@@ -1,20 +1,37 @@
 #!/usr/bin/env bash
 
-# Update aptitude
-sudo apt-get update
-sudo apt-get upgrade -y
 
-# Install opencv & vim.
-sudo apt-get install -y libopencv-dev
-sudo apt-get install -y vim
+# Update opkg
+echo "src all     http://iotdk.intel.com/repos/1.1/iotdk/all" >> /etc/opkg/base-feeds.conf
+echo "src x86 http://iotdk.intel.com/repos/1.1/iotdk/x86" >> /etc/opkg/base-feeds.conf
+echo "src i586    http://iotdk.intel.com/repos/1.1/iotdk/i586" >> /etc/opkg/base-feeds.conf
 
-#Ensure webcam module is loaded.
-sudo modprobe uvcvideo
+opkg update
+opkg upgrade
+opkg install git
 
-if [ ! -f go1.4.2.linux-arm~multiarch-armv7-1.tar.gz ]; then
-	wget http://dave.cheney.net/paste/go1.4.2.linux-arm~multiarch-armv7-1.tar.gz
+
+# Install golang.
+if [ ! -f go1.5.1.linux-386.tar.gz ]; then
+	wget https://storage.googleapis.com/golang/go1.5.1.linux-386.tar.gz
 fi
 
-sudo tar -C /usr/local -xzf go1.4.2.linux-arm~multiarch-armv7-1.tar.gz
-echo "export PATH=$PATH:/usr/local/go/bin" >> /home/pi/.bashrc
-source /home/pi/.bashrc
+mkdir /usr/local
+tar -C /usr/local -xzf go1.5.1.linux-386.tar.gz
+echo "PATH=$PATH:/usr/local/go/bin" >> /etc/profile
+
+
+# Install pre-compiled binaries of our third party dependencies.
+if [ ! -f opencv-3-edison.tgz ]; then
+	wget https://github.com/MeasureTheFuture/scout-dependencies/releases/download/0.1/opencv-3-edison.tgz
+fi
+
+tar -C /usr/local -xzf opencv-3-edison.tgz
+
+
+# Configure the go project and get the scout source code
+mkdir mtf
+mkdir mtf/src
+export GOPATH=`pwd`/mtf
+git clone https://github.com/MeasureTheFuture/scout.git mtf/src/scout/
+
