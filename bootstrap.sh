@@ -32,6 +32,6 @@ tar -C /usr/local -xzf opencv-3-edison.tgz
 # Configure the go project and get the scout source code
 mkdir mtf
 mkdir mtf/src
-export GOPATH=`pwd`/mtf
+export GOPATH=`pwd`/mtf # TODO: try and get this wedged into /etc/profile so that it is always set on boot.
 git clone https://github.com/MeasureTheFuture/scout.git mtf/src/scout/
 
