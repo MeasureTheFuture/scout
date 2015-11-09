@@ -2,7 +2,7 @@
 
 This software powers measure the future 'scouts'. These are web cam based devices that monitor activity in and around various spaces.
 
-## Compilation/Installation
+## Compilation/Installation (Edison)
 
 1. [Upgrade the Firmware on your Intel Edison to Yocto 2.1*](http://reprage.com/post/bootstrapping-the-intel-edison/).
 2. ssh into your Edison.
@@ -15,6 +15,18 @@ This software powers measure the future 'scouts'. These are web cam based device
 4. After the bootstrap script has installed go, 3rd-party dependencies and downloaded the scout source code, it can be built with the following:
 ```
 	$ source /etc/profile
+	$ go build scout
+```
+
+## Compilation/Installation (OSX)
+
+1. [Download & Install Go 1.5.1](https://golang.org/dl/)
+2. Install OpenCV-3.0 via [Brew](http://brew.sh/):
+```
+	$ brew install opencv3
+```
+3.
+```
 	$ go build scout
 ```
 

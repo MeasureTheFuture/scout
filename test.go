@@ -17,12 +17,13 @@
 
 package main
 
-// #cgo darwin CFLAGS: -I/opt/local/include -I/opt/local/include/opencv
+// #cgo darwin CFLAGS: -I/usr/local/opt/opencv3/include -I/usr/local/opt/opencv3/include/opencv
 // #cgo linux CFLAGS: -I/usr/local/include -I/usr/local/include/opencv
 // #cgo CFLAGS: -Wno-error
-// #cgo darwin LDFLAGS: -L/opt/local/lib
+// #cgo darwin LDFLAGS: -L/usr/local/opt/opencv3/lib
 // #cgo linux LDFLAGS: -L/usr/local/lib
-// #cgo LDFLAGS: -lm -lstdc++ -lz -ldl -lpthread -lippicv -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lIlmImf -llibpng -llibjasper -llibjpeg -llibwebp -llibtiff -lopencv_highgui -lopencv_core -lopencv_video -lopencv_hal -ltbb
+// #cgo darwin LDFLAGS: -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lopencv_core -lopencv_video -lopencv_hal
+// #cgo linux LDFLAGS: -lm -lstdc++ -lz -ldl -lpthread -lippicv -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lIlmImf -llibpng -llibjasper -llibjpeg -llibwebp -llibtiff -lopencv_highgui -lopencv_core -lopencv_video -lopencv_hal -ltbb
 // #include "cv.h"
 // #include "highgui.h"
 import "C"
