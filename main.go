@@ -59,11 +59,18 @@ func main() {
 	C.cvSaveImage(file, unsafe.Pointer(refFrame), nil)
 	C.free(unsafe.Pointer(file))
 
-	mask := C.cvCloneImage(refFrame)
-	//nexFrame := C.cvQueryFrame(camera)
+	C.cvGrabFrame(camera)
 
-	mog2 := C.createMOG2(30, 0.5, 1)
-	C.applyMOG2(mog2, unsafe.Pointer(C.cvQueryFrame(camera)), unsafe.Pointer(mask), 0.1)
+	mask := C.cvCreateImage(C.cvSize(refFrame.width, refFrame.height), C.IPL_DEPTH_8U, 1)
+	C.cvSaveImage(file, unsafe.Pointer(mask), nil)
+
+	nexFrame := C.cvCloneImage(C.cvQueryFrame(camera))
+
+	C.initMOG2(500, 16, 1)
+	C.applyMOG2(unsafe.Pointer(nexFrame), unsafe.Pointer(mask))
+
+	nexFrame = C.cvCloneImage(C.cvQueryFrame(camera))
+	C.applyMOG2(unsafe.Pointer(nexFrame), unsafe.Pointer(mask))
 
 	file = C.CString("mask.png")
 	C.cvSaveImage(file, unsafe.Pointer(mask), nil)
