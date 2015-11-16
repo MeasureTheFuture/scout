@@ -18,11 +18,22 @@
 package main
 
 import (
-	"log"
+	"time"
 )
 
-func main() {
-	log.Printf("INFO: Starting sensor.\n")
+type Waypoint struct {
+	Xpixels int32
+	Ypixels int32
+	T float32
+}
 
-	monitor()
+type Interaction struct {
+	Entered time.Time
+	Duration float32
+
+	Path []Waypoint
+}
+
+func sendInteraction(i Interaction) {
+	// TODO: Broadcast the interaction to the mothership.
 }
