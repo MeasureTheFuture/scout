@@ -24,11 +24,11 @@ import (
 type Waypoint struct {
 	Xpixels int32
 	Ypixels int32
-	T float32
+	T       float32
 }
 
 type Interaction struct {
-	Entered time.Time
+	Entered  time.Time
 	Duration float32
 
 	Path []Waypoint

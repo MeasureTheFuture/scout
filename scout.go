@@ -33,11 +33,11 @@ import "C"
 
 import (
 	"log"
-	"unsafe"
 	"strconv"
+	"unsafe"
 )
 
-func monitor() { 	
+func monitor() {
 	// Webcam source.
 	//camera := C.cvCaptureFromCAM(-1)
 
@@ -61,13 +61,11 @@ func monitor() {
 
 	// Create a frame to hold the foreground mask results.
 	mask := C.cvCreateImage(C.cvSize(calibrationFrame.width, calibrationFrame.height), C.IPL_DEPTH_8U, 1)
-	maskI := C.cvCreateImage(C.cvSize(calibrationFrame.width, calibrationFrame.height), C.IPL_DEPTH_8U, 1)
-
-	C.initBlob(15, 1000, 0, 255)
+	//maskI := C.cvCreateImage(C.cvSize(calibrationFrame.width, calibrationFrame.height), C.IPL_DEPTH_8U, 1)
 
 	// Push the initial calibration frame into the MOG2 image subtractor.
-	C.initMOG2(500, 30, 0)
-	C.applyMOG2(unsafe.Pointer(calibrationFrame), unsafe.Pointer(mask))	
+	C.initMOG2(500, 30, 1)
+	C.applyMOG2(unsafe.Pointer(calibrationFrame), unsafe.Pointer(mask))
 
 	// Start monitoring from the camera.
 	for i := 0; i < 100; i++ {
@@ -75,30 +73,34 @@ func monitor() {
 		C.cvGrabFrame(camera)
 		nextFrame := C.cvQueryFrame(camera)
 		C.applyMOG2(unsafe.Pointer(nextFrame), unsafe.Pointer(mask))
-		
-		// Detect blobs in foreground mask
-		var blobs [600]int32
 
-		C.cvNot(unsafe.Pointer(mask), unsafe.Pointer(maskI))
+		// Filter the foreground mask to clean up any noise or holes (morphological-closing).
+		C.cvSmooth(unsafe.Pointer(mask), unsafe.Pointer(mask), C.CV_GAUSSIAN, 5, 0, 0.0, 0.0)
+		C.cvThreshold(unsafe.Pointer(mask), unsafe.Pointer(mask), 128, 255, 0) //thresh, max out.
+		C.cvDilate(unsafe.Pointer(mask), unsafe.Pointer(mask), nil, 10)
+		//C.cvNot(unsafe.Pointer(mask), unsafe.Pointer(maskI))
 
-		nBlobs := int(C.detectBlobs(unsafe.Pointer(maskI), (*C.int)(unsafe.Pointer(&blobs[0]))))
+		// Detect contours in filtered foreground mask
+		storage := C.cvCreateMemStorage(0)
+		contours := C.cvCreateSeq(0, C.size_t(unsafe.Sizeof(C.CvSeq{})), C.size_t(unsafe.Sizeof(C.CvPoint{})), storage)
+		offset := C.cvPoint(C.int(0), C.int(0))
+		num := int(C.cvFindContours(unsafe.Pointer(mask), storage, &contours, C.int(unsafe.Sizeof(C.CvContour{})),
+			C.CV_RETR_LIST, C.CV_CHAIN_APPROX_SIMPLE, offset))
+		log.Printf("Frame " + strconv.Itoa(i) + " C: " + strconv.Itoa(num))
+		C.cvDrawContours(unsafe.Pointer(nextFrame), contours, C.cvScalar(12.0, 212.0, 250.0, 255), C.cvScalar(0, 0, 0, 0), 2, 1, 8, offset)
 
-		log.Printf("Frame" + strconv.Itoa(i) + ": " + strconv.Itoa(nBlobs))
-		for j := 0; j < nBlobs; j++ {
-		 	log.Printf("=[" + strconv.Itoa(int(blobs[j*3])) + ", " + strconv.Itoa(int(blobs[(j*3) + 1])) + ", " + strconv.Itoa(int(blobs[(j*3) + 2])) + "]")
+		for c := 0; c < num; c++ {
+			boundingBox := C.cvBoundingRect(unsafe.Pointer(contours), 0)
+			pt1 := C.cvPoint(boundingBox.x, boundingBox.y)
+			pt2 := C.cvPoint(boundingBox.x+boundingBox.width, boundingBox.y+boundingBox.height)
+			C.cvRectangle(unsafe.Pointer(nextFrame), pt1, pt2, C.cvScalar(16.0, 8.0, 186.0, 255), C.int(5), C.int(8), C.int(0))
 		}
 
 		// DEBUG - save what we have so far.
-		
-		// if nBlobs > 0 {
-		// 	point := C.cvPoint(C.int(blobs[0]), C.int(blobs[1]))
-		// 	C.cvCircle(unsafe.Pointer(maskI), point, C.int(blobs[2]), C.cvScalar(255.0, 0.0, 255.0, 0.0), C.int(5), C.int(8), 0)
-		// }
-
-		file = C.CString("mask" + strconv.Itoa(i) + ".png")
-		C.cvSaveImage(file, unsafe.Pointer(maskI), nil)
+		file = C.CString("f" + strconv.Itoa(i) + "-detected.png")
+		C.cvSaveImage(file, unsafe.Pointer(nextFrame), nil)
 	}
-	
+
 	C.cvReleaseImage(&mask)
 	C.cvReleaseImage(&calibrationFrame)
 }
