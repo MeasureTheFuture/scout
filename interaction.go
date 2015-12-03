@@ -24,35 +24,75 @@ import (
 )
 
 type Waypoint struct {
-	XPixels      int
-	YPixels      int
-	WidthPixels  int
-	HeightPixels int
-	T            float32
+	XPixels          int // x-coordinate of waypoint centroid in pixels
+	YPixels          int // y-coordinate of waypoint centroid in pixels
+	HalfWidthPixels  int // Half the width of the waypoint in pixels
+	HalfHeightPixels int // Half the height of the waypoint in pixels
+	T                float32
+}
+
+// distanceSq calculates the distance squared between this and the
+// supplied waypoint.
+func (a Waypoint) distanceSq(b Waypoint) int {
+	dx := a.XPixels - b.XPixels
+	dy := a.YPixels - b.YPixels
+
+	return (dx * dx) + (dy * dy)
 }
 
 type Interaction struct {
-	Entered  time.Time
-	Duration float32
-
-	Path []Waypoint
+	Entered  time.Time  // The time the interaction started (rounded to nearest half hour)
+	Duration float32    // The total duration of the interaction.
+	Path     []Waypoint // The pathway of the interaction through the scene.
 }
 
 type Scene struct {
-	interactions []Interaction
+	interactions []Interaction // The current interactions occuring within the scene.
 }
 
+// initScene creates an empty scene that can be used for monitoring interactions.
 func initScene() Scene {
-	return Scene{make([]Interaction, 10)}
+	return Scene{}
 }
 
-func monitorScene(s Scene, detected []Waypoint) Scene {
+// addInteraction
+func addInteraction(s *Scene, detected []Waypoint) {
+	// Work out which of the detected waypoints are new.
+	var matched []bool = make([]bool, len(s.interactions))
+
+	for i := 0; i < len(detected); i++ {
+		for j := 0; j < len(s.interactions); j++ {
+
+			//dist :=
+		}
+	}
+}
+
+func updateInteractions(s *Scene, detected []Waypoint) {
+
+}
+
+func monitorScene(s *Scene, detected []Waypoint) {
 	for i := 0; i < len(detected); i++ {
 		log.Printf("\t D: [" + strconv.Itoa(detected[i].XPixels) + "," + strconv.Itoa(detected[i].YPixels) + "]")
 	}
 
+	if len(detected) > len(s.interactions) {
+		// Someone new has entered the frame.
+		log.Printf("\t New person")
+		addInteraction(s, detected)
+
+	} else if len(detected) == len(s.interactions) {
+		// Update the positions of everyone within the frame.
+		log.Printf("\t Updating")
+
+	} else {
+		// Someone has left the frame.
+		log.Printf("\t Person left")
+
+	}
+
 	log.Printf("")
-	return s
 }
 
 func sendInteraction(i Interaction) {

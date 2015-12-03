@@ -118,7 +118,7 @@ func monitor() {
 		}
 
 		log.Printf("Frame " + strconv.Itoa(i) + ":")
-		scene = monitorScene(scene, detectedObjects)
+		monitorScene(&scene, detectedObjects)
 
 		// DEBUG - save what we have so far.
 		file = C.CString("f" + strconv.Itoa(i) + "-detected.png")
