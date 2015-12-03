@@ -43,6 +43,7 @@ func monitor() {
 
 	videoFile := C.CString("sample2.mov")
 	camera := C.cvCaptureFromFile(videoFile)
+	scene := initScene()
 
 	if camera == nil {
 		log.Printf("WARNING: No camera detected. Shutting down sensor.\n")
@@ -69,6 +70,7 @@ func monitor() {
 
 	// Start monitoring from the camera.
 	for i := 0; i < 100; i++ {
+
 		// Subtract the calibration frame from the current frame.
 		C.cvGrabFrame(camera)
 		nextFrame := C.cvQueryFrame(camera)
@@ -78,7 +80,6 @@ func monitor() {
 		C.cvSmooth(unsafe.Pointer(mask), unsafe.Pointer(mask), C.CV_GAUSSIAN, 5, 0, 0.0, 0.0)
 		C.cvThreshold(unsafe.Pointer(mask), unsafe.Pointer(mask), 128, 255, 0) //thresh, max out.
 		C.cvDilate(unsafe.Pointer(mask), unsafe.Pointer(mask), nil, 10)
-		//C.cvNot(unsafe.Pointer(mask), unsafe.Pointer(maskI))
 
 		// Detect contours in filtered foreground mask
 		storage := C.cvCreateMemStorage(0)
@@ -86,15 +87,38 @@ func monitor() {
 		offset := C.cvPoint(C.int(0), C.int(0))
 		num := int(C.cvFindContours(unsafe.Pointer(mask), storage, &contours, C.int(unsafe.Sizeof(C.CvContour{})),
 			C.CV_RETR_LIST, C.CV_CHAIN_APPROX_SIMPLE, offset))
-		log.Printf("Frame " + strconv.Itoa(i) + " C: " + strconv.Itoa(num))
-		C.cvDrawContours(unsafe.Pointer(nextFrame), contours, C.cvScalar(12.0, 212.0, 250.0, 255), C.cvScalar(0, 0, 0, 0), 2, 1, 8, offset)
 
-		for c := 0; c < num; c++ {
-			boundingBox := C.cvBoundingRect(unsafe.Pointer(contours), 0)
-			pt1 := C.cvPoint(boundingBox.x, boundingBox.y)
-			pt2 := C.cvPoint(boundingBox.x+boundingBox.width, boundingBox.y+boundingBox.height)
-			C.cvRectangle(unsafe.Pointer(nextFrame), pt1, pt2, C.cvScalar(16.0, 8.0, 186.0, 255), C.int(5), C.int(8), C.int(0))
+		var detectedObjects []Waypoint
+
+		// Track each of the detected contours.
+		for contours != nil {
+			area := float64(C.cvContourArea(unsafe.Pointer(contours), C.cvSlice(0, 0x3fffffff), 0))
+			//log.Printf("A: " + strconv.FormatFloat(float64(area), 'E', -1, 32))
+
+			// Only track large objects.
+			if area > 14000.0 {
+				boundingBox := C.cvBoundingRect(unsafe.Pointer(contours), 0)
+				w := int(boundingBox.width / 2)
+				h := int(boundingBox.height / 2)
+				x := int(boundingBox.x) + w
+				y := int(boundingBox.y) + h
+
+				detectedObjects = append(detectedObjects, Waypoint{x, y, w, h, 0.0})
+
+				// Debug -- Frame drawing.
+				pt1 := C.cvPoint(boundingBox.x, boundingBox.y)
+				pt2 := C.cvPoint(boundingBox.x+boundingBox.width, boundingBox.y+boundingBox.height)
+				C.cvDrawContours(unsafe.Pointer(nextFrame), contours, C.cvScalar(12.0, 212.0, 250.0, 255), C.cvScalar(0, 0, 0, 0), 2, 1, 8, offset)
+				C.cvRectangle(unsafe.Pointer(nextFrame), pt1, pt2, C.cvScalar(16.0, 8.0, 186.0, 255), C.int(5), C.int(8), C.int(0))
+			} else {
+				num--
+			}
+
+			contours = contours.h_next
 		}
+
+		log.Printf("Frame " + strconv.Itoa(i) + ":")
+		scene = monitorScene(scene, detectedObjects)
 
 		// DEBUG - save what we have so far.
 		file = C.CString("f" + strconv.Itoa(i) + "-detected.png")

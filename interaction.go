@@ -18,13 +18,17 @@
 package main
 
 import (
+	"log"
+	"strconv"
 	"time"
 )
 
 type Waypoint struct {
-	Xpixels int32
-	Ypixels int32
-	T       float32
+	XPixels      int
+	YPixels      int
+	WidthPixels  int
+	HeightPixels int
+	T            float32
 }
 
 type Interaction struct {
@@ -32,6 +36,23 @@ type Interaction struct {
 	Duration float32
 
 	Path []Waypoint
+}
+
+type Scene struct {
+	interactions []Interaction
+}
+
+func initScene() Scene {
+	return Scene{make([]Interaction, 10)}
+}
+
+func monitorScene(s Scene, detected []Waypoint) Scene {
+	for i := 0; i < len(detected); i++ {
+		log.Printf("\t D: [" + strconv.Itoa(detected[i].XPixels) + "," + strconv.Itoa(detected[i].YPixels) + "]")
+	}
+
+	log.Printf("")
+	return s
 }
 
 func sendInteraction(i Interaction) {
