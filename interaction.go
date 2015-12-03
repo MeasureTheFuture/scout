@@ -65,38 +65,58 @@ func initScene() Scene {
 func addInteraction(s *Scene, detected []Waypoint) {
 	// The start time to use for the new interaction -- truncated to the nearest 30 minutes.
 	start := time.Now().Truncate(30 * time.Minute)
+	log.Printf("\t detected: " + strconv.Itoa(len(detected)))
 
-	// Empty scene - just add a new interaction for each new waypoint.
 	if len(s.Interactions) == 0 {
+		// Empty scene: just add a new interaction for each new waypoint.
 		for i := 0; i < len(detected); i++ {
 			s.Interactions = append(s.Interactions, Interaction{start, 0.0, []Waypoint{detected[i]}})
 		}
 
 	} else {
-		var closest map[int][][]int = make(map[int][][]int)
+		// Existing scene:
+		// for each of the detected waypoints
+		// 	 work which of the existing interactions are closest.
+		//   for interactions that have more than one close detected waypoints
+		//		create a new interaction from the furthest detected waypoint
+		// 		the nearest waypoint is used to update the interaction.
+		var distances map[int][]int = make(map[int][]int)
 
-		for i := 0; i < len(s.Interactions); i++ {
+		for i := 0; i < len(detected); i++ {
 			dist := math.MaxInt32
 			minW := -1
 
-			for j := 0; j < len(detected); j++ {
-				d := s.Interactions[i].lastWaypoint().distanceSq(detected[j])
+			for j := 0; j < len(s.Interactions); j++ {
+				d := detected[i].distanceSq(s.Interactions[j].lastWaypoint())
 				if d < dist {
 					dist = d
 					minW = j
 				}
 			}
 
-			closest[i] = append(closest[i], []int{minW, dist})
-			//closest[i] = []int{minW, dist}
+			log.Printf("\t Adding: " + strconv.Itoa(minW) + ", " + strconv.Itoa(dist) + " to " + strconv.Itoa(i))
+			distances[minW] = append(distances[minW], dist)
 		}
 
-		// TODO: detected is larger.
-		// for each path in interactions
-		// work out the closest waypoint in detected.
-		// One or more interactions will have two or more close waypoints in detected.
-		// The nearest waypoint in detected is used to update the pathway in interactions.
-		// While the other waypoints are interactions new to the scene.
+		for i := 0; i < len(s.Interactions); i++ {
+			if len(distances[i]) > 1 {
+				dist := math.MaxInt32
+				minW := -1
+
+				for j := 0; j < len(distances[i]); j++ {
+					if distances[i][j] < dist {
+						dist = distances[i][j]
+						minW = j
+					}
+				}
+
+				for j := 0; j < len(distances[i]); j++ {
+					if j != minW {
+						s.Interactions = append(s.Interactions, Interaction{start, 0.0, []Waypoint{detected[j]}})
+					}
+				}
+			}
+		}
 	}
 }
 
