@@ -21,6 +21,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"testing"
+	"time"
 )
 
 func TestInteraction(t *testing.T) {
@@ -46,13 +47,41 @@ var _ = Describe("Interaction", func() {
 	})
 
 	Context("addInteraction", func() {
+		wpA := Waypoint{100, 100, 20, 20, 0.0}
+		wpAA := Waypoint{102, 100, 20, 20, 0.0}
+		wpB := Waypoint{50, 50, 20, 20, 0.0}
+
 		It("should be able to add an interaction to an empty scene", func() {
 			s := initScene()
-			wp := Waypoint{100, 100, 20, 20, 0.0}
-			addInteraction(&s, []Waypoint{wp})
+			addInteraction(&s, []Waypoint{wpA})
 
-			Ω(len(s.interactions)).Should(Equal(1))
-			//Ω(s.interactions[0].path[0]).Should(Equal)
+			Ω(len(s.Interactions)).Should(Equal(1))
+			Ω(s.Interactions[0].Path).Should(Equal([]Waypoint{wpA}))
+		})
+
+		It("should be able to add multiple interactions to an empty scene,", func() {
+			s := initScene()
+
+			addInteraction(&s, []Waypoint{wpA, wpB})
+
+			Ω(len(s.Interactions)).Should(Equal(2))
+			Ω(s.Interactions[0].Path).Should(Equal([]Waypoint{wpA}))
+			Ω(s.Interactions[1].Path).Should(Equal([]Waypoint{wpB}))
+		})
+
+		It("should list the interaction start time truncated to 30 mins", func() {
+			s := initScene()
+			addInteraction(&s, []Waypoint{wpA})
+
+			Ω(s.Interactions[0].Entered).Should(Equal(time.Now().Truncate(30 * time.Minute)))
+		})
+
+		It("should be able to add an interaction to a scene with stuff already gonig on", func() {
+			s := initScene()
+			addInteraction(&s, []Waypoint{wpA})
+			addInteraction(&s, []Waypoint{wpAA, wpB})
+
+			Ω(len(s.Interactions)).Should(Equal(2))
 		})
 	})
 })
