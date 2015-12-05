@@ -20,7 +20,6 @@ package main
 import (
 	"log"
 	"math"
-	"strconv"
 	"time"
 )
 
@@ -88,7 +87,7 @@ func buildDistanceMap(s *Scene, detected []Waypoint) map[int][][]int {
 func addInteraction(s *Scene, detected []Waypoint) {
 	// The start time to use for the new interaction -- truncated to the nearest 30 minutes.
 	start := time.Now().Truncate(30 * time.Minute)
-	log.Printf("\t detected: " + strconv.Itoa(len(detected)))
+	//log.Printf("\t detected: " + strconv.Itoa(len(detected)))
 
 	if len(s.Interactions) == 0 {
 		// Empty scene: just add a new interaction for each new waypoint.
@@ -119,7 +118,6 @@ func addInteraction(s *Scene, detected []Waypoint) {
 
 				for j := 0; j < len(distances[i]); j++ {
 					if j != minW {
-						//log.Printf("\t Creating: " + strconv.Itoa(j) )
 						s.Interactions = append(s.Interactions, Interaction{start, 0.0, []Waypoint{detected[distances[i][j][1]]}})
 					} else {
 						s.Interactions[i].Path = append(s.Interactions[i].Path, detected[distances[i][j][1]])
@@ -132,29 +130,31 @@ func addInteraction(s *Scene, detected []Waypoint) {
 	}
 }
 
-func updateInteractions(s *Scene, detected []Waypoint) {
-	//distances := buildDistanceMap(s, detected)
+func removeInteraction(s *Scene, detected []Waypoint) {
+	distances := buildDistanceMap(s, detected)
+	matched := map[int]bool{}
 
+	for i := 0; i < len(distances); i++ {
+		for j := 0; j < len(distances[i]); j++ {
+			matched[distances[i][j][1]] = true
+		}
+	}
+
+	for i := 0; i < len(s.Interactions); i++ {
+		if _, ok := matched[i]; ok {
+			s.Interactions[i].Path = append(s.Interactions[i].Path, detected[distances[i][0][1]])
+		} else {
+			sendInteraction(s.Interactions[i])
+			s.Interactions = append(s.Interactions[:i], s.Interactions[i+1:]...)
+		}
+	}
 }
 
 func monitorScene(s *Scene, detected []Waypoint) {
-	for i := 0; i < len(detected); i++ {
-		log.Printf("\t D: [" + strconv.Itoa(detected[i].XPixels) + "," + strconv.Itoa(detected[i].YPixels) + "]")
-	}
-
-	if len(detected) > len(s.Interactions) {
-		// Someone new has entered the frame.
-		log.Printf("\t New person")
+	if len(detected) >= len(s.Interactions) {
 		addInteraction(s, detected)
-
-	} else if len(detected) == len(s.Interactions) {
-		// Update the positions of everyone within the frame.
-		log.Printf("\t Updating")
-
 	} else {
-		// Someone has left the frame.
-		log.Printf("\t Person left")
-
+		removeInteraction(s, detected)
 	}
 
 	log.Printf("")

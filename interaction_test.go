@@ -99,5 +99,23 @@ var _ = Describe("Interaction", func() {
 			Ω(s.Interactions[1].Path).Should(Equal([]Waypoint{wpB, wpBA}))
 			Ω(s.Interactions[2].Path).Should(Equal([]Waypoint{wpC}))
 		})
+
+		It("should be able to remove interactions when a person leaves the scene", func() {
+			s := initScene()
+			addInteraction(&s, []Waypoint{wpA, wpB})
+			removeInteraction(&s, []Waypoint{wpAA})
+
+			Ω(len(s.Interactions)).Should(Equal(1))
+			Ω(s.Interactions[0].Path).Should(Equal([]Waypoint{wpA, wpAA}))
+		})
+
+		It("should be able to remove multiple interactions when more than one person leaves the scene", func() {
+			s := initScene()
+			addInteraction(&s, []Waypoint{wpA, wpB, wpC})
+			removeInteraction(&s, []Waypoint{wpBA})
+
+			Ω(len(s.Interactions)).Should(Equal(1))
+			Ω(s.Interactions[0].Path).Should(Equal([]Waypoint{wpB, wpBA}))
+		})
 	})
 })
