@@ -50,6 +50,8 @@ var _ = Describe("Interaction", func() {
 		wpA := Waypoint{100, 100, 20, 20, 0.0}
 		wpAA := Waypoint{102, 100, 20, 20, 0.0}
 		wpB := Waypoint{50, 50, 20, 20, 0.0}
+		wpBA := Waypoint{55, 53, 20, 20, 0.0}
+		wpC := Waypoint{150, 150, 20, 20, 0.0}
 
 		It("should be able to add an interaction to an empty scene", func() {
 			s := initScene()
@@ -76,12 +78,26 @@ var _ = Describe("Interaction", func() {
 			Ω(s.Interactions[0].Entered).Should(Equal(time.Now().Truncate(30 * time.Minute)))
 		})
 
-		It("should be able to add an interaction to a scene with stuff already gonig on", func() {
+		It("should be able to add an interaction to a scene with stuff already going on", func() {
 			s := initScene()
 			addInteraction(&s, []Waypoint{wpA})
 			addInteraction(&s, []Waypoint{wpAA, wpB})
 
 			Ω(len(s.Interactions)).Should(Equal(2))
+			Ω(s.Interactions[0].Path).Should(Equal([]Waypoint{wpA, wpAA}))
+			Ω(s.Interactions[1].Path).Should(Equal([]Waypoint{wpB}))
+		})
+
+		It("should be able to add multiple interactions to a scene with stuff already going on", func() {
+			s := initScene()
+			addInteraction(&s, []Waypoint{wpA})
+			addInteraction(&s, []Waypoint{wpAA, wpB})
+			addInteraction(&s, []Waypoint{wpAA, wpBA, wpC})
+
+			Ω(len(s.Interactions)).Should(Equal(3))
+			Ω(s.Interactions[0].Path).Should(Equal([]Waypoint{wpA, wpAA, wpAA}))
+			Ω(s.Interactions[1].Path).Should(Equal([]Waypoint{wpB, wpBA}))
+			Ω(s.Interactions[2].Path).Should(Equal([]Waypoint{wpC}))
 		})
 	})
 })

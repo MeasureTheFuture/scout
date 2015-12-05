@@ -61,6 +61,29 @@ func initScene() Scene {
 	return Scene{}
 }
 
+func buildDistanceMap(s *Scene, detected []Waypoint) map[int][][]int {
+	var distances map[int][][]int = make(map[int][][]int)
+
+	// For each of the detected waypoints, work out the
+	// closest interaction in the scene.
+	for i := 0; i < len(detected); i++ {
+		dist := math.MaxInt32
+		minW := -1
+
+		for j := 0; j < len(s.Interactions); j++ {
+			d := detected[i].distanceSq(s.Interactions[j].lastWaypoint())
+			if d < dist {
+				dist = d
+				minW = j
+			}
+		}
+
+		distances[minW] = append(distances[minW], []int{dist, i})
+	}
+
+	return distances
+}
+
 // addInteraction
 func addInteraction(s *Scene, detected []Waypoint) {
 	// The start time to use for the new interaction -- truncated to the nearest 30 minutes.
@@ -80,47 +103,37 @@ func addInteraction(s *Scene, detected []Waypoint) {
 		//   for interactions that have more than one close detected waypoints
 		//		create a new interaction from the furthest detected waypoint
 		// 		the nearest waypoint is used to update the interaction.
-		var distances map[int][]int = make(map[int][]int)
+		distances := buildDistanceMap(s, detected)
 
-		for i := 0; i < len(detected); i++ {
-			dist := math.MaxInt32
-			minW := -1
-
-			for j := 0; j < len(s.Interactions); j++ {
-				d := detected[i].distanceSq(s.Interactions[j].lastWaypoint())
-				if d < dist {
-					dist = d
-					minW = j
-				}
-			}
-
-			log.Printf("\t Adding: " + strconv.Itoa(minW) + ", " + strconv.Itoa(dist) + " to " + strconv.Itoa(i))
-			distances[minW] = append(distances[minW], dist)
-		}
-
-		for i := 0; i < len(s.Interactions); i++ {
+		for i := 0; i < len(distances); i++ {
 			if len(distances[i]) > 1 {
 				dist := math.MaxInt32
 				minW := -1
 
 				for j := 0; j < len(distances[i]); j++ {
-					if distances[i][j] < dist {
-						dist = distances[i][j]
+					if distances[i][j][0] < dist {
+						dist = distances[i][j][0]
 						minW = j
 					}
 				}
 
 				for j := 0; j < len(distances[i]); j++ {
 					if j != minW {
-						s.Interactions = append(s.Interactions, Interaction{start, 0.0, []Waypoint{detected[j]}})
+						//log.Printf("\t Creating: " + strconv.Itoa(j) )
+						s.Interactions = append(s.Interactions, Interaction{start, 0.0, []Waypoint{detected[distances[i][j][1]]}})
+					} else {
+						s.Interactions[i].Path = append(s.Interactions[i].Path, detected[distances[i][j][1]])
 					}
 				}
+			} else if len(distances[i]) == 1 {
+				s.Interactions[i].Path = append(s.Interactions[i].Path, detected[distances[i][0][1]])
 			}
 		}
 	}
 }
 
 func updateInteractions(s *Scene, detected []Waypoint) {
+	//distances := buildDistanceMap(s, detected)
 
 }
 
