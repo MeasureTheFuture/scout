@@ -2,6 +2,9 @@
 
 This software powers measure the future 'scouts'. These are web cam based devices that monitor activity in and around various spaces.
 
+![alpha](https://img.shields.io/badge/stability-alpha-orange.svg?style=flat "Alpha")&nbsp;
+ ![GPLv3 License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat "GPLv3 License")
+
 ## Compilation/Installation (Edison)
 
 1. [Upgrade the Firmware on your Intel Edison to Yocto 2.1*](http://reprage.com/post/bootstrapping-the-intel-edison/).
