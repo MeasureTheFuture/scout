@@ -117,12 +117,19 @@ func monitor() {
 			contours = contours.h_next
 		}
 
-		log.Printf("Frame " + strconv.Itoa(i) + ":")
 		monitorScene(&scene, detectedObjects)
 
 		// DEBUG - save what we have so far.
+		if len(scene.Interactions) == 1 {
+			for _, w := range scene.Interactions[0].Path {
+				pt1 := C.cvPoint(C.int(w.XPixels), C.int(w.YPixels))
+				C.cvCircle(unsafe.Pointer(nextFrame), pt1, C.int(10), C.cvScalar(0.0, 46.0, 109.0, 255), C.int(2), C.int(8), C.int(0))
+			}
+		}
+
 		file = C.CString("f" + strconv.Itoa(i) + "-detected.png")
 		C.cvSaveImage(file, unsafe.Pointer(nextFrame), nil)
+		saveScene(string("f"+strconv.Itoa(i)+"-metadata.json"), &scene)
 	}
 
 	C.cvReleaseImage(&mask)

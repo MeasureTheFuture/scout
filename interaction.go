@@ -19,6 +19,8 @@ package main
 
 import (
 	//"log"
+	"encoding/json"
+	"io/ioutil"
 	"math"
 	//"strconv"
 	"time"
@@ -160,6 +162,12 @@ func monitorScene(s *Scene, detected []Waypoint) {
 	} else {
 		removeInteraction(s, detected)
 	}
+}
+
+func saveScene(filename string, s *Scene) {
+	b, _ := json.Marshal(s)
+	ioutil.WriteFile(filename, b, 0611)
+
 }
 
 func sendInteraction(i Interaction) {
