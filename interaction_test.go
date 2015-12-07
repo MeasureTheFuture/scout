@@ -106,6 +106,7 @@ var _ = Describe("Interaction", func() {
 			removeInteraction(&s, []Waypoint{wpAA})
 
 			Ω(len(s.Interactions)).Should(Equal(1))
+			Ω(len(s.Interactions[0].Path)).Should(Equal(2))
 			Ω(s.Interactions[0].Path).Should(Equal([]Waypoint{wpA, wpAA}))
 		})
 
