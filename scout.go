@@ -37,7 +37,7 @@ import (
 	"unsafe"
 )
 
-func monitor() {
+func monitor(config Configuration) {
 	// Webcam source.
 	//camera := C.cvCaptureFromCAM(-1)
 
@@ -62,10 +62,9 @@ func monitor() {
 
 	// Create a frame to hold the foreground mask results.
 	mask := C.cvCreateImage(C.cvSize(calibrationFrame.width, calibrationFrame.height), C.IPL_DEPTH_8U, 1)
-	//maskI := C.cvCreateImage(C.cvSize(calibrationFrame.width, calibrationFrame.height), C.IPL_DEPTH_8U, 1)
 
 	// Push the initial calibration frame into the MOG2 image subtractor.
-	C.initMOG2(500, 30, 1)
+	C.initMOG2(C.int(config.MogHistoryLength), C.double(config.MogThreshold), C.int(config.MogDetectShadows))
 	C.applyMOG2(unsafe.Pointer(calibrationFrame), unsafe.Pointer(mask))
 
 	// Start monitoring from the camera.
@@ -77,9 +76,9 @@ func monitor() {
 		C.applyMOG2(unsafe.Pointer(nextFrame), unsafe.Pointer(mask))
 
 		// Filter the foreground mask to clean up any noise or holes (morphological-closing).
-		C.cvSmooth(unsafe.Pointer(mask), unsafe.Pointer(mask), C.CV_GAUSSIAN, 5, 0, 0.0, 0.0)
-		C.cvThreshold(unsafe.Pointer(mask), unsafe.Pointer(mask), 128, 255, 0) //thresh, max out.
-		C.cvDilate(unsafe.Pointer(mask), unsafe.Pointer(mask), nil, 10)
+		C.cvSmooth(unsafe.Pointer(mask), unsafe.Pointer(mask), C.CV_GAUSSIAN, C.int(config.GaussianSmooth), 0, 0.0, 0.0)
+		C.cvThreshold(unsafe.Pointer(mask), unsafe.Pointer(mask), C.double(config.ForegroundThresh), 255, 0)
+		C.cvDilate(unsafe.Pointer(mask), unsafe.Pointer(mask), nil, C.int(config.DilationIterations))
 
 		// Detect contours in filtered foreground mask
 		storage := C.cvCreateMemStorage(0)
@@ -96,7 +95,7 @@ func monitor() {
 			//log.Printf("A: " + strconv.FormatFloat(float64(area), 'E', -1, 32))
 
 			// Only track large objects.
-			if area > 14000.0 {
+			if area > config.MinArea {
 				boundingBox := C.cvBoundingRect(unsafe.Pointer(contours), 0)
 				w := int(boundingBox.width / 2)
 				h := int(boundingBox.height / 2)
@@ -120,8 +119,8 @@ func monitor() {
 		monitorScene(&scene, detectedObjects)
 
 		// DEBUG - save what we have so far.
-		if len(scene.Interactions) == 1 {
-			for _, w := range scene.Interactions[0].Path {
+		for _, i := range scene.Interactions {
+			for _, w := range i.Path {
 				pt1 := C.cvPoint(C.int(w.XPixels), C.int(w.YPixels))
 				C.cvCircle(unsafe.Pointer(nextFrame), pt1, C.int(10), C.cvScalar(0.0, 46.0, 109.0, 255), C.int(2), C.int(8), C.int(0))
 			}

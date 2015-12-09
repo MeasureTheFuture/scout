@@ -1,0 +1,9 @@
+{
+	"MinArea":2.0,
+	"DilationIterations":2,
+	"ForegroundThresh":2,
+	"GaussianSmooth":2,
+	"MogHistoryLength":2,
+	"MogThreshold":2,
+	"MogDetectShadows":0
+}

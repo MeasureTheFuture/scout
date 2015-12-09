@@ -24,5 +24,12 @@ import (
 func main() {
 	log.Printf("INFO: Starting sensor.\n")
 
-	monitor()
+	configFile := "scout.json"
+	config, err := parseConfiguration(configFile)
+	if err != nil {
+		log.Printf("WARNING: Unable to open '%s', using defaults.", configFile)
+		log.Printf("WARNING: %s", err)
+	}
+
+	monitor(config)
 }

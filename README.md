@@ -33,6 +33,17 @@ This software powers measure the future 'scouts'. These are web cam based device
 	$ go build scout
 ```
 
+## TODO:
+* Clean up existing code:
+	* ~~Add configuration file.~~
+	* Command line option for overriding location of config file.
+	* Command line options to specify video file or live feed from webcam.
+* Cleanup up the OpenCV bindings, and bundle them with the other third party-dependencies.
+* Update compilation / installation instructions to suit.
+* Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).
+* Do some more testing on the Edison. I have been just developing locally on my laptop.
+* Start implementing the communication protocol with the mothership.
+
 ## License
 
 Copyright (C) 2015, Clinton Freeman
