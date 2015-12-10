@@ -28,9 +28,22 @@ This software powers measure the future 'scouts'. These are web cam based device
 ```
 	$ brew install opencv3
 ```
-3.
+3. Create Project structure, build CV Bindings. Download and build the scout:
 ```
-	$ go build scout
+	$ mkdir mtf
+	$ cd mtf
+	$ git clone https://github.com/MeasureTheFuture/CVBindings.git
+	$ cd CVBindings
+	$ cmake .
+	$ make
+	$ cp CVBindings.h /usr/local/opt/opencv3/include
+	$ cp libCVBindings.a /usr/local/opt/opencv3/lib
+	$ mkdir scout
+	$ cd scout
+	$ export GOPATH=`pwd`
+	$ go get github.com/onsi/ginkgo
+	$ go get github.com/onsi/gomega
+	$ go get github.com/MeasureTheFuture/scout
 ```
 
 ## TODO:

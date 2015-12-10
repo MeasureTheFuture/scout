@@ -19,10 +19,10 @@ package main
 
 // TODO: Shift the MOG2Bindings linkage to someplace else, after I have finished deborking them.
 
-// #cgo darwin CFLAGS: -I/usr/local/opt/opencv3/include -I/usr/local/opt/opencv3/include/opencv -I/Users/cfreeman/Projects/measure-the-future/code/MOG2Bindings
+// #cgo darwin CFLAGS: -I/usr/local/opt/opencv3/include -I/usr/local/opt/opencv3/include/opencv
 // #cgo linux CFLAGS: -I/usr/local/include -I/usr/local/include/opencv
 // #cgo CFLAGS: -Wno-error
-// #cgo darwin LDFLAGS: -L/usr/local/opt/opencv3/lib -L/Users/cfreeman/Projects/measure-the-future/code/MOG2Bindings
+// #cgo darwin LDFLAGS: -L/usr/local/opt/opencv3/lib
 // #cgo linux LDFLAGS: -L/usr/local/lib
 // #cgo darwin LDFLAGS: -lstdc++ -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lopencv_core -lopencv_features2d -lopencv_video -lopencv_hal -lCVBindings
 // #cgo linux LDFLAGS: -lm -lstdc++ -lz -ldl -lpthread -lippicv -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lIlmImf -llibpng -llibjasper -llibjpeg -llibwebp -llibtiff -lopencv_highgui -lopencv_core -lopencv_video -lopencv_hal -ltbb
