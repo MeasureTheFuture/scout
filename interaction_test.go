@@ -49,6 +49,7 @@ var _ = Describe("Interaction", func() {
 	Context("addInteraction", func() {
 		wpA := Waypoint{100, 100, 20, 20, 0.0}
 		wpAA := Waypoint{102, 100, 20, 20, 0.0}
+		wpAAT := Waypoint{102, 100, 20, 20, 0.10}
 		wpB := Waypoint{50, 50, 20, 20, 0.0}
 		wpBA := Waypoint{55, 53, 20, 20, 0.0}
 		wpC := Waypoint{150, 150, 20, 20, 0.0}
@@ -63,7 +64,6 @@ var _ = Describe("Interaction", func() {
 
 		It("should be able to add multiple interactions to an empty scene,", func() {
 			s := initScene()
-
 			addInteraction(&s, []Waypoint{wpA, wpB})
 
 			Ω(len(s.Interactions)).Should(Equal(2))
@@ -81,10 +81,13 @@ var _ = Describe("Interaction", func() {
 		It("should be able to add an interaction to a scene with stuff already going on", func() {
 			s := initScene()
 			addInteraction(&s, []Waypoint{wpA})
+
+			time.Sleep(100 * time.Millisecond)
 			addInteraction(&s, []Waypoint{wpAA, wpB})
 
 			Ω(len(s.Interactions)).Should(Equal(2))
-			Ω(s.Interactions[0].Path).Should(Equal([]Waypoint{wpA, wpAA}))
+			Ω(s.Interactions[0].Path[0].compare(wpA)).Should(BeTrue())
+			Ω(s.Interactions[0].Path[1].compare(wpAAT)).Should(BeTrue())
 			Ω(s.Interactions[1].Path).Should(Equal([]Waypoint{wpB}))
 		})
 
@@ -95,9 +98,14 @@ var _ = Describe("Interaction", func() {
 			addInteraction(&s, []Waypoint{wpAA, wpBA, wpC})
 
 			Ω(len(s.Interactions)).Should(Equal(3))
-			Ω(s.Interactions[0].Path).Should(Equal([]Waypoint{wpA, wpAA, wpAA}))
-			Ω(s.Interactions[1].Path).Should(Equal([]Waypoint{wpB, wpBA}))
-			Ω(s.Interactions[2].Path).Should(Equal([]Waypoint{wpC}))
+			Ω(s.Interactions[0].Path[0].compare(wpA)).Should(BeTrue())
+			Ω(s.Interactions[0].Path[1].compare(wpAA)).Should(BeTrue())
+			Ω(s.Interactions[0].Path[2].compare(wpAA)).Should(BeTrue())
+
+			Ω(s.Interactions[1].Path[0].compare(wpB)).Should(BeTrue())
+			Ω(s.Interactions[1].Path[1].compare(wpBA)).Should(BeTrue())
+
+			Ω(s.Interactions[2].Path[0].compare(wpC)).Should(BeTrue())
 		})
 
 		It("should be able to remove interactions when a person leaves the scene", func() {
@@ -107,7 +115,9 @@ var _ = Describe("Interaction", func() {
 
 			Ω(len(s.Interactions)).Should(Equal(1))
 			Ω(len(s.Interactions[0].Path)).Should(Equal(2))
-			Ω(s.Interactions[0].Path).Should(Equal([]Waypoint{wpA, wpAA}))
+
+			Ω(s.Interactions[0].Path[0].compare(wpA)).Should(BeTrue())
+			Ω(s.Interactions[0].Path[1].compare(wpAA)).Should(BeTrue())
 		})
 
 		It("should be able to remove multiple interactions when more than one person leaves the scene", func() {
@@ -116,7 +126,8 @@ var _ = Describe("Interaction", func() {
 			removeInteraction(&s, []Waypoint{wpBA})
 
 			Ω(len(s.Interactions)).Should(Equal(1))
-			Ω(s.Interactions[0].Path).Should(Equal([]Waypoint{wpB, wpBA}))
+			Ω(s.Interactions[0].Path[0].compare(wpB)).Should(BeTrue())
+			Ω(s.Interactions[0].Path[1].compare(wpBA)).Should(BeTrue())
 		})
 	})
 })

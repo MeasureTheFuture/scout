@@ -39,7 +39,7 @@ var _ = Describe("Configuration", func() {
 			Ω(c.ForegroundThresh).Should(Equal(128))
 			Ω(c.GaussianSmooth).Should(Equal(5))
 			Ω(c.MogHistoryLength).Should(Equal(500))
-			Ω(c.MogThreshold).Should(Equal(30))
+			Ω(c.MogThreshold).Should(Equal(30.0))
 			Ω(c.MogDetectShadows).Should(Equal(1))
 		})
 
@@ -52,7 +52,7 @@ var _ = Describe("Configuration", func() {
 			Ω(c.ForegroundThresh).Should(Equal(2))
 			Ω(c.GaussianSmooth).Should(Equal(2))
 			Ω(c.MogHistoryLength).Should(Equal(2))
-			Ω(c.MogThreshold).Should(Equal(2))
+			Ω(c.MogThreshold).Should(Equal(2.0))
 			Ω(c.MogDetectShadows).Should(Equal(0))
 		})
 	})

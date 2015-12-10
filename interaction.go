@@ -27,11 +27,11 @@ import (
 )
 
 type Waypoint struct {
-	XPixels          int // x-coordinate of waypoint centroid in pixels
-	YPixels          int // y-coordinate of waypoint centroid in pixels
-	HalfWidthPixels  int // Half the width of the waypoint in pixels
-	HalfHeightPixels int // Half the height of the waypoint in pixels
-	T                float32
+	XPixels          int     // x-coordinate of waypoint centroid in pixels
+	YPixels          int     // y-coordinate of waypoint centroid in pixels
+	HalfWidthPixels  int     // Half the width of the waypoint in pixels
+	HalfHeightPixels int     // Half the height of the waypoint in pixels
+	T                float32 // The number of seconds elapsed since the beginning of the interaction
 }
 
 // distanceSq calculates the distance squared between this and the
@@ -43,14 +43,26 @@ func (a Waypoint) distanceSq(b Waypoint) int {
 	return (dx * dx) + (dy * dy)
 }
 
+func (a Waypoint) compare(b Waypoint) bool {
+	return a.XPixels == b.XPixels && a.YPixels == b.YPixels && a.HalfHeightPixels == b.HalfHeightPixels && a.HalfWidthPixels == b.HalfWidthPixels && math.Abs(float64(a.T-b.T)) < 0.007
+}
+
 type Interaction struct {
 	Entered  time.Time  // The time the interaction started (rounded to nearest half hour)
+	started  time.Time  // The actual time the interaction started. Private. Not to be transmitted for privacy concerns
 	Duration float32    // The total duration of the interaction.
 	Path     []Waypoint // The pathway of the interaction through the scene.
 }
 
+func (i *Interaction) addWaypoint(w Waypoint) {
+	newW := w
+	newW.T = float32(time.Now().Sub(i.started).Seconds())
+
+	i.Path = append(i.Path, newW)
+}
+
 // lastWaypoint returns the last waypoint within the interaction.
-func (i Interaction) lastWaypoint() Waypoint {
+func (i *Interaction) lastWaypoint() Waypoint {
 	return i.Path[len(i.Path)-1]
 }
 
@@ -94,7 +106,7 @@ func addInteraction(s *Scene, detected []Waypoint) {
 	if len(s.Interactions) == 0 {
 		// Empty scene: just add a new interaction for each new waypoint.
 		for i := 0; i < len(detected); i++ {
-			s.Interactions = append(s.Interactions, Interaction{start, 0.0, []Waypoint{detected[i]}})
+			s.Interactions = append(s.Interactions, Interaction{start, time.Now(), 0.0, []Waypoint{detected[i]}})
 		}
 
 	} else {
@@ -125,10 +137,10 @@ func addInteraction(s *Scene, detected []Waypoint) {
 			if i == closestI {
 				// If this detected element is the closest to an interaction - update the interaction with the
 				// detected waypoint.
-				s.Interactions[distances[i][1]].Path = append(s.Interactions[distances[i][1]].Path, detected[i])
+				s.Interactions[distances[i][1]].addWaypoint(detected[i])
 			} else {
 				// Otherwise this must be a new interaction, create it and add it to the scene.
-				s.Interactions = append(s.Interactions, Interaction{start, 0.0, []Waypoint{detected[i]}})
+				s.Interactions = append(s.Interactions, Interaction{start, time.Now(), 0.0, []Waypoint{detected[i]}})
 			}
 
 			//log.Printf("\t closestI[" + strconv.Itoa(closestI) + "], closestD[" + strconv.Itoa(closestD) + "] = " + strconv.Itoa(dist))
@@ -147,7 +159,7 @@ func removeInteraction(s *Scene, detected []Waypoint) {
 	for i := len(s.Interactions) - 1; i >= 0; i-- {
 		if v, ok := matched[i]; ok {
 			//log.Printf("\t matched and updating: " + strconv.Itoa(i))
-			s.Interactions[i].Path = append(s.Interactions[i].Path, detected[v])
+			s.Interactions[i].addWaypoint(detected[v])
 		} else {
 			//log.Printf("\t not matched and removing: " + strconv.Itoa(i))
 			sendInteraction(s.Interactions[i])
