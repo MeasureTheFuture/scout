@@ -18,18 +18,24 @@
 package main
 
 import (
+	"flag"
 	"log"
 )
 
 func main() {
 	log.Printf("INFO: Starting sensor.\n")
+	var configFile string
+	var videoFile string
 
-	configFile := "scout.json"
+	flag.StringVar(&configFile, "configFile", "scout.json", "The path to the configuration file")
+	flag.StringVar(&videoFile, "videoFile", "", "The path to a video file to detect motion from instead of a webcam")
+	flag.Parse()
+
 	config, err := parseConfiguration(configFile)
 	if err != nil {
-		log.Printf("WARNING: Unable to open '%s', using defaults.", configFile)
-		log.Printf("WARNING: %s", err)
+		log.Printf("INFO: Unable to open '%s', using defaults.", configFile)
+		log.Printf("INFO: %s", err)
 	}
 
-	monitor(config)
+	monitor(config, videoFile)
 }

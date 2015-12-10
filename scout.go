@@ -37,22 +37,24 @@ import (
 	"unsafe"
 )
 
-func monitor(config Configuration) {
-	// Webcam source.
-	//camera := C.cvCaptureFromCAM(-1)
-
-	videoFile := C.CString("sample2.mov")
-	camera := C.cvCaptureFromFile(videoFile)
-	scene := initScene()
-
+func monitor(config Configuration, videoFile string) {
+	// Try starting monitor with a video file source first.
+	camera := C.cvCaptureFromFile(C.CString(videoFile))
 	if camera == nil {
-		log.Printf("WARNING: No camera detected. Shutting down sensor.\n")
-		return
+		// No valid video file found, fallback to webcam.
+		camera = C.cvCaptureFromCAM(-1)
+
+		if camera == nil {
+			// No valid webcam detected either. Shutdown monitoring.
+			log.Printf("WARNING: No camera detected. Shutting down sensor.\n")
+			return
+		}
+
+		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, 1280)
+		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, 720)
 	}
 
-	// Webcam source.
-	//C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, 1280)
-	//C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, 720)
+	scene := initScene()
 
 	// Build the calibration frame from the first frame from the camera.
 	calibrationFrame := C.cvQueryFrame(camera)
