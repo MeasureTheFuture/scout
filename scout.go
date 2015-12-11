@@ -17,15 +17,13 @@
 
 package main
 
-// TODO: Shift the MOG2Bindings linkage to someplace else, after I have finished deborking them.
-
 // #cgo darwin CFLAGS: -I/usr/local/opt/opencv3/include -I/usr/local/opt/opencv3/include/opencv
 // #cgo linux CFLAGS: -I/usr/local/include -I/usr/local/include/opencv
 // #cgo CFLAGS: -Wno-error
 // #cgo darwin LDFLAGS: -L/usr/local/opt/opencv3/lib
 // #cgo linux LDFLAGS: -L/usr/local/lib
 // #cgo darwin LDFLAGS: -lstdc++ -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lopencv_core -lopencv_features2d -lopencv_video -lopencv_hal -lCVBindings
-// #cgo linux LDFLAGS: -lm -lstdc++ -lz -ldl -lpthread -lippicv -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lIlmImf -llibpng -llibjasper -llibjpeg -llibwebp -llibtiff -lopencv_highgui -lopencv_core -lopencv_video -lopencv_hal -ltbb
+// #cgo linux LDFLAGS: -lm -lstdc++ -lz -ldl -lpthread -lippicv -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lIlmImf -llibpng -llibjasper -llibjpeg -llibwebp -llibtiff -lopencv_highgui -lCVBindings -lopencv_video -lopencv_core -lopencv_hal -ltbb
 // #include "cv.h"
 // #include "highgui.h"
 // #include "CVBindings.h"
@@ -46,7 +44,7 @@ func monitor(config Configuration, videoFile string) {
 
 		if camera == nil {
 			// No valid webcam detected either. Shutdown monitoring.
-			log.Printf("WARNING: No camera detected. Shutting down sensor.\n")
+			log.Printf("ERROR: Unable to open a video source. Shutting down scout.\n")
 			return
 		}
 
@@ -121,7 +119,7 @@ func monitor(config Configuration, videoFile string) {
 
 		monitorScene(&scene, detectedObjects)
 
-		// DEBUG - render what we have so far.
+		// DEBUG - render the interaction path we have detected so far.
 		for _, i := range scene.Interactions {
 			for _, w := range i.Path {
 				pt1 := C.cvPoint(C.int(w.XPixels), C.int(w.YPixels))

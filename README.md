@@ -56,8 +56,8 @@ This software powers measure the future 'scouts'. These are web cam based device
 	* Make sure the calibration frame is always the one first pushed into the foreground subtractor.
 	* Look at using hte calibration frame to 'refresh' the foreground subtractor.
 	* Remove debug code from monitor, or add an optional flag for including it.
-* Cleanup up the OpenCV bindings, and bundle them with the other third party-dependencies.
-* Update compilation / installation instructions to suit.
+* ~~Cleanup up the OpenCV bindings, and bundle them with the other third party-dependencies.~~
+* ~~Update compilation / installation instructions to suit.~~
 * Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).
 * Do some more testing on the Edison. I have been just developing locally on my laptop.
 * Start implementing the communication protocol with the mothership.

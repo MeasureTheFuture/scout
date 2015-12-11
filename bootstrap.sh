@@ -23,7 +23,7 @@ echo "PATH=$PATH:/usr/local/go/bin" >> /etc/profile
 
 # Install pre-compiled binaries of our third party dependencies.
 if [ ! -f opencv-3-edison.tgz ]; then
-	wget https://github.com/MeasureTheFuture/scout-dependencies/releases/download/0.1/opencv-3-edison.tgz
+	wget https://github.com/MeasureTheFuture/scout-dependencies/releases/download/v0.2-alpha/opencv-3-edison.tgz
 fi
 
 tar -C /usr/local -xzf opencv-3-edison.tgz
