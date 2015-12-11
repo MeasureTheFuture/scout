@@ -35,7 +35,7 @@ import (
 	"unsafe"
 )
 
-func monitor(config Configuration, videoFile string) {
+func monitor(config Configuration, videoFile string, debug bool) {
 	// Try starting monitor with a video file source first.
 	camera := C.cvCaptureFromFile(C.CString(videoFile))
 	if camera == nil {
@@ -43,7 +43,7 @@ func monitor(config Configuration, videoFile string) {
 		camera = C.cvCaptureFromCAM(-1)
 
 		if camera == nil {
-			// No valid webcam detected either. Shutdown monitoring.
+			// No valid webcam detected either. Shutdown the scout.
 			log.Printf("ERROR: Unable to open a video source. Shutting down scout.\n")
 			return
 		}
@@ -67,8 +67,8 @@ func monitor(config Configuration, videoFile string) {
 	C.initMOG2(C.int(config.MogHistoryLength), C.double(config.MogThreshold), C.int(config.MogDetectShadows))
 	C.applyMOG2(unsafe.Pointer(calibrationFrame), unsafe.Pointer(mask))
 
-	// DEBUG - frame counter for use with filenames.
-	i := 0
+	// Current frame counter.
+	frame := int64(0)
 
 	// Start monitoring from the camera.
 	for C.cvGrabFrame(camera) != 0 {
@@ -93,7 +93,6 @@ func monitor(config Configuration, videoFile string) {
 		// Track each of the detected contours.
 		for contours != nil {
 			area := float64(C.cvContourArea(unsafe.Pointer(contours), C.cvSlice(0, 0x3fffffff), 0))
-			//log.Printf("A: " + strconv.FormatFloat(float64(area), 'E', -1, 32))
 
 			// Only track large objects.
 			if area > config.MinArea {
@@ -105,11 +104,13 @@ func monitor(config Configuration, videoFile string) {
 
 				detectedObjects = append(detectedObjects, Waypoint{x, y, w, h, 0.0})
 
-				// Debug -- Render contours and bounding boxes.
-				pt1 := C.cvPoint(boundingBox.x, boundingBox.y)
-				pt2 := C.cvPoint(boundingBox.x+boundingBox.width, boundingBox.y+boundingBox.height)
-				C.cvDrawContours(unsafe.Pointer(nextFrame), contours, C.cvScalar(12.0, 212.0, 250.0, 255), C.cvScalar(0, 0, 0, 0), 2, 1, 8, offset)
-				C.cvRectangle(unsafe.Pointer(nextFrame), pt1, pt2, C.cvScalar(16.0, 8.0, 186.0, 255), C.int(5), C.int(8), C.int(0))
+				if debug {
+					// DEBUG -- Render contours and bounding boxes around detected objects.
+					pt1 := C.cvPoint(boundingBox.x, boundingBox.y)
+					pt2 := C.cvPoint(boundingBox.x+boundingBox.width, boundingBox.y+boundingBox.height)
+					C.cvDrawContours(unsafe.Pointer(nextFrame), contours, C.cvScalar(12.0, 212.0, 250.0, 255), C.cvScalar(0, 0, 0, 0), 2, 1, 8, offset)
+					C.cvRectangle(unsafe.Pointer(nextFrame), pt1, pt2, C.cvScalar(16.0, 8.0, 186.0, 255), C.int(5), C.int(8), C.int(0))
+				}
 			} else {
 				num--
 			}
@@ -119,18 +120,20 @@ func monitor(config Configuration, videoFile string) {
 
 		monitorScene(&scene, detectedObjects)
 
-		// DEBUG - render the interaction path we have detected so far.
-		for _, i := range scene.Interactions {
-			for _, w := range i.Path {
-				pt1 := C.cvPoint(C.int(w.XPixels), C.int(w.YPixels))
-				C.cvCircle(unsafe.Pointer(nextFrame), pt1, C.int(10), C.cvScalar(0.0, 46.0, 109.0, 255), C.int(2), C.int(8), C.int(0))
+		if debug {
+			// DEBUG - render current interaction path for detected objects.
+			for _, i := range scene.Interactions {
+				for _, w := range i.Path {
+					pt1 := C.cvPoint(C.int(w.XPixels), C.int(w.YPixels))
+					C.cvCircle(unsafe.Pointer(nextFrame), pt1, C.int(10), C.cvScalar(109.0, 46.0, 0.0, 255), C.int(2), C.int(8), C.int(0))
+				}
 			}
-		}
 
-		file = C.CString("f" + strconv.Itoa(i) + "-detected.png")
-		C.cvSaveImage(file, unsafe.Pointer(nextFrame), nil)
-		saveScene(string("f"+strconv.Itoa(i)+"-metadata.json"), &scene)
-		i++
+			file = C.CString("f" + strconv.FormatInt(frame, 10) + "-detected.png")
+			C.cvSaveImage(file, unsafe.Pointer(nextFrame), nil)
+			saveScene(string("f"+strconv.FormatInt(frame, 10)+"-metadata.json"), &scene)
+			frame++
+		}
 	}
 
 	C.cvReleaseImage(&mask)

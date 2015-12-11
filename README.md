@@ -54,8 +54,8 @@ This software powers measure the future 'scouts'. These are web cam based device
 	* ~~Update monitor to loop while frames are available from the camera source.~~
 	* ~~Make sure all the metadata fields are populated in the scene when tracking people (frame times).~~
 	* Make sure the calibration frame is always the one first pushed into the foreground subtractor.
-	* Look at using hte calibration frame to 'refresh' the foreground subtractor.
-	* Remove debug code from monitor, or add an optional flag for including it.
+	* Look at using the calibration frame to 'refresh' the foreground subtractor.
+	* ~~Remove debug code from monitor, or add an optional flag for including it.~~
 * ~~Cleanup up the OpenCV bindings, and bundle them with the other third party-dependencies.~~
 * ~~Update compilation / installation instructions to suit.~~
 * Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).

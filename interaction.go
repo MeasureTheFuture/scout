@@ -18,11 +18,9 @@
 package main
 
 import (
-	//"log"
 	"encoding/json"
 	"io/ioutil"
 	"math"
-	//"strconv"
 	"time"
 )
 
@@ -43,6 +41,7 @@ func (a Waypoint) distanceSq(b Waypoint) int {
 	return (dx * dx) + (dy * dy)
 }
 
+// compare returns true if two waypoints are the same, false otherwise.
 func (a Waypoint) compare(b Waypoint) bool {
 	return a.XPixels == b.XPixels && a.YPixels == b.YPixels && a.HalfHeightPixels == b.HalfHeightPixels && a.HalfWidthPixels == b.HalfWidthPixels && math.Abs(float64(a.T-b.T)) < 0.007
 }
@@ -54,6 +53,7 @@ type Interaction struct {
 	Path     []Waypoint // The pathway of the interaction through the scene.
 }
 
+// addWaypoint inserts a new waypoint to the end of the interaction.
 func (i *Interaction) addWaypoint(w Waypoint) {
 	newW := w
 	newW.T = float32(time.Now().Sub(i.started).Seconds())
@@ -64,6 +64,10 @@ func (i *Interaction) addWaypoint(w Waypoint) {
 // lastWaypoint returns the last waypoint within the interaction.
 func (i *Interaction) lastWaypoint() Waypoint {
 	return i.Path[len(i.Path)-1]
+}
+
+func sendInteraction(i Interaction) {
+	// TODO: Broadcast the interaction to the mothership.
 }
 
 type Scene struct {
@@ -120,9 +124,6 @@ func addInteraction(s *Scene, detected []Waypoint) {
 		// assert(len(distances) == len(detected))
 
 		for i := 0; i < len(distances); i++ {
-			//log.Printf("\t len(detected) = " + strconv.Itoa(len(detected)))
-			//log.Printf("\t len(distances[" + strconv.Itoa(i) + "]) = " + strconv.Itoa(len(distances[i])))
-
 			dist := math.MaxInt32
 			closestI := -1
 
@@ -142,8 +143,6 @@ func addInteraction(s *Scene, detected []Waypoint) {
 				// Otherwise this must be a new interaction, create it and add it to the scene.
 				s.Interactions = append(s.Interactions, Interaction{start, time.Now(), 0.0, []Waypoint{detected[i]}})
 			}
-
-			//log.Printf("\t closestI[" + strconv.Itoa(closestI) + "], closestD[" + strconv.Itoa(closestD) + "] = " + strconv.Itoa(dist))
 		}
 	}
 }
@@ -158,10 +157,8 @@ func removeInteraction(s *Scene, detected []Waypoint) {
 
 	for i := len(s.Interactions) - 1; i >= 0; i-- {
 		if v, ok := matched[i]; ok {
-			//log.Printf("\t matched and updating: " + strconv.Itoa(i))
 			s.Interactions[i].addWaypoint(detected[v])
 		} else {
-			//log.Printf("\t not matched and removing: " + strconv.Itoa(i))
 			sendInteraction(s.Interactions[i])
 			s.Interactions = append(s.Interactions[:i], s.Interactions[i+1:]...)
 		}
@@ -180,8 +177,4 @@ func saveScene(filename string, s *Scene) {
 	b, _ := json.Marshal(s)
 	ioutil.WriteFile(filename, b, 0611)
 
-}
-
-func sendInteraction(i Interaction) {
-	// TODO: Broadcast the interaction to the mothership.
 }

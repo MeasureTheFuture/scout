@@ -26,9 +26,11 @@ func main() {
 	log.Printf("INFO: Starting sensor.\n")
 	var configFile string
 	var videoFile string
+	var debug bool
 
 	flag.StringVar(&configFile, "configFile", "scout.json", "The path to the configuration file")
 	flag.StringVar(&videoFile, "videoFile", "", "The path to a video file to detect motion from instead of a webcam")
+	flag.BoolVar(&debug, "debug", false, "Should we run scout in debug mode, and render frames of detected materials")
 	flag.Parse()
 
 	config, err := parseConfiguration(configFile)
@@ -37,5 +39,5 @@ func main() {
 		log.Printf("INFO: %s", err)
 	}
 
-	monitor(config, videoFile)
+	monitor(config, videoFile, debug)
 }
