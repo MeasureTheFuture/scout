@@ -30,28 +30,58 @@ package main
 import "C"
 
 import (
+	"errors"
 	"log"
 	"strconv"
 	"unsafe"
 )
 
-func monitor(config Configuration, videoFile string, debug bool) {
-	// Try starting monitor with a video file source first.
-	camera := C.cvCaptureFromFile(C.CString(videoFile))
-	if camera == nil {
-		// No valid video file found, fallback to webcam.
-		camera = C.cvCaptureFromCAM(-1)
-
+func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
+	if videoFile != "" {
+		camera = C.cvCaptureFromFile(C.CString(videoFile))
 		if camera == nil {
-			// No valid webcam detected either. Shutdown the scout.
-			log.Printf("ERROR: Unable to open a video source. Shutting down scout.\n")
-			return
+			return camera, errors.New("Unable to open a video file. Shutting down scout.")
+		}
+
+		return camera, nil
+	} else {
+		camera = C.cvCaptureFromCAM(-1)
+		if camera == nil {
+			return camera, errors.New("Unable to open webcam. Shutting down scout.")
 		}
 
 		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, 1280)
 		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, 720)
+
+		return camera, nil
+	}
+}
+
+func calibrate(deltaC chan Command, videoFile string, config Configuration) {
+	camera, err := getVideoSource(videoFile)
+	if err != nil {
+		// No valid webcam detected either. Shutdown the scout.
+		log.Printf("ERROR: %s\n", err)
+		return
 	}
 
+	// Build the calibration frame from the first frame from the camera.
+	calibrationFrame := C.cvQueryFrame(camera)
+	file := C.CString("calibrationFrame.png")
+	C.cvSaveImage(file, unsafe.Pointer(calibrationFrame), nil)
+	C.free(unsafe.Pointer(file))
+	C.cvReleaseCapture(&camera)
+
+	// TODO: Broadcast calibration results up to the mothership.
+}
+
+func monitor(deltaC chan Command, videoFile string, debug bool, config Configuration) {
+	camera, err := getVideoSource(videoFile)
+	if err != nil {
+		// No valid webcam detected either. Shutdown the scout.
+		log.Printf("ERROR: %s\n", err)
+		return
+	}
 	scene := initScene()
 
 	// Build the calibration frame from the first frame from the camera.
