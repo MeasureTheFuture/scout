@@ -32,13 +32,16 @@ import "C"
 import (
 	"errors"
 	"log"
+	"runtime"
 	"strconv"
 	"unsafe"
 )
 
 func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 	if videoFile != "" {
-		camera = C.cvCaptureFromFile(C.CString(videoFile))
+		file := C.CString(videoFile)
+		camera = C.cvCaptureFromFile(file)
+		C.free(unsafe.Pointer(file))
 		if camera == nil {
 			return camera, errors.New("Unable to open a video file. Shutting down scout.")
 		}
@@ -50,6 +53,7 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 			return camera, errors.New("Unable to open webcam. Shutting down scout.")
 		}
 
+		// Make sure the webcam is set to 720p.
 		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, 1280)
 		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, 720)
 
@@ -57,7 +61,31 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 	}
 }
 
-func calibrate(deltaC chan Command, videoFile string, config Configuration) {
+func monitor(deltaC chan Command, videoFile string, debug bool, config Configuration) {
+	runtime.LockOSThread() // All OpenCV operations must run on the OS thread to access the webcam.
+
+	for {
+		c := <-deltaC
+
+		switch {
+		case c == CALIBRATE:
+			log.Printf("INFO: Calibrating scout.")
+			calibrate(videoFile, config)
+
+		case c == START_MEASURE:
+			log.Printf("INFO: Starting measure")
+			measure(deltaC, videoFile, debug, config)
+
+		case c == STOP_MEASURE:
+			log.Printf("INFO: Stopping measure")
+			// Nothing to do at the moment.
+		}
+	}
+
+	runtime.UnlockOSThread()
+}
+
+func calibrate(videoFile string, config Configuration) {
 	camera, err := getVideoSource(videoFile)
 	if err != nil {
 		// No valid webcam detected either. Shutdown the scout.
@@ -65,29 +93,28 @@ func calibrate(deltaC chan Command, videoFile string, config Configuration) {
 		return
 	}
 
-	// Build the calibration frame from the first frame from the camera.
+	// Build the calibration image from the first frame that comes off the camera.
 	calibrationFrame := C.cvQueryFrame(camera)
 	file := C.CString("calibrationFrame.png")
 	C.cvSaveImage(file, unsafe.Pointer(calibrationFrame), nil)
 	C.free(unsafe.Pointer(file))
 	C.cvReleaseCapture(&camera)
 
-	// TODO: Broadcast calibration results up to the mothership.
+	// TODO: Broadcast calibration results to the mothership.
 }
 
-func monitor(deltaC chan Command, videoFile string, debug bool, config Configuration) {
+func measure(deltaC chan Command, videoFile string, debug bool, config Configuration) {
 	camera, err := getVideoSource(videoFile)
 	if err != nil {
-		// No valid webcam detected either. Shutdown the scout.
+		// No valid video source. Abort measuring.
 		log.Printf("ERROR: %s\n", err)
 		return
 	}
 	scene := initScene()
 
-	// Build the calibration frame from the first frame from the camera.
-	calibrationFrame := C.cvQueryFrame(camera)
+	// Build the calibration frame from disk.
 	file := C.CString("calibrationFrame.png")
-	C.cvSaveImage(file, unsafe.Pointer(calibrationFrame), nil)
+	calibrationFrame := C.cvLoadImage(file, C.CV_LOAD_IMAGE_COLOR)
 	C.free(unsafe.Pointer(file))
 
 	// Create a frame to hold the foreground mask results.
@@ -99,11 +126,25 @@ func monitor(deltaC chan Command, videoFile string, debug bool, config Configura
 
 	// Current frame counter.
 	frame := int64(0)
+	measuring := true
 
 	// Start monitoring from the camera.
-	for C.cvGrabFrame(camera) != 0 {
+	for measuring && C.cvGrabFrame(camera) != 0 {
+		// See if there are any new commands on the deltaC channel.
+		select {
+		case c := <-deltaC:
+			switch {
+			case c == STOP_MEASURE:
+				log.Printf("INFO: Stopping measure")
+				measuring = false
+			}
+
+		default:
+			// Procceed with measuring.
+		}
+
 		// Subtract the calibration frame from the current frame.
-		nextFrame := C.cvQueryFrame(camera)
+		nextFrame := C.cvRetrieveFrame(camera, 0)
 		C.applyMOG2(unsafe.Pointer(nextFrame), unsafe.Pointer(mask))
 
 		// Filter the foreground mask to clean up any noise or holes (morphological-closing).
@@ -151,7 +192,7 @@ func monitor(deltaC chan Command, videoFile string, debug bool, config Configura
 		monitorScene(&scene, detectedObjects)
 
 		if debug {
-			// DEBUG - render current interaction path for detected objects.
+			// DEBUG -- render current interaction path for detected objects.
 			for _, i := range scene.Interactions {
 				for _, w := range i.Path {
 					pt1 := C.cvPoint(C.int(w.XPixels), C.int(w.YPixels))
@@ -161,6 +202,7 @@ func monitor(deltaC chan Command, videoFile string, debug bool, config Configura
 
 			file = C.CString("f" + strconv.FormatInt(frame, 10) + "-detected.png")
 			C.cvSaveImage(file, unsafe.Pointer(nextFrame), nil)
+			C.free(unsafe.Pointer(file))
 			saveScene(string("f"+strconv.FormatInt(frame, 10)+"-metadata.json"), &scene)
 			frame++
 		}
@@ -168,4 +210,5 @@ func monitor(deltaC chan Command, videoFile string, debug bool, config Configura
 
 	C.cvReleaseImage(&mask)
 	C.cvReleaseImage(&calibrationFrame)
+	C.cvReleaseCapture(&camera)
 }

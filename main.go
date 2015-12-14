@@ -22,6 +22,8 @@ import (
 	"log"
 )
 
+var mainfunc = make(chan func())
+
 func main() {
 	log.Printf("INFO: Starting sensor.\n")
 	var configFile string
@@ -41,7 +43,6 @@ func main() {
 
 	deltaC := make(chan Command)
 
-	//go monitor(deltaC, videoFile, debug, config)
-	//controller(deltaC, config)
-	calibrate(deltaC, videoFile, config)
+	go controller(deltaC, config)
+	monitor(deltaC, videoFile, debug, config)
 }
