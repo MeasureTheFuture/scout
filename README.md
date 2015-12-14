@@ -46,6 +46,21 @@ This software powers measure the future 'scouts'. These are web cam based device
 	$ go get github.com/MeasureTheFuture/scout
 ```
 
+## API:
+
+* To calibrate the scout (takes a new reference image):
+	GET http://sco.ut.ip/calibrate
+	returns: 200 OK on success.
+
+* To start measuring:
+	GET http://sco.ut.ip/measure/start
+	returns: 200 OK on success.
+
+* To stop measuring:
+	GET http://sco.ut.ip/measure/stop
+	returns: 200 OK on success.
+
+
 ## TODO:
 * Clean up existing code:
 	* ~~Add configuration file.~~
