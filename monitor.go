@@ -32,6 +32,7 @@ import "C"
 import (
 	"errors"
 	"log"
+	"os"
 	"runtime"
 	"strconv"
 	"unsafe"
@@ -110,15 +111,27 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 		log.Printf("ERROR: %s\n", err)
 		return
 	}
+	defer C.cvReleaseCapture(&camera)
+
 	scene := initScene()
 
 	// Build the calibration frame from disk.
-	file := C.CString("calibrationFrame.png")
-	calibrationFrame := C.cvLoadImage(file, C.CV_LOAD_IMAGE_COLOR)
-	C.free(unsafe.Pointer(file))
+	var calibrationFrame *C.IplImage
+	if _, err := os.Stat("calibrationFrame.png"); err == nil {
+		file := C.CString("calibrationFrame.png")
+
+		calibrationFrame = C.cvLoadImage(file, C.CV_LOAD_IMAGE_COLOR)
+		defer C.cvReleaseImage(&calibrationFrame)
+
+		C.free(unsafe.Pointer(file))
+	} else {
+		log.Printf("ERROR: Unable to measure, missing calibration frame")
+		return
+	}
 
 	// Create a frame to hold the foreground mask results.
 	mask := C.cvCreateImage(C.cvSize(calibrationFrame.width, calibrationFrame.height), C.IPL_DEPTH_8U, 1)
+	defer C.cvReleaseImage(&mask)
 
 	// Push the initial calibration frame into the MOG2 image subtractor.
 	C.initMOG2(C.int(config.MogHistoryLength), C.double(config.MogThreshold), C.int(config.MogDetectShadows))
@@ -200,15 +213,11 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 				}
 			}
 
-			file = C.CString("f" + strconv.FormatInt(frame, 10) + "-detected.png")
+			file := C.CString("f" + strconv.FormatInt(frame, 10) + "-detected.png")
 			C.cvSaveImage(file, unsafe.Pointer(nextFrame), nil)
 			C.free(unsafe.Pointer(file))
 			saveScene(string("f"+strconv.FormatInt(frame, 10)+"-metadata.json"), &scene)
 			frame++
 		}
 	}
-
-	C.cvReleaseImage(&mask)
-	C.cvReleaseImage(&calibrationFrame)
-	C.cvReleaseCapture(&camera)
 }
