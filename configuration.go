@@ -19,6 +19,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 )
 
@@ -32,16 +33,38 @@ type Configuration struct {
 	MogThreshold       float64 // Threshold to use with the MOG2 subtractor.
 	MogDetectShadows   int     // 1 if you want the MOG2 subtractor to detect shadows, 0 otherwise.
 
+	// Communication parameters.
+	ScoutAddress      string // The listening address for the scout.
+	MothershipAddress string // The IP address of the mothership.
+	UUID              string // Unique identifier for the scout.
+}
+
+func saveConfiguration(configFile string, c Configuration) {
+	// Save the default configuration file to disk for use later.
+	file, err := os.Create(configFile)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(&c)
+	if err != nil {
+		log.Printf("ERROR: Unable to encode configuration file")
+	}
+	log.Printf("INFO: Saved configuration to disk")
 }
 
 func parseConfiguration(configFile string) (c Configuration, err error) {
-	c = Configuration{14000.0, 10, 128, 5, 500, 30, 1}
+	u := NewUUID()
+	c = Configuration{14000.0, 10, 128, 5, 500, 30, 1, ":8080", "127.0.0.1:8081", u.String()}
 
 	// Open the configuration file.
 	file, err := os.Open(configFile)
 	if err != nil {
 		return c, err
 	}
+	defer file.Close()
 
 	// Parse JSON in the configuration file.
 	decoder := json.NewDecoder(file)

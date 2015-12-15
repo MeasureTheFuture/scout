@@ -5,5 +5,7 @@
 	"GaussianSmooth":2,
 	"MogHistoryLength":2,
 	"MogThreshold":2,
-	"MogDetectShadows":0
+	"MogDetectShadows":0,
+	"ScoutAddress":":9090",
+	"MothershipAddress":"127.0.0.1:9091"
 }

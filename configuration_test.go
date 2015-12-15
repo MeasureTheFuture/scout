@@ -41,6 +41,9 @@ var _ = Describe("Configuration", func() {
 			Ω(c.MogHistoryLength).Should(Equal(500))
 			Ω(c.MogThreshold).Should(Equal(30.0))
 			Ω(c.MogDetectShadows).Should(Equal(1))
+
+			Ω(c.ScoutAddress).Should(Equal(":8080"))
+			Ω(c.MothershipAddress).Should(Equal("127.0.0.1:8081"))
 		})
 
 		It("should be able to parse a valid config file", func() {
@@ -54,6 +57,22 @@ var _ = Describe("Configuration", func() {
 			Ω(c.MogHistoryLength).Should(Equal(2))
 			Ω(c.MogThreshold).Should(Equal(2.0))
 			Ω(c.MogDetectShadows).Should(Equal(0))
+
+			Ω(c.ScoutAddress).Should(Equal(":9090"))
+			Ω(c.MothershipAddress).Should(Equal("127.0.0.1:9091"))
+		})
+	})
+
+	Context("Saving", func() {
+		It("should be able to save a config file", func() {
+			c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091"}
+			saveConfiguration("testdata/foo.json", c)
+
+			a, err := parseConfiguration("testdata/test-config.json")
+			b, err := parseConfiguration("testdata/foo.json")
+
+			Ω(err).Should(BeNil())
+			Ω(a).Should(Equal(b))
 		})
 	})
 })

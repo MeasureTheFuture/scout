@@ -37,8 +37,11 @@ func main() {
 
 	config, err := parseConfiguration(configFile)
 	if err != nil {
-		log.Printf("INFO: Unable to open '%s', using defaults.", configFile)
 		log.Printf("INFO: %s", err)
+		log.Printf("INFO: Unable to open '%s', creating one with default values.", configFile)
+
+		// Save the default config file to disk.
+		saveConfiguration(configFile, config)
 	}
 
 	deltaC := make(chan Command)
