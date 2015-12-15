@@ -96,12 +96,13 @@ func calibrate(videoFile string, config Configuration) {
 
 	// Build the calibration image from the first frame that comes off the camera.
 	calibrationFrame := C.cvQueryFrame(camera)
-	file := C.CString("calibrationFrame.png")
+	file := C.CString("calibrationFrame.jpg")
 	C.cvSaveImage(file, unsafe.Pointer(calibrationFrame), nil)
 	C.free(unsafe.Pointer(file))
 	C.cvReleaseCapture(&camera)
 
-	// TODO: Broadcast calibration results to the mothership.
+	// Broadcast calibration results to the mothership.
+	post("calibrationFrame.jpg", config.MothershipAddress+"/scout/"+config.UUID+"/calibrated")
 }
 
 func measure(deltaC chan Command, videoFile string, debug bool, config Configuration) {

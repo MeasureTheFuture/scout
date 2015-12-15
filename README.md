@@ -53,16 +53,26 @@ This software powers measure the future 'scouts'. These are web cam based device
 	GET http://sco.ut.ip/calibrate
 	returns: 200 OK on success.
 ```
+
+* Once calibrated, the scout will make the following request to the mothership:
+```
+	POST http://moth.er.sh.ip/scout/<UUID>/calibrated
+	This is a MIME multipart message with an attached file (file:calibrationFrame.jpg)
+```
+
 * To start measuring:
 ```
 	GET http://sco.ut.ip/measure/start
 	returns: 200 OK on success.
 ```
+
 * To stop measuring:
 ```
 	GET http://sco.ut.ip/measure/stop
 	returns: 200 OK on success.
 ```
+
+
 
 ## TODO:
 * Clean up existing code:
@@ -79,6 +89,12 @@ This software powers measure the future 'scouts'. These are web cam based device
 * Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).
 * Do some more testing on the Edison. I have been just developing locally on my laptop.
 * Start implementing the communication protocol with the mothership.
+	* ~~Need to store the mothership ip address/endpoint in the configuration.~~
+	* Need to write tests for inbound API.
+	* Expand calibrate GET request to accept parameters (that can be adjusted on the scout).
+	* ~~Need to implement calibrate response -> transmit calibration frame to the mothership.~~
+	* Need to implement broadcasting of interactions to mothership.
+* ~~Generate UUID on initial startup, store as part of configuration.~~
 
 ## License
 
