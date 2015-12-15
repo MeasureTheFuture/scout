@@ -96,13 +96,20 @@ func calibrate(videoFile string, config Configuration) {
 
 	// Build the calibration image from the first frame that comes off the camera.
 	calibrationFrame := C.cvQueryFrame(camera)
-	file := C.CString("calibrationFrame.jpg")
+	fileName := "calibrationFrame.jpg"
+	file := C.CString(fileName)
 	C.cvSaveImage(file, unsafe.Pointer(calibrationFrame), nil)
 	C.free(unsafe.Pointer(file))
 	C.cvReleaseCapture(&camera)
 
 	// Broadcast calibration results to the mothership.
-	post("calibrationFrame.jpg", config.MothershipAddress+"/scout/"+config.UUID+"/calibrated")
+	f, err := os.Open(fileName)
+	if err != nil {
+		log.Printf("ERROR: Unable to open calibration frame to broadcast")
+		return
+	}
+	defer f.Close()
+	post(fileName, config.MothershipAddress+"/scout/"+config.UUID+"/calibrated", f)
 }
 
 func measure(deltaC chan Command, videoFile string, debug bool, config Configuration) {
@@ -203,7 +210,7 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 			contours = contours.h_next
 		}
 
-		monitorScene(&scene, detectedObjects)
+		scene.update(detectedObjects, config)
 
 		if debug {
 			// DEBUG -- render current interaction path for detected objects.
@@ -217,7 +224,7 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 			file := C.CString("f" + strconv.FormatInt(frame, 10) + "-detected.png")
 			C.cvSaveImage(file, unsafe.Pointer(nextFrame), nil)
 			C.free(unsafe.Pointer(file))
-			saveScene(string("f"+strconv.FormatInt(frame, 10)+"-metadata.json"), &scene)
+			scene.save(string("f" + strconv.FormatInt(frame, 10) + "-metadata.json"))
 			frame++
 		}
 	}

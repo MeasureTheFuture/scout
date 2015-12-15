@@ -23,7 +23,6 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
-	"os"
 )
 
 type Command int
@@ -50,14 +49,7 @@ func controller(deltaC chan Command, config Configuration) {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func post(fileName string, url string) {
-	f, err := os.Open(fileName)
-	if err != nil {
-		log.Printf("ERROR: Unable to open calibration frame to broadcast")
-		return
-	}
-	defer f.Close()
-
+func post(fileName string, url string, src io.Reader) {
 	body := bytes.Buffer{}
 	w := multipart.NewWriter(&body)
 	defer w.Close()
@@ -67,7 +59,7 @@ func post(fileName string, url string) {
 		log.Printf("ERROR: Unable to create form element for broadcast")
 	}
 
-	_, err = io.Copy(part, f)
+	_, err = io.Copy(part, src)
 	if err != nil {
 		log.Printf("ERROR: unable to copy frame into multipart message")
 	}

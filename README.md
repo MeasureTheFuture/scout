@@ -66,6 +66,12 @@ This software powers measure the future 'scouts'. These are web cam based device
 	returns: 200 OK on success.
 ```
 
+* During the measurement phase, the scout will make the following requests to the mothership:
+```
+	POST http://moth.er.sh.ip/scout/<UUID>/interaction
+	This is a MIME multipart message with an attached file (file:interaction.json)
+```
+
 * To stop measuring:
 ```
 	GET http://sco.ut.ip/measure/stop
@@ -93,7 +99,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 	* Need to write tests for inbound API.
 	* Expand calibrate GET request to accept parameters (that can be adjusted on the scout).
 	* ~~Need to implement calibrate response -> transmit calibration frame to the mothership.~~
-	* Need to implement broadcasting of interactions to mothership.
+	* ~~Need to implement broadcasting of interactions to mothership.~~
 * ~~Generate UUID on initial startup, store as part of configuration.~~
 
 ## License

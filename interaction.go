@@ -18,8 +18,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"math"
 	"time"
 )
@@ -66,8 +68,18 @@ func (i *Interaction) lastWaypoint() Waypoint {
 	return i.Path[len(i.Path)-1]
 }
 
-func sendInteraction(i Interaction) {
+func (i *Interaction) post(config Configuration) {
 	// TODO: Broadcast the interaction to the mothership.
+	body := bytes.Buffer{}
+	encoder := json.NewEncoder(&body)
+	err := encoder.Encode(i)
+	if err != nil {
+		log.Printf("ERROR: Unable to encode configuration file")
+	}
+	log.Printf("INFO: Saved configuration to disk")
+
+	post("interaction.json", config.MothershipAddress+"/scout/"+config.UUID+"/interaction", &body)
+
 }
 
 type Scene struct {
@@ -75,11 +87,11 @@ type Scene struct {
 }
 
 // initScene creates an empty scene that can be used for monitoring interactions.
-func initScene() Scene {
-	return Scene{}
+func initScene() *Scene {
+	return &Scene{}
 }
 
-func buildDistanceMap(s *Scene, detected []Waypoint) map[int][]int {
+func (s *Scene) buildDistanceMap(detected []Waypoint) map[int][]int {
 	var distances map[int][]int = make(map[int][]int)
 
 	// For each of the detected waypoints, work out the
@@ -103,7 +115,7 @@ func buildDistanceMap(s *Scene, detected []Waypoint) map[int][]int {
 }
 
 // addInteraction
-func addInteraction(s *Scene, detected []Waypoint) {
+func (s *Scene) addInteraction(detected []Waypoint) {
 	// The start time to use for the new interaction -- truncated to the nearest 30 minutes.
 	start := time.Now().Truncate(30 * time.Minute)
 
@@ -120,7 +132,7 @@ func addInteraction(s *Scene, detected []Waypoint) {
 		//   for interactions that have more than one close detected waypoints
 		//		create a new interaction from the furthest detected waypoint
 		// 		the nearest waypoint is used to update the interaction.
-		distances := buildDistanceMap(s, detected)
+		distances := s.buildDistanceMap(detected)
 		// assert(len(distances) == len(detected))
 
 		for i := 0; i < len(distances); i++ {
@@ -147,8 +159,8 @@ func addInteraction(s *Scene, detected []Waypoint) {
 	}
 }
 
-func removeInteraction(s *Scene, detected []Waypoint) {
-	distances := buildDistanceMap(s, detected)
+func (s *Scene) removeInteraction(detected []Waypoint, config Configuration) {
+	distances := s.buildDistanceMap(detected)
 	matched := map[int]int{}
 
 	for i := 0; i < len(distances); i++ {
@@ -159,22 +171,21 @@ func removeInteraction(s *Scene, detected []Waypoint) {
 		if v, ok := matched[i]; ok {
 			s.Interactions[i].addWaypoint(detected[v])
 		} else {
-			sendInteraction(s.Interactions[i])
+			s.Interactions[i].post(config)
 			s.Interactions = append(s.Interactions[:i], s.Interactions[i+1:]...)
 		}
 	}
 }
 
-func monitorScene(s *Scene, detected []Waypoint) {
+func (s *Scene) update(detected []Waypoint, config Configuration) {
 	if len(detected) >= len(s.Interactions) {
-		addInteraction(s, detected)
+		s.addInteraction(detected)
 	} else {
-		removeInteraction(s, detected)
+		s.removeInteraction(detected, config)
 	}
 }
 
-func saveScene(filename string, s *Scene) {
+func (s *Scene) save(filename string) {
 	b, _ := json.Marshal(s)
 	ioutil.WriteFile(filename, b, 0611)
-
 }
