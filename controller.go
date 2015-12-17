@@ -23,6 +23,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 )
 
 type Command int
@@ -33,8 +34,50 @@ const (
 	STOP_MEASURE
 )
 
-func controller(deltaC chan Command, config Configuration) {
+func controller(deltaC chan Command, deltaCFG chan Configuration, configFile string, config Configuration) {
 	http.HandleFunc("/calibrate", func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+
+		newConfig := config
+
+		f, err := strconv.ParseFloat(q.Get("MinArea"), 64)
+		if err == nil {
+			newConfig.MinArea = f
+		}
+
+		i, err := strconv.ParseInt(q.Get("DilationIterations"), 10, 64)
+		if err == nil {
+			newConfig.DilationIterations = int(i)
+		}
+
+		i, err = strconv.ParseInt(q.Get("ForegroundThresh"), 10, 64)
+		if err == nil {
+			newConfig.ForegroundThresh = int(i)
+		}
+
+		i, err = strconv.ParseInt(q.Get("GaussianSmooth"), 10, 64)
+		if err == nil {
+			newConfig.GaussianSmooth = int(i)
+		}
+
+		i, err = strconv.ParseInt(q.Get("MogHistoryLength"), 10, 64)
+		if err == nil {
+			newConfig.MogHistoryLength = int(i)
+		}
+
+		f, err = strconv.ParseFloat(q.Get("MogThreshold"), 64)
+		if err == nil {
+			newConfig.MogThreshold = f
+		}
+
+		i, err = strconv.ParseInt(q.Get("MogDetectShadows"), 10, 64)
+		if err == nil {
+			newConfig.MogDetectShadows = int(i)
+		}
+
+		saveConfiguration(configFile, newConfig)
+
+		deltaCFG <- newConfig
 		deltaC <- CALIBRATE
 	})
 

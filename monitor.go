@@ -62,11 +62,19 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 	}
 }
 
-func monitor(deltaC chan Command, videoFile string, debug bool, config Configuration) {
+func monitor(deltaC chan Command, deltaCFG chan Configuration,
+	videoFile string, debug bool, config Configuration) {
+
 	runtime.LockOSThread() // All OpenCV operations must run on the OS thread to access the webcam.
 
 	for {
 		c := <-deltaC
+
+		// See if the configuration has been changed by calibration
+		select {
+		case config = <-deltaCFG:
+		default:
+		}
 
 		switch {
 		case c == CALIBRATE:
@@ -125,8 +133,8 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 
 	// Build the calibration frame from disk.
 	var calibrationFrame *C.IplImage
-	if _, err := os.Stat("calibrationFrame.png"); err == nil {
-		file := C.CString("calibrationFrame.png")
+	if _, err := os.Stat("calibrationFrame.jpg"); err == nil {
+		file := C.CString("calibrationFrame.jpg")
 
 		calibrationFrame = C.cvLoadImage(file, C.CV_LOAD_IMAGE_COLOR)
 		defer C.cvReleaseImage(&calibrationFrame)

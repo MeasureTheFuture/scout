@@ -52,6 +52,21 @@ This software powers measure the future 'scouts'. These are web cam based device
 ```
 	GET http://sco.ut.ip/calibrate
 	returns: 200 OK on success.
+
+	Calibrate accepts parameters for tweaking OpenCV settings:
+
+	MinArea            float64 // The minimum area enclosed by a contour to be counted as an interaction.
+	DilationIterations int     // The number of iterations to perform while dilating the foreground mask.
+	ForegroundThresh   int     // A value between 0 and 255 to use when thresholding the foreground mask.
+	GaussianSmooth     int     // The size of the filter to use when gaussian smoothing.
+	MogHistoryLength   int     // The length of history to use for the MOG2 subtractor.
+	MogThreshold       float64 // Threshold to use with the MOG2 subtractor.
+	MogDetectShadows   int     // 1 if you want the MOG2 subtractor to detect shadows, 0 otherwise.
+
+	For example:
+	GET http://sco.ut.ip/calibrate?MinArea=1300&MogDetectShadows=1
+
+	Sets the minimum detectable area of a 'person' to be 1300 pixels and enables shadow detection.
 ```
 
 * Once calibrated, the scout will make the following request to the mothership:
@@ -89,16 +104,26 @@ This software powers measure the future 'scouts'. These are web cam based device
 	* ~~Make sure all the metadata fields are populated in the scene when tracking people (frame times).~~
 	* ~~Make sure the calibration frame is always the one first pushed into the foreground subtractor.~~
 	* Look at using the calibration frame to 'refresh' the foreground subtractor.
+		* Calibration frame of foreground subtractor could also be periodically updated when we have no
+		* people detected in the frame (to compensate for subtle lighting changes).
 	* ~~Remove debug code from monitor, or add an optional flag for including it.~~
 * ~~Cleanup up the OpenCV bindings, and bundle them with the other third party-dependencies.~~
 * ~~Update compilation / installation instructions to suit.~~
 * Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).
 * Do some more testing on the Edison. I have been just developing locally on my laptop.
+	* Setup a test with mothership on laptop, and latest code running on Edison.
+	* Long running tests / memory leaks and any other hardware issues.
+	* Multiple people testing.
 * Start implementing the communication protocol with the mothership.
 	* ~~Need to store the mothership ip address/endpoint in the configuration.~~
 	* Need to write tests for inbound API.
-	* Expand calibrate GET request to accept parameters (that can be adjusted on the scout).
+	* ~~Expand calibrate GET request to accept parameters (that can be adjusted on the scout).~~
 	* ~~Need to implement calibrate response -> transmit calibration frame to the mothership.~~
+	* Go over protocol document and double check that I'm sending everything that needs to be transmitted.
+		* Need to send version identifiers with all communication to the motherhsip.
+		* Need to include UUID with interactions transmitted to mothership.
+		* Health heart beat, is it going ahead?
+	* Look into some of the pathway optimisation stuff (to reduce data size of transmitted interactions).
 	* ~~Need to implement broadcasting of interactions to mothership.~~
 * ~~Generate UUID on initial startup, store as part of configuration.~~
 

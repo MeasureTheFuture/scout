@@ -25,7 +25,7 @@ import (
 var mainfunc = make(chan func())
 
 func main() {
-	log.Printf("INFO: Starting sensor.\n")
+	log.Printf("INFO: Starting scout.\n")
 	var configFile string
 	var videoFile string
 	var debug bool
@@ -45,7 +45,8 @@ func main() {
 	}
 
 	deltaC := make(chan Command)
+	deltaCFG := make(chan Configuration, 1)
 
-	go controller(deltaC, config)
-	monitor(deltaC, videoFile, debug, config)
+	go controller(deltaC, deltaCFG, configFile, config)
+	monitor(deltaC, deltaCFG, videoFile, debug, config)
 }

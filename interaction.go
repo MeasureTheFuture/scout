@@ -69,17 +69,14 @@ func (i *Interaction) lastWaypoint() Waypoint {
 }
 
 func (i *Interaction) post(config Configuration) {
-	// TODO: Broadcast the interaction to the mothership.
 	body := bytes.Buffer{}
 	encoder := json.NewEncoder(&body)
 	err := encoder.Encode(i)
 	if err != nil {
-		log.Printf("ERROR: Unable to encode configuration file")
+		log.Printf("ERROR: Unable to encode configuration for transport to mothership")
 	}
-	log.Printf("INFO: Saved configuration to disk")
 
 	post("interaction.json", config.MothershipAddress+"/scout/"+config.UUID+"/interaction", &body)
-
 }
 
 type Scene struct {
