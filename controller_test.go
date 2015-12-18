@@ -18,6 +18,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -49,7 +51,7 @@ func TestController(t *testing.T) {
 
 var _ = Describe("Controller", func() {
 	Context("Inbound commands", func() {
-		It("be able to start measuring", func() {
+		It("should be able to start measuring", func() {
 			dC, _, _, _, s := createTestServer()
 
 			req, err := http.NewRequest("GET", fmt.Sprintf("%s/measure/start", s.URL), nil)
@@ -63,7 +65,7 @@ var _ = Describe("Controller", func() {
 			s.Close()
 		})
 
-		It("be able to stop measuring", func() {
+		It("should be able to stop measuring", func() {
 			dC, _, _, _, s := createTestServer()
 
 			req, err := http.NewRequest("GET", fmt.Sprintf("%s/measure/stop", s.URL), nil)
@@ -77,7 +79,7 @@ var _ = Describe("Controller", func() {
 			s.Close()
 		})
 
-		It("be able to calibrate", func() {
+		It("should be able to calibrate", func() {
 			dC, dCFG, cFile, _, s := createTestServer()
 
 			req, err := http.NewRequest("GET", fmt.Sprintf("%s/calibrate?MinArea=2.0&DilationIterations=2", s.URL), nil)
@@ -97,6 +99,39 @@ var _ = Describe("Controller", func() {
 
 			Ω(newCFG.MinArea).Should(BeNumerically("==", 2))
 			Ω(newCFG.DilationIterations).Should(Equal(2))
+
+			s.Close()
+		})
+	})
+
+	Context("Outbound commands", func() {
+		It("should be able to send multipart messages", func() {
+			type Artist struct {
+				Name string
+				Year int
+			}
+			t := Artist{"Tom Sachs", 2015}
+			fName := "artist"
+
+			mux := http.NewServeMux()
+			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+				err := r.ParseMultipartForm(10000)
+				file, _, err := r.FormFile("file")
+				Ω(err).Should(BeNil())
+
+				var s Artist
+				decoder := json.NewDecoder(file)
+				err = decoder.Decode(&s)
+				Ω(err).Should(BeNil())
+				Ω(s).Should(Equal(t))
+			})
+			s := httptest.NewServer(mux)
+
+			body := bytes.Buffer{}
+			err := json.NewEncoder(&body).Encode(t)
+
+			post(fName, s.URL, &body)
+			Ω(err).Should(BeNil())
 
 			s.Close()
 		})

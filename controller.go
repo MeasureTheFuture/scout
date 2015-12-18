@@ -115,19 +115,21 @@ func controller(deltaC chan Command, deltaCFG chan Configuration, configFile str
 func post(fileName string, url string, src io.Reader) {
 	body := bytes.Buffer{}
 	w := multipart.NewWriter(&body)
-	defer w.Close()
 
 	part, err := w.CreateFormFile("file", fileName)
 	if err != nil {
 		log.Printf("ERROR: Unable to create form element for broadcast")
+		w.Close()
 	}
 
 	_, err = io.Copy(part, src)
 	if err != nil {
 		log.Printf("ERROR: unable to copy frame into multipart message")
+		w.Close()
 	}
 
-	client := &http.Client{}
-	req, err := http.NewRequest("POST", url, &body)
-	client.Do(req)
+	contentType := w.FormDataContentType()
+	w.Close()
+
+	http.Post(url, contentType, &body)
 }
