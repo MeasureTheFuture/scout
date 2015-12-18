@@ -65,7 +65,7 @@ var _ = Describe("Configuration", func() {
 
 	Context("Saving", func() {
 		It("should be able to save a config file", func() {
-			c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091"}
+			c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "0938c583-4140-458c-b267-a8d816d96f4b"}
 			saveConfiguration("testdata/foo.json", c)
 
 			a, err := parseConfiguration("testdata/test-config.json")
