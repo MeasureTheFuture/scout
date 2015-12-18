@@ -116,7 +116,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 	* Multiple people testing.
 * Start implementing the communication protocol with the mothership.
 	* ~~Need to store the mothership ip address/endpoint in the configuration.~~
-	* Need to write tests for inbound API.
+	* ~~Need to write tests for inbound API.~~
 	* ~~Expand calibrate GET request to accept parameters (that can be adjusted on the scout).~~
 	* ~~Need to implement calibrate response -> transmit calibration frame to the mothership.~~
 	* ~~Go over protocol document and double check that I'm sending everything that needs to be transmitted.~~
