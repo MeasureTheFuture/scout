@@ -34,62 +34,82 @@ const (
 	STOP_MEASURE
 )
 
+func calibrateHandler(deltaC chan Command, deltaCFG chan Configuration, configFile string,
+	config Configuration, w http.ResponseWriter, r *http.Request) {
+
+	q := r.URL.Query()
+	newConfig := config
+
+	f, err := strconv.ParseFloat(q.Get("MinArea"), 64)
+	if err == nil {
+		newConfig.MinArea = f
+	}
+
+	i, err := strconv.ParseInt(q.Get("DilationIterations"), 10, 64)
+	if err == nil {
+		newConfig.DilationIterations = int(i)
+	}
+
+	i, err = strconv.ParseInt(q.Get("ForegroundThresh"), 10, 64)
+	if err == nil {
+		newConfig.ForegroundThresh = int(i)
+	}
+
+	i, err = strconv.ParseInt(q.Get("GaussianSmooth"), 10, 64)
+	if err == nil {
+		newConfig.GaussianSmooth = int(i)
+	}
+
+	i, err = strconv.ParseInt(q.Get("MogHistoryLength"), 10, 64)
+	if err == nil {
+		newConfig.MogHistoryLength = int(i)
+	}
+
+	f, err = strconv.ParseFloat(q.Get("MogThreshold"), 64)
+	if err == nil {
+		newConfig.MogThreshold = f
+	}
+
+	i, err = strconv.ParseInt(q.Get("MogDetectShadows"), 10, 64)
+	if err == nil {
+		newConfig.MogDetectShadows = int(i)
+	}
+
+	saveConfiguration(configFile, newConfig)
+
+	deltaCFG <- newConfig
+	deltaC <- CALIBRATE
+}
+
+func measureStartHandler(deltaC chan Command, w http.ResponseWriter, r *http.Request) {
+	deltaC <- START_MEASURE
+}
+
+func measureStopHandler(deltaC chan Command, w http.ResponseWriter, r *http.Request) {
+	deltaC <- STOP_MEASURE
+}
+
+func bindHandlers(deltaC chan Command, deltaCFG chan Configuration, configFile string, config Configuration) *http.ServeMux {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/calibrate", func(w http.ResponseWriter, r *http.Request) {
+		calibrateHandler(deltaC, deltaCFG, configFile, config, w, r)
+	})
+
+	mux.HandleFunc("/measure/start", func(w http.ResponseWriter, r *http.Request) {
+		measureStartHandler(deltaC, w, r)
+	})
+
+	mux.HandleFunc("/measure/stop", func(w http.ResponseWriter, r *http.Request) {
+		measureStopHandler(deltaC, w, r)
+	})
+
+	return mux
+}
+
 func controller(deltaC chan Command, deltaCFG chan Configuration, configFile string, config Configuration) {
-	http.HandleFunc("/calibrate", func(w http.ResponseWriter, r *http.Request) {
-		q := r.URL.Query()
-
-		newConfig := config
-
-		f, err := strconv.ParseFloat(q.Get("MinArea"), 64)
-		if err == nil {
-			newConfig.MinArea = f
-		}
-
-		i, err := strconv.ParseInt(q.Get("DilationIterations"), 10, 64)
-		if err == nil {
-			newConfig.DilationIterations = int(i)
-		}
-
-		i, err = strconv.ParseInt(q.Get("ForegroundThresh"), 10, 64)
-		if err == nil {
-			newConfig.ForegroundThresh = int(i)
-		}
-
-		i, err = strconv.ParseInt(q.Get("GaussianSmooth"), 10, 64)
-		if err == nil {
-			newConfig.GaussianSmooth = int(i)
-		}
-
-		i, err = strconv.ParseInt(q.Get("MogHistoryLength"), 10, 64)
-		if err == nil {
-			newConfig.MogHistoryLength = int(i)
-		}
-
-		f, err = strconv.ParseFloat(q.Get("MogThreshold"), 64)
-		if err == nil {
-			newConfig.MogThreshold = f
-		}
-
-		i, err = strconv.ParseInt(q.Get("MogDetectShadows"), 10, 64)
-		if err == nil {
-			newConfig.MogDetectShadows = int(i)
-		}
-
-		saveConfiguration(configFile, newConfig)
-
-		deltaCFG <- newConfig
-		deltaC <- CALIBRATE
-	})
-
-	http.HandleFunc("/measure/start", func(w http.ResponseWriter, r *http.Request) {
-		deltaC <- START_MEASURE
-	})
-
-	http.HandleFunc("/measure/stop", func(w http.ResponseWriter, r *http.Request) {
-		deltaC <- STOP_MEASURE
-	})
-
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	mux := bindHandlers(deltaC, deltaCFG, configFile, config)
+	log.Fatal(http.ListenAndServe(config.ScoutAddress, mux))
 }
 
 func post(fileName string, url string, src io.Reader) {

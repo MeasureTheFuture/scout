@@ -130,7 +130,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 		* Get Disk usage.
 		* Get CPU usage.
 		* Transmit any application error logs.
-	* Look into some of the pathway optimisation stuff (to reduce data size of transmitted interactions).
+	* Implement Douglas-Peucker to simplify interaction pathway before transmission (to reduce data size of transmitted interactions).
 	* ~~Need to implement broadcasting of interactions to mothership.~~
 * ~~Generate UUID on initial startup, store as part of configuration.~~
 
