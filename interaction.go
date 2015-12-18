@@ -49,10 +49,21 @@ func (a Waypoint) compare(b Waypoint) bool {
 }
 
 type Interaction struct {
+	UUID     string     // The UUID for the scout that detected the interaction.
+	Version  string     // The Version of the protocol used for transmitting data to the mothership
 	Entered  time.Time  // The time the interaction started (rounded to nearest half hour)
 	started  time.Time  // The actual time the interaction started. Private. Not to be transmitted for privacy concerns
 	Duration float32    // The total duration of the interaction.
 	Path     []Waypoint // The pathway of the interaction through the scene.
+}
+
+func NewInteraction(w Waypoint, config Configuration) Interaction {
+	start := time.Now()
+
+	// The start time broadcasted for the interaction is truncated to the nearest 30 minutes.
+	apparentStart := start.Truncate(30 * time.Minute)
+
+	return Interaction{config.UUID, "0.1", apparentStart, start, 0.0, []Waypoint{w}}
 }
 
 // addWaypoint inserts a new waypoint to the end of the interaction.
@@ -71,6 +82,7 @@ func (i *Interaction) lastWaypoint() Waypoint {
 func (i *Interaction) post(config Configuration) {
 	body := bytes.Buffer{}
 	encoder := json.NewEncoder(&body)
+
 	err := encoder.Encode(i)
 	if err != nil {
 		log.Printf("ERROR: Unable to encode configuration for transport to mothership")
@@ -112,14 +124,12 @@ func (s *Scene) buildDistanceMap(detected []Waypoint) map[int][]int {
 }
 
 // addInteraction
-func (s *Scene) addInteraction(detected []Waypoint) {
-	// The start time to use for the new interaction -- truncated to the nearest 30 minutes.
-	start := time.Now().Truncate(30 * time.Minute)
+func (s *Scene) addInteraction(detected []Waypoint, config Configuration) {
 
 	if len(s.Interactions) == 0 {
 		// Empty scene: just add a new interaction for each new waypoint.
 		for i := 0; i < len(detected); i++ {
-			s.Interactions = append(s.Interactions, Interaction{start, time.Now(), 0.0, []Waypoint{detected[i]}})
+			s.Interactions = append(s.Interactions, NewInteraction(detected[i], config))
 		}
 
 	} else {
@@ -150,7 +160,7 @@ func (s *Scene) addInteraction(detected []Waypoint) {
 				s.Interactions[distances[i][1]].addWaypoint(detected[i])
 			} else {
 				// Otherwise this must be a new interaction, create it and add it to the scene.
-				s.Interactions = append(s.Interactions, Interaction{start, time.Now(), 0.0, []Waypoint{detected[i]}})
+				s.Interactions = append(s.Interactions, NewInteraction(detected[i], config))
 			}
 		}
 	}
@@ -176,7 +186,7 @@ func (s *Scene) removeInteraction(detected []Waypoint, config Configuration) {
 
 func (s *Scene) update(detected []Waypoint, config Configuration) {
 	if len(detected) >= len(s.Interactions) {
-		s.addInteraction(detected)
+		s.addInteraction(detected, config)
 	} else {
 		s.removeInteraction(detected, config)
 	}

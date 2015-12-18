@@ -119,10 +119,17 @@ This software powers measure the future 'scouts'. These are web cam based device
 	* Need to write tests for inbound API.
 	* ~~Expand calibrate GET request to accept parameters (that can be adjusted on the scout).~~
 	* ~~Need to implement calibrate response -> transmit calibration frame to the mothership.~~
-	* Go over protocol document and double check that I'm sending everything that needs to be transmitted.
-		* Need to send version identifiers with all communication to the motherhsip.
-		* Need to include UUID with interactions transmitted to mothership.
-		* Health heart beat, is it going ahead?
+	* ~~Go over protocol document and double check that I'm sending everything that needs to be transmitted.~~
+		* ~~Need to send version identifiers with all communication to the motherhsip.~~
+		* ~~Need to include UUID with interactions transmitted to mothership.~~
+		* ~~Finish implementing new interaction utility in interaction.go~~
+	* Health heart beat, is it going ahead?
+		* Send first heart beat on startup.
+		* Get IP address for transmission
+		* Get memory usage.
+		* Get Disk usage.
+		* Get CPU usage.
+		* Transmit any application error logs.
 	* Look into some of the pathway optimisation stuff (to reduce data size of transmitted interactions).
 	* ~~Need to implement broadcasting of interactions to mothership.~~
 * ~~Generate UUID on initial startup, store as part of configuration.~~
