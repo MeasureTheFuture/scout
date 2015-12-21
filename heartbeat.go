@@ -1,0 +1,94 @@
+/*
+ * Copyright (C) 2015 Clinton Freeman
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"log"
+	"net"
+	"syscall"
+)
+
+type Heartbeat struct {
+	UUID    string     // The UUID for the scout.
+	Version string     // The version of the protocol used used for transmitting data to the mothership.
+	Health  HealthData // The current health status of the scout.
+
+}
+
+type HealthData struct {
+	IpAddress string  // The current IP address of the scout.
+	CPU       float32 // The amount of CPU load currently being consumed on the scout. 0.0 - no load, 1.0 - full load.
+	memory    float32 // The amount of memory consumed on the scout. 0.0 - no memory used, 1.0 no memory available.
+	storage   float32 // The amount of storage consumed on the scout. 0.0 - disk unused, 1.0 disk full.
+}
+
+func NewHeartbeat(config Configuration) *Heartbeat {
+	h := Heartbeat{config.UUID, "0.1", HealthData{getIpAddress(), 0.1, 0.1, getStorageUsage()}}
+
+	return &h
+}
+
+func getIpAddress() string {
+	addys, err := net.InterfaceAddrs()
+	if err != nil {
+		log.Printf("ERROR: Unable to get the IP address for the scout.")
+		return ""
+	}
+
+	for _, address := range addys {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+
+	return ""
+}
+
+func getCPULoad() float32 {
+	return 0.0
+}
+
+func getMemoryUsage() float32 {
+	return 0.0
+}
+
+func getStorageUsage() float32 {
+	var stat syscall.Statfs_t
+	syscall.Statfs("/", &stat)
+
+	size := stat.Blocks * uint64(stat.Bsize)
+	free := stat.Bfree * uint64(stat.Bsize)
+
+	return float32(size-free) / float32(size)
+}
+
+func (h *Heartbeat) post(config Configuration) {
+	body := bytes.Buffer{}
+	encoder := json.NewEncoder(&body)
+
+	err := encoder.Encode(h)
+	if err != nil {
+		log.Printf("ERROR: Unable to encode configuration for transport to mothership")
+	}
+
+	post("heartbeat.json", config.MothershipAddress+"/scout/"+config.UUID+"/heartbeat", &body)
+}

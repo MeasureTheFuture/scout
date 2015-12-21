@@ -124,10 +124,10 @@ This software powers measure the future 'scouts'. These are web cam based device
 		* ~~Need to include UUID with interactions transmitted to mothership.~~
 		* ~~Finish implementing new interaction utility in interaction.go~~
 	* Health heart beat, is it going ahead?
-		* Send first heart beat on startup.
-		* Get IP address for transmission
+		* Send first heart beat on startup, and then every 15 minutes after that.
+		* ~~Get IP address for transmission~~
 		* Get memory usage.
-		* Get Disk usage.
+		* ~~Get Disk usage.~~
 		* Get CPU usage.
 		* Transmit any application error logs.
 	* Implement Douglas-Peucker to simplify interaction pathway before transmission (to reduce data size of transmitted interactions).
