@@ -43,6 +43,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 	$ export GOPATH=`pwd`
 	$ go get github.com/onsi/ginkgo
 	$ go get github.com/onsi/gomega
+	$ go get github.com/shirou/gopsutil
 	$ go get github.com/MeasureTheFuture/scout
 ```
 
@@ -128,7 +129,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 		* ~~Get IP address for transmission~~
 		* Get memory usage.
 		* ~~Get Disk usage.~~
-		* Get CPU usage.
+		* ~~Get CPU usage.~~
 		* Transmit any application error logs.
 	* Implement Douglas-Peucker to simplify interaction pathway before transmission (to reduce data size of transmitted interactions).
 	* ~~Need to implement broadcasting of interactions to mothership.~~

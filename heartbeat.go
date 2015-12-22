@@ -20,6 +20,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/shirou/gopsutil/load"
 	"log"
 	"net"
 	"syscall"
@@ -33,14 +34,15 @@ type Heartbeat struct {
 }
 
 type HealthData struct {
-	IpAddress string  // The current IP address of the scout.
-	CPU       float32 // The amount of CPU load currently being consumed on the scout. 0.0 - no load, 1.0 - full load.
-	memory    float32 // The amount of memory consumed on the scout. 0.0 - no memory used, 1.0 no memory available.
-	storage   float32 // The amount of storage consumed on the scout. 0.0 - disk unused, 1.0 disk full.
+	IpAddress   string  // The current IP address of the scout.
+	CPU         float32 // The amount of CPU load currently being consumed on the scout. 0.0 - no load, 1.0 - full load.
+	Memory      float32 // The amount of memory consumed on the scout. 0.0 - no memory used, 1.0 no memory available.
+	TotalMemory float32 // The total number of gigabytes of virtual memory currently available.
+	Storage     float32 // The amount of storage consumed on the scout. 0.0 - disk unused, 1.0 disk full.
 }
 
 func NewHeartbeat(config Configuration) *Heartbeat {
-	h := Heartbeat{config.UUID, "0.1", HealthData{getIpAddress(), 0.1, 0.1, getStorageUsage()}}
+	h := Heartbeat{config.UUID, "0.1", HealthData{getIpAddress(), 0.1, 0.1, 0.1, getStorageUsage()}}
 
 	return &h
 }
@@ -64,7 +66,12 @@ func getIpAddress() string {
 }
 
 func getCPULoad() float32 {
-	return 0.0
+	c, err := load.LoadAvg()
+	if err != nil {
+		log.Printf("ERROR: Unable to get CPU load for the scout.")
+	}
+
+	return float32(c.Load5)
 }
 
 func getMemoryUsage() float32 {
