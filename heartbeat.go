@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/shirou/gopsutil/load"
+	"github.com/shirou/gopsutil/mem"
 	"log"
 	"net"
 	"syscall"
@@ -42,7 +43,8 @@ type HealthData struct {
 }
 
 func NewHeartbeat(config Configuration) *Heartbeat {
-	h := Heartbeat{config.UUID, "0.1", HealthData{getIpAddress(), 0.1, 0.1, 0.1, getStorageUsage()}}
+	t, u := getMemoryUsage()
+	h := Heartbeat{config.UUID, "0.1", HealthData{getIpAddress(), getCPULoad(), u, t, getStorageUsage()}}
 
 	return &h
 }
@@ -74,8 +76,13 @@ func getCPULoad() float32 {
 	return float32(c.Load5)
 }
 
-func getMemoryUsage() float32 {
-	return 0.0
+func getMemoryUsage() (float32 , float32) {
+	v, err := mem.VirtualMemory()
+	if err != nil {
+		log.Printf("ERROR: Unable to get memory usage for the scout.")
+	}
+
+	return float32(v.Total), (float32(v.UsedPercent) / 100.0)
 }
 
 func getStorageUsage() float32 {

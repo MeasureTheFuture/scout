@@ -127,7 +127,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 	* Health heart beat, is it going ahead?
 		* Send first heart beat on startup, and then every 15 minutes after that.
 		* ~~Get IP address for transmission~~
-		* Get memory usage.
+		* ~~Get memory usage.~~
 		* ~~Get Disk usage.~~
 		* ~~Get CPU usage.~~
 		* Transmit any application error logs.
