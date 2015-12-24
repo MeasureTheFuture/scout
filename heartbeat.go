@@ -76,7 +76,7 @@ func getCPULoad() float32 {
 	return float32(c.Load5)
 }
 
-func getMemoryUsage() (float32 , float32) {
+func getMemoryUsage() (float32, float32) {
 	v, err := mem.VirtualMemory()
 	if err != nil {
 		log.Printf("ERROR: Unable to get memory usage for the scout.")

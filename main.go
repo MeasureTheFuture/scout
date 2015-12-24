@@ -20,6 +20,7 @@ package main
 import (
 	"flag"
 	"log"
+	"time"
 )
 
 var mainfunc = make(chan func())
@@ -43,6 +44,17 @@ func main() {
 		// Save the default config file to disk.
 		saveConfiguration(configFile, config)
 	}
+
+	// Send initial health heartbeat on startup.
+	NewHeartbeat(config).post(config)
+
+	// Send periodic health heartbeats to the mothership.
+	ticker := time.NewTicker(time.Minute * 15)
+	go func() {
+		for range ticker.C {
+			NewHeartbeat(config).post(config)
+		}
+	}()
 
 	deltaC := make(chan Command)
 	deltaCFG := make(chan Configuration, 1)

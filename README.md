@@ -85,7 +85,22 @@ This software powers measure the future 'scouts'. These are web cam based device
 * During the measurement phase, the scout will make the following requests to the mothership:
 ```
 	POST http://moth.er.sh.ip/scout/<UUID>/interaction
-	This is a MIME multipart message with an attached file (file:interaction.json)
+	This is a MIME multipart message with an attached file (file:interaction.json) containing:
+	{
+		"UUID":"59ef7180-f6b2-4129-99bf-970eb4312b4b",	// Unique identifier of scout.
+		"Version":"0.1",								// Transmission protocol version.
+		"Entered":"2015-03-07 11:00:00 +0000 UTC",		// When interaction began, rounded to nearest half hour.
+		"Duration":2.3,									// The duration in seconds.
+		"Path":[
+			{
+				XPixels:4,								// x-coordinate of waypoint centroid in pixels.
+				YPixels:5,								// y-coordinate of waypoint centroid in pixels.
+				HalfWidthPixels:2,						// Half the width of the waypoint in pixels.
+				HalfHeightPixels:2,						// Half the height of the waypoint in pixels.
+				T:0.5									// The number of seconds since the interaction start.
+			}
+		]
+	}
 ```
 
 * To stop measuring:
@@ -94,7 +109,23 @@ This software powers measure the future 'scouts'. These are web cam based device
 	returns: 200 OK on success.
 ```
 
+* When the scout is running, it will send periodic health heart beats to the mothership:
+```
+	POST http://moth.er.sh.ip/scout/<UUID>/heartbeat
+	This is a MIME multipart message with an attached file (file:heartbeat.json) containing:
+	{
+		"UUID":"59ef7180-f6b2-4129-99bf-970eb4312b4b",	// Unique identifier of scout.
+		"Version":"0.1",								// Transmission protocol version.
+		"Health":{
+			"IpAddress":"10.1.1.1",						// Current IP address of the scout.
+			"CPU":0.4,									// Current CPU load, 0.0 - no load.
+			"Memory":0.1,								// Current Memory usage, 0.0 - not used, 1.0 all used.
+			"TotalMemory":1233312.0,					// Total Memory available in bytes.
+			"Storage":0.1								// Current Storage usage, 0.0 - not used, 1.0 all full.
+		}
+	}
 
+```
 
 ## TODO:
 * Clean up existing code:
@@ -124,8 +155,8 @@ This software powers measure the future 'scouts'. These are web cam based device
 		* ~~Need to send version identifiers with all communication to the motherhsip.~~
 		* ~~Need to include UUID with interactions transmitted to mothership.~~
 		* ~~Finish implementing new interaction utility in interaction.go~~
-	* Health heart beat, is it going ahead?
-		* Send first heart beat on startup, and then every 15 minutes after that.
+	* Health heart beat:
+		* ~~Send first heart beat on startup, and then every 15 minutes after that.~~
 		* ~~Get IP address for transmission~~
 		* ~~Get memory usage.~~
 		* ~~Get Disk usage.~~
