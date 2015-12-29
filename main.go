@@ -20,21 +20,38 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 	"time"
 )
 
 var mainfunc = make(chan func())
 
 func main() {
-	log.Printf("INFO: Starting scout.\n")
 	var configFile string
 	var videoFile string
+	var logFile string
 	var debug bool
 
 	flag.StringVar(&configFile, "configFile", "scout.json", "The path to the configuration file")
 	flag.StringVar(&videoFile, "videoFile", "", "The path to a video file to detect motion from instead of a webcam")
+	flag.StringVar(&logFile, "logFile", "scout.log", "The output path for log files.")
 	flag.BoolVar(&debug, "debug", false, "Should we run scout in debug mode, and render frames of detected materials")
 	flag.Parse()
+
+	// Copy the old log file to a temporary location for transmission to the mothership
+	// and start a new log for this instance of scout.
+	tmpLog := "scout_tmp.log"
+	os.Link("scout.log", tmpLog)
+	os.Remove("scout.log")
+
+	f, err := os.OpenFile("scout.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatalf("Unable to open log file: %v", err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+	log.Printf("INFO: Starting scout.\n")
 
 	config, err := parseConfiguration(configFile)
 	if err != nil {
@@ -44,6 +61,9 @@ func main() {
 		// Save the default config file to disk.
 		saveConfiguration(configFile, config)
 	}
+
+	// Send old log to mothership on startup.
+	postLog(config, tmpLog)
 
 	// Send initial health heartbeat on startup.
 	NewHeartbeat(config).post(config)

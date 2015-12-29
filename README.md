@@ -109,6 +109,12 @@ This software powers measure the future 'scouts'. These are web cam based device
 	returns: 200 OK on success.
 ```
 
+* On startup, the scout will transmit the log file from its previous run to the mothership:
+```
+	POST http://moth.er.sh.ip/scout/<UUID>/log
+	This is a MIME multipart message with an attached file (file:scout.log).
+```
+
 * When the scout is running, it will send periodic health heart beats to the mothership:
 ```
 	POST http://moth.er.sh.ip/scout/<UUID>/heartbeat
@@ -146,7 +152,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 	* Setup a test with mothership on laptop, and latest code running on Edison.
 	* Long running tests / memory leaks and any other hardware issues.
 	* Multiple people testing.
-* Start implementing the communication protocol with the mothership.
+* ~~Start implementing the communication protocol with the mothership.~~
 	* ~~Need to store the mothership ip address/endpoint in the configuration.~~
 	* ~~Need to write tests for inbound API.~~
 	* ~~Expand calibrate GET request to accept parameters (that can be adjusted on the scout).~~
@@ -161,7 +167,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 		* ~~Get memory usage.~~
 		* ~~Get Disk usage.~~
 		* ~~Get CPU usage.~~
-		* Transmit any application error logs.
+		* ~~Transmit any application error logs.~~
 	* ~~Implement Douglas-Peucker to simplify interaction pathway before transmission (to reduce data size of transmitted interactions).~~
 	* ~~Need to implement broadcasting of interactions to mothership.~~
 * ~~Generate UUID on initial startup, store as part of configuration.~~

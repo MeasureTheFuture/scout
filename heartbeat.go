@@ -18,12 +18,14 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
 	"log"
 	"net"
+	"os"
 	"syscall"
 )
 
@@ -93,6 +95,18 @@ func getStorageUsage() float32 {
 	free := stat.Bfree * uint64(stat.Bsize)
 
 	return float32(size-free) / float32(size)
+}
+
+func postLog(config Configuration, tmpLog string) {
+	f, err := os.Open(tmpLog)
+	if err != nil {
+		log.Printf("Unable to open temporary log")
+		return
+	}
+
+	post("scout.log", config.MothershipAddress+"/scout/"+config.UUID+"/log", bufio.NewReader(f))
+	f.Close()
+	os.Remove(tmpLog)
 }
 
 func (h *Heartbeat) post(config Configuration) {
