@@ -1,1 +1,1 @@
-{"MinArea":2,"DilationIterations":2,"ForegroundThresh":2,"GaussianSmooth":2,"MogHistoryLength":2,"MogThreshold":2,"MogDetectShadows":0,"ScoutAddress":":9090","MothershipAddress":"127.0.0.1:9091","UUID":"0938c583-4140-458c-b267-a8d816d96f4b"}
+{"MinArea":2,"DilationIterations":2,"ForegroundThresh":2,"GaussianSmooth":2,"MogHistoryLength":2,"MogThreshold":2,"MogDetectShadows":0,"ScoutAddress":":9090","MothershipAddress":"127.0.0.1:9091","UUID":"0938c583-4140-458c-b267-a8d816d96f4b","SimplifyEpsilon":2.0}

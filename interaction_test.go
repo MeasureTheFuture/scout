@@ -44,6 +44,35 @@ var _ = Describe("Interaction", func() {
 
 			Ω(a.distanceSq(b)).Should(Equal(8))
 		})
+
+		It("should be able to calculate the perpendicular distance to a line", func() {
+			x := Waypoint{2, 0, 0, 0, 0.0}
+			a := Waypoint{0, 0, 0, 0, 0.0}
+			b := Waypoint{0, 2, 0, 0, 0.0}
+
+			Ω(x.perpendicularDistance(a, b)).Should(BeNumerically("~", 2.0, 0.001))
+		})
+	})
+
+	Context("douglasPeucker", func() {
+		It("should handle small sized paths", func() {
+			a := Waypoint{0, 0, 0, 0, 0.0}
+			b := Waypoint{0, 2, 0, 0, 0.0}
+
+			Ω(douglasPeucker([]Waypoint{a, b}, 2)).Should(Equal([]Waypoint{a, b}))
+			Ω(douglasPeucker([]Waypoint{a}, 2)).Should(Equal([]Waypoint{a, a}))
+		})
+
+		It("should remove waypoints if perpendicular distance is less than epsilon", func() {
+			a := Waypoint{0, 0, 0, 0, 0.0}
+			b := Waypoint{2, 1, 0, 0, 0.0}
+			c := Waypoint{2, 2, 0, 0, 0.0}
+			d := Waypoint{0, 4, 0, 0, 0.0}
+
+			Ω(douglasPeucker([]Waypoint{a, b, d}, 3)).Should(Equal([]Waypoint{a, d}))
+			Ω(douglasPeucker([]Waypoint{a, b, d}, 1)).Should(Equal([]Waypoint{a, b, d}))
+			Ω(douglasPeucker([]Waypoint{a, b, c, d}, 1)).Should(Equal([]Waypoint{a, b, d}))
+		})
 	})
 
 	Context("addInteraction", func() {
@@ -53,7 +82,7 @@ var _ = Describe("Interaction", func() {
 		wpB := Waypoint{50, 50, 20, 20, 0.0}
 		wpBA := Waypoint{55, 53, 20, 20, 0.0}
 		wpC := Waypoint{150, 150, 20, 20, 0.0}
-		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc"}
+		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc", 2.0}
 
 		It("should be able to add an interaction to an empty scene", func() {
 			s := initScene()

@@ -43,6 +43,15 @@ func (a Waypoint) distanceSq(b Waypoint) int {
 	return (dx * dx) + (dy * dy)
 }
 
+// perpendicularDistance calulates the distance from a point (x) to a line
+// (defined by a and b).
+func (x Waypoint) perpendicularDistance(a Waypoint, b Waypoint) float64 {
+	n := float64(((b.YPixels - a.YPixels) * x.XPixels) - ((b.XPixels - a.XPixels) * x.YPixels) + (b.XPixels * a.YPixels) - (b.YPixels * a.XPixels))
+	d := float64(((b.YPixels - a.YPixels) * (b.YPixels - a.YPixels)) + ((b.XPixels - a.XPixels) * (b.XPixels - a.XPixels)))
+
+	return (math.Abs(n) / math.Sqrt(d))
+}
+
 // compare returns true if two waypoints are the same, false otherwise.
 func (a Waypoint) compare(b Waypoint) bool {
 	return a.XPixels == b.XPixels && a.YPixels == b.YPixels && a.HalfHeightPixels == b.HalfHeightPixels && a.HalfWidthPixels == b.HalfWidthPixels && math.Abs(float64(a.T-b.T)) < 0.007
@@ -74,12 +83,41 @@ func (i *Interaction) addWaypoint(w Waypoint) {
 	i.Path = append(i.Path, newW)
 }
 
+func douglasPeucker(path []Waypoint, epsilon float64) []Waypoint {
+	dMax := 0.0
+	iMax := 0
+	end := len(path) - 1
+
+	for i := 1; i < end; i++ {
+		d := path[i].perpendicularDistance(path[0], path[end])
+		if d > dMax {
+			iMax = i
+			dMax = d
+		}
+	}
+
+	if dMax > epsilon {
+		a := douglasPeucker(path[0:iMax+1], epsilon)
+		b := douglasPeucker(path[iMax:len(path)], epsilon)
+
+		return append(a[0:iMax], b...)
+	}
+
+	return []Waypoint{path[0], path[end]}
+}
+
 // lastWaypoint returns the last waypoint within the interaction.
 func (i *Interaction) lastWaypoint() Waypoint {
 	return i.Path[len(i.Path)-1]
 }
 
+func (i *Interaction) simplify(config Configuration) {
+	i.Path = douglasPeucker(i.Path, config.SimplifyEpsilon)
+}
+
 func (i *Interaction) post(config Configuration) {
+	i.simplify(config) // Remove unessary segments from the pathway before sending.
+
 	body := bytes.Buffer{}
 	encoder := json.NewEncoder(&body)
 

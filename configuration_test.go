@@ -44,6 +44,7 @@ var _ = Describe("Configuration", func() {
 
 			Ω(c.ScoutAddress).Should(Equal(":8080"))
 			Ω(c.MothershipAddress).Should(Equal("127.0.0.1:8081"))
+			Ω(c.SimplifyEpsilon).Should(Equal(5.0))
 		})
 
 		It("should be able to parse a valid config file", func() {
@@ -60,12 +61,13 @@ var _ = Describe("Configuration", func() {
 
 			Ω(c.ScoutAddress).Should(Equal(":9090"))
 			Ω(c.MothershipAddress).Should(Equal("127.0.0.1:9091"))
+			Ω(c.SimplifyEpsilon).Should(Equal(2.0))
 		})
 	})
 
 	Context("Saving", func() {
 		It("should be able to save a config file", func() {
-			c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "0938c583-4140-458c-b267-a8d816d96f4b"}
+			c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "0938c583-4140-458c-b267-a8d816d96f4b", 2.0}
 			saveConfiguration("testdata/foo.json", c)
 
 			a, err := parseConfiguration("testdata/test-config.json")

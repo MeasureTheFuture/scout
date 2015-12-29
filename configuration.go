@@ -34,9 +34,10 @@ type Configuration struct {
 	MogDetectShadows   int     // 1 if you want the MOG2 subtractor to detect shadows, 0 otherwise.
 
 	// Communication parameters.
-	ScoutAddress      string // The listening address for the scout.
-	MothershipAddress string // The IP address of the mothership.
-	UUID              string // Unique identifier for the scout.
+	ScoutAddress      string  // The listening address for the scout.
+	MothershipAddress string  // The IP address of the mothership.
+	UUID              string  // Unique identifier for the scout.
+	SimplifyEpsilon   float64 // The perpendicular distance threshold for simplifying pathways.
 }
 
 func saveConfiguration(configFile string, c Configuration) {
@@ -57,7 +58,7 @@ func saveConfiguration(configFile string, c Configuration) {
 
 func parseConfiguration(configFile string) (c Configuration, err error) {
 	u := NewUUID()
-	c = Configuration{14000.0, 10, 128, 5, 500, 30, 1, ":8080", "127.0.0.1:8081", u.String()}
+	c = Configuration{14000.0, 10, 128, 5, 500, 30, 1, ":8080", "127.0.0.1:8081", u.String(), 5.0}
 
 	// Open the configuration file.
 	file, err := os.Open(configFile)
