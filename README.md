@@ -134,24 +134,24 @@ This software powers measure the future 'scouts'. These are web cam based device
 ```
 
 ## TODO:
-* Clean up existing code:
+* Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).
+* Do some more testing on the Edison. I have been just developing locally on my laptop.
+	* Setup a test with mothership on laptop, and latest code running on Edison.
+	* Long running tests / memory leaks and any other hardware issues.
+	* Multiple people testing.
+* Look at using the calibration frame to 'refresh' the foreground subtractor.
+		* Calibration frame of foreground subtractor could also be periodically updated when we have no
+		* people detected in the frame (to compensate for subtle lighting changes).
+* ~~Clean up existing code:~~
 	* ~~Add configuration file.~~
 	* ~~Command line option for overriding location of config file.~~
 	* ~~Command line options to specify video file or live feed from webcam.~~
 	* ~~Update monitor to loop while frames are available from the camera source.~~
 	* ~~Make sure all the metadata fields are populated in the scene when tracking people (frame times).~~
 	* ~~Make sure the calibration frame is always the one first pushed into the foreground subtractor.~~
-	* Look at using the calibration frame to 'refresh' the foreground subtractor.
-		* Calibration frame of foreground subtractor could also be periodically updated when we have no
-		* people detected in the frame (to compensate for subtle lighting changes).
 	* ~~Remove debug code from monitor, or add an optional flag for including it.~~
 * ~~Cleanup up the OpenCV bindings, and bundle them with the other third party-dependencies.~~
 * ~~Update compilation / installation instructions to suit.~~
-* Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).
-* Do some more testing on the Edison. I have been just developing locally on my laptop.
-	* Setup a test with mothership on laptop, and latest code running on Edison.
-	* Long running tests / memory leaks and any other hardware issues.
-	* Multiple people testing.
 * ~~Start implementing the communication protocol with the mothership.~~
 	* ~~Need to store the mothership ip address/endpoint in the configuration.~~
 	* ~~Need to write tests for inbound API.~~
@@ -161,7 +161,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 		* ~~Need to send version identifiers with all communication to the motherhsip.~~
 		* ~~Need to include UUID with interactions transmitted to mothership.~~
 		* ~~Finish implementing new interaction utility in interaction.go~~
-	* Health heart beat:
+	* ~~Health heart beat:~~
 		* ~~Send first heart beat on startup, and then every 15 minutes after that.~~
 		* ~~Get IP address for transmission~~
 		* ~~Get memory usage.~~
