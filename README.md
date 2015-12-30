@@ -135,13 +135,14 @@ This software powers measure the future 'scouts'. These are web cam based device
 
 ## TODO:
 * Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).
+* Update bootstrap.sh with the latest dependencies used by the scout.
 * Do some more testing on the Edison. I have been just developing locally on my laptop.
 	* Setup a test with mothership on laptop, and latest code running on Edison.
 	* Long running tests / memory leaks and any other hardware issues.
 	* Multiple people testing.
 * Look at using the calibration frame to 'refresh' the foreground subtractor.
-		* Calibration frame of foreground subtractor could also be periodically updated when we have no
-		* people detected in the frame (to compensate for subtle lighting changes).
+	* Calibration frame of foreground subtractor could also be periodically updated when we have no
+	* people detected in the frame (to compensate for subtle lighting changes).
 * ~~Clean up existing code:~~
 	* ~~Add configuration file.~~
 	* ~~Command line option for overriding location of config file.~~
