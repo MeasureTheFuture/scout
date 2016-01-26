@@ -112,7 +112,7 @@ func (i *Interaction) lastWaypoint() Waypoint {
 }
 
 func (i *Interaction) simplify(config Configuration) {
-	i.Path = douglasPeucker(i.Path, config.SimplifyEpsilon)
+	//i.Path = douglasPeucker(i.Path, config.SimplifyEpsilon)
 }
 
 func (i *Interaction) post(config Configuration) {
@@ -126,7 +126,7 @@ func (i *Interaction) post(config Configuration) {
 		log.Printf("ERROR: Unable to encode configuration for transport to mothership")
 	}
 
-	post("interaction.json", config.MothershipAddress+"/scout/"+config.UUID+"/interaction", &body)
+	post("interaction.json", config.MothershipAddress+"/scout_api/"+config.UUID+"/interaction", &body)
 }
 
 type Scene struct {

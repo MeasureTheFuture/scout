@@ -104,7 +104,7 @@ func postLog(config Configuration, tmpLog string) {
 		return
 	}
 
-	post("scout.log", config.MothershipAddress+"/scout/"+config.UUID+"/log", bufio.NewReader(f))
+	post("scout.log", config.MothershipAddress+"/scout_api/"+config.UUID+"/log", bufio.NewReader(f))
 	f.Close()
 	os.Remove(tmpLog)
 }

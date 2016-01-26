@@ -34,7 +34,8 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"strconv"
+	//"strconv"
+	"fmt"
 	"unsafe"
 )
 
@@ -229,10 +230,10 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 				}
 			}
 
-			file := C.CString("f" + strconv.FormatInt(frame, 10) + "-detected.png")
+			file := C.CString("f" + fmt.Sprintf("%03d", frame) + "-detected.png")
 			C.cvSaveImage(file, unsafe.Pointer(nextFrame), nil)
 			C.free(unsafe.Pointer(file))
-			scene.save(string("f" + strconv.FormatInt(frame, 10) + "-metadata.json"))
+			//scene.save(string("f" + strconv.FormatInt(frame, 10) + "-metadata.json"))
 			frame++
 		}
 	}
