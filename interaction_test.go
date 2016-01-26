@@ -105,7 +105,7 @@ var _ = Describe("Interaction", func() {
 			s := initScene()
 			s.addInteraction([]Waypoint{wpA}, c)
 
-			Ω(s.Interactions[0].Entered).Should(Equal(time.Now().Truncate(30 * time.Minute)))
+			Ω(s.Interactions[0].Entered).Should(Equal(time.Now().Round(15 * time.Minute)))
 		})
 
 		It("should be able to add an interaction to a scene with stuff already going on", func() {

@@ -70,7 +70,7 @@ func NewInteraction(w Waypoint, config Configuration) Interaction {
 	start := time.Now()
 
 	// The start time broadcasted for the interaction is truncated to the nearest 30 minutes.
-	apparentStart := start.Truncate(30 * time.Minute)
+	apparentStart := start.Round(15 * time.Minute)
 
 	return Interaction{config.UUID, "0.1", apparentStart, start, 0.0, []Waypoint{w}}
 }
