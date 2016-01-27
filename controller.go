@@ -131,5 +131,11 @@ func post(fileName string, url string, src io.Reader) {
 	contentType := w.FormDataContentType()
 	w.Close()
 
-	http.Post(url, contentType, &body)
+	resp, err := http.Post(url, contentType, &body)
+	if err != nil {
+		log.Printf("ERROR: Unable to send multipart message. %+v\n", err)
+	}
+
+	log.Printf("STATUS: %s", resp.Status)
+
 }

@@ -126,7 +126,7 @@ func (i *Interaction) post(config Configuration) {
 		log.Printf("ERROR: Unable to encode configuration for transport to mothership")
 	}
 
-	post("interaction.json", config.MothershipAddress+"/scout_api/"+config.UUID+"/interaction", &body)
+	post("interaction.json", config.MothershipAddress+"/scout_api/interaction", &body)
 }
 
 type Scene struct {
