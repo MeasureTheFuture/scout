@@ -143,7 +143,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 * Look at using the calibration frame to 'refresh' the foreground subtractor.
 	* Calibration frame of foreground subtractor could also be periodically updated when we have no
 	* people detected in the frame (to compensate for subtle lighting changes).
-* Fix bug in simplification code (demo-data.mov)
+* ~~Fix bug in simplification code (demo-data.mov)~~
 * Remove UUID from URL structure used to communicate with mothership.
 * ~~Rename mothership URL endpoint from scout to scout_api.~~
 * ~~Free C.free(unsafe.Pointer(file)) for calibration image.~~

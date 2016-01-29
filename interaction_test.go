@@ -60,7 +60,7 @@ var _ = Describe("Interaction", func() {
 			b := Waypoint{0, 2, 0, 0, 0.0}
 
 			Ω(douglasPeucker([]Waypoint{a, b}, 2)).Should(Equal([]Waypoint{a, b}))
-			Ω(douglasPeucker([]Waypoint{a}, 2)).Should(Equal([]Waypoint{a, a}))
+			Ω(douglasPeucker([]Waypoint{a}, 2)).Should(Equal([]Waypoint{a}))
 		})
 
 		It("should remove waypoints if perpendicular distance is less than epsilon", func() {
@@ -71,7 +71,7 @@ var _ = Describe("Interaction", func() {
 
 			Ω(douglasPeucker([]Waypoint{a, b, d}, 3)).Should(Equal([]Waypoint{a, d}))
 			Ω(douglasPeucker([]Waypoint{a, b, d}, 1)).Should(Equal([]Waypoint{a, b, d}))
-			Ω(douglasPeucker([]Waypoint{a, b, c, d}, 1)).Should(Equal([]Waypoint{a, b, d}))
+			Ω(douglasPeucker([]Waypoint{a, b, c, d}, 1.9)).Should(Equal([]Waypoint{a, b, d}))
 		})
 	})
 

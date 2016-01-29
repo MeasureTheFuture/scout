@@ -84,6 +84,10 @@ func (i *Interaction) addWaypoint(w Waypoint) {
 }
 
 func douglasPeucker(path []Waypoint, epsilon float64) []Waypoint {
+	if len(path) == 1 {
+		return path
+	}
+
 	dMax := 0.0
 	iMax := 0
 	end := len(path) - 1
@@ -100,7 +104,11 @@ func douglasPeucker(path []Waypoint, epsilon float64) []Waypoint {
 		a := douglasPeucker(path[0:iMax+1], epsilon)
 		b := douglasPeucker(path[iMax:len(path)], epsilon)
 
-		return append(a[0:iMax], b...)
+		if len(b) > 1 {
+			return append(a, b[1:len(b)]...)
+		} else {
+			return a
+		}
 	}
 
 	return []Waypoint{path[0], path[end]}
@@ -112,7 +120,7 @@ func (i *Interaction) lastWaypoint() Waypoint {
 }
 
 func (i *Interaction) simplify(config Configuration) {
-	//i.Path = douglasPeucker(i.Path, config.SimplifyEpsilon)
+	i.Path = douglasPeucker(i.Path, config.SimplifyEpsilon)
 }
 
 func (i *Interaction) post(config Configuration) {
