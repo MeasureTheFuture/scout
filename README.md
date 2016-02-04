@@ -18,6 +18,10 @@ This software powers measure the future 'scouts'. These are web cam based device
 4. After the bootstrap script has installed go, 3rd-party dependencies and downloaded the scout source code, it can be built with the following:
 ```
 	$ source /etc/profile
+	$ go get github.com/onsi/ginkgo
+	$ go get github.com/onsi/gomega
+	$ go get github.com/shirou/gopsutil
+	$ go get github.com/MeasureTheFuture/scout
 	$ go build scout
 ```
 
@@ -46,6 +50,28 @@ This software powers measure the future 'scouts'. These are web cam based device
 	$ go get github.com/shirou/gopsutil
 	$ go get github.com/MeasureTheFuture/scout
 ```
+
+## Operating Instructions:
+
+The scout is a command line application that broadcasts interaction data to 'mothership' or any other location for agregation/reporting.
+
+```
+	$ ./scout -help
+
+
+	  Usage of ./scout:
+      -configFile string
+    	The path to the configuration file (default "scout.json")
+      -debug
+    	Should we run scout in debug mode, and render frames of detected materials
+      -logFile string
+    	The output path for log files. (default "scout.log")
+      -videoFile string
+    	The path to a video file to detect motion from instead of a webcam
+```
+
+If the configuration doesn't exist at the specified place, the scout will create one for you. The scout will fill it with default values that can be customised.
+
 
 ## API:
 
@@ -145,6 +171,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 	* people detected in the frame (to compensate for subtle lighting changes).
 * ~~Fix bug in simplification code (demo-data.mov)~~
 * Remove UUID from URL structure used to communicate with mothership.
+	* Remove UUID from calibrate and log endpoints (shifting it inside form metadata).
 * ~~Rename mothership URL endpoint from scout to scout_api.~~
 * ~~Free C.free(unsafe.Pointer(file)) for calibration image.~~
 * ~~Clean up existing code:~~
