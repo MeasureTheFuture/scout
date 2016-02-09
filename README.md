@@ -98,8 +98,11 @@ If the configuration doesn't exist at the specified place, the scout will create
 
 * Once calibrated, the scout will make the following request to the mothership:
 ```
-	POST http://moth.er.sh.ip/scout/<UUID>/calibrated
+	POST http://moth.er.sh.ip/scout/calibrated
 	This is a MIME multipart message with an attached file (file:calibrationFrame.jpg)
+
+	Within the request header is the following key "Mothership-Authorization", it
+	contains the UUID of the scout.
 ```
 
 * To start measuring:
@@ -110,7 +113,7 @@ If the configuration doesn't exist at the specified place, the scout will create
 
 * During the measurement phase, the scout will make the following requests to the mothership:
 ```
-	POST http://moth.er.sh.ip/scout/<UUID>/interaction
+	POST http://moth.er.sh.ip/scout/interaction
 	This is a MIME multipart message with an attached file (file:interaction.json) containing:
 	{
 		"UUID":"59ef7180-f6b2-4129-99bf-970eb4312b4b",	// Unique identifier of scout.
@@ -127,6 +130,9 @@ If the configuration doesn't exist at the specified place, the scout will create
 			}
 		]
 	}
+
+	Within the request header is the following key "Mothership-Authorization", it
+	contains the UUID of the scout.
 ```
 
 * To stop measuring:
@@ -137,13 +143,16 @@ If the configuration doesn't exist at the specified place, the scout will create
 
 * On startup, the scout will transmit the log file from its previous run to the mothership:
 ```
-	POST http://moth.er.sh.ip/scout/<UUID>/log
+	POST http://moth.er.sh.ip/scout/log
 	This is a MIME multipart message with an attached file (file:scout.log).
+
+	Within the request header is the following key "Mothership-Authorization", it
+	contains the UUID of the scout.
 ```
 
 * When the scout is running, it will send periodic health heart beats to the mothership:
 ```
-	POST http://moth.er.sh.ip/scout/<UUID>/heartbeat
+	POST http://moth.er.sh.ip/scout/heartbeat
 	This is a MIME multipart message with an attached file (file:heartbeat.json) containing:
 	{
 		"UUID":"59ef7180-f6b2-4129-99bf-970eb4312b4b",	// Unique identifier of scout.
@@ -157,21 +166,23 @@ If the configuration doesn't exist at the specified place, the scout will create
 		}
 	}
 
+	Within the request header is the following key "Mothership-Authorization", it
+	contains the UUID of the scout.
 ```
 
 ## TODO:
 * Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).
-* Update bootstrap.sh with the latest dependencies used by the scout.
+* ~~Update bootstrap.sh with the latest dependencies used by the scout.~~
 * Do some more testing on the Edison. I have been just developing locally on my laptop.
-	* Setup a test with mothership on laptop, and latest code running on Edison.
+	* ~~Setup a test with mothership on edison, and latest code running on laptop.~~
 	* Long running tests / memory leaks and any other hardware issues.
 	* Multiple people testing.
 * Look at using the calibration frame to 'refresh' the foreground subtractor.
 	* Calibration frame of foreground subtractor could also be periodically updated when we have no
 	* people detected in the frame (to compensate for subtle lighting changes).
 * ~~Fix bug in simplification code (demo-data.mov)~~
-* Remove UUID from URL structure used to communicate with mothership.
-	* Remove UUID from calibrate and log endpoints (shifting it inside form metadata).
+* ~~Remove UUID from URL structure used to communicate with mothership.~~
+	* ~~Remove UUID from calibrate and log endpoints (shifting it inside form metadata).~~
 * ~~Rename mothership URL endpoint from scout to scout_api.~~
 * ~~Free C.free(unsafe.Pointer(file)) for calibration image.~~
 * ~~Clean up existing code:~~

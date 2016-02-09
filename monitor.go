@@ -118,7 +118,7 @@ func calibrate(videoFile string, config Configuration) {
 		return
 	}
 	defer f.Close()
-	post(fileName, config.MothershipAddress+"/scout/"+config.UUID+"/calibrated", f)
+	post(fileName, config.MothershipAddress+"/scout/calibrated", config.UUID, f)
 }
 
 func measure(deltaC chan Command, videoFile string, debug bool, config Configuration) {

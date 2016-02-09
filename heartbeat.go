@@ -104,7 +104,7 @@ func postLog(config Configuration, tmpLog string) {
 		return
 	}
 
-	post("scout.log", config.MothershipAddress+"/scout_api/"+config.UUID+"/log/", bufio.NewReader(f))
+	post("scout.log", config.MothershipAddress+"/scout_api/log/", config.UUID, bufio.NewReader(f))
 	f.Close()
 	os.Remove(tmpLog)
 }
@@ -118,5 +118,5 @@ func (h *Heartbeat) post(config Configuration) {
 		log.Printf("ERROR: Unable to encode configuration for transport to mothership")
 	}
 
-	post("heartbeat.json", config.MothershipAddress+"/scout_api/heartbeat/", &body)
+	post("heartbeat.json", config.MothershipAddress+"/scout_api/heartbeat/", config.UUID, &body)
 }

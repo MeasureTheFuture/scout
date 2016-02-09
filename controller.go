@@ -112,7 +112,7 @@ func controller(deltaC chan Command, deltaCFG chan Configuration, configFile str
 	log.Fatal(http.ListenAndServe(config.ScoutAddress, mux))
 }
 
-func post(fileName string, url string, src io.Reader) {
+func post(fileName string, url string, uuid string, src io.Reader) {
 	body := bytes.Buffer{}
 	w := multipart.NewWriter(&body)
 
@@ -131,7 +131,16 @@ func post(fileName string, url string, src io.Reader) {
 	contentType := w.FormDataContentType()
 	w.Close()
 
-	_, err = http.Post(url, contentType, &body)
+	req, err := http.NewRequest("POST", url, &body)
+	req.Header.Add("Mothership-Authorization", uuid)
+	req.Header.Set("Content-Type", contentType)
+	if err != nil {
+		log.Printf("ERROR: Unable to create multipart message. %+v\n", err)
+	}
+
+	//_, err = http.Post(url, contentType, &body)
+	client := &http.Client{}
+	_, err = client.Do(req)
 	if err != nil {
 		log.Printf("ERROR: Unable to send multipart message. %+v\n", err)
 	}
