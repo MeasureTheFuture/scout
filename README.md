@@ -172,14 +172,30 @@ If the configuration doesn't exist at the specified place, the scout will create
 
 ## TODO:
 * Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).
-* ~~Update bootstrap.sh with the latest dependencies used by the scout.~~
-* Do some more testing on the Edison. I have been just developing locally on my laptop.
-	* ~~Setup a test with mothership on edison, and latest code running on laptop.~~
+
+* Do more testing on the Edison. I have been just developing locally on my laptop.
+	* Setup a test with mothership on edison, and latest code running on laptop.
+		* Depends on mothership supporting API.
 	* Long running tests / memory leaks and any other hardware issues.
 	* Multiple people testing.
+		* Depends on mothership reporting data from the scout.
+
 * Look at using the calibration frame to 'refresh' the foreground subtractor.
 	* Calibration frame of foreground subtractor could also be periodically updated when we have no
 	* people detected in the frame (to compensate for subtle lighting changes).
+
+* Build dependencies into ipk so that they are easier to install on the Edison.
+	* OpenCV
+	* Nginx
+	* Postgres
+	* Setup a little spot on reprage to host them.
+
+* Upgrade scout from OpenCV 3.0 to OpenCV 3.1
+
+* Configure and setup monit to automatically start and monitor the scout application on the Edison.
+
+## Completed:
+* ~~Update bootstrap.sh with the latest dependencies used by the scout.~~
 * ~~Fix bug in simplification code (demo-data.mov)~~
 * ~~Remove UUID from URL structure used to communicate with mothership.~~
 	* ~~Remove UUID from calibrate and log endpoints (shifting it inside form metadata).~~
