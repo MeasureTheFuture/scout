@@ -22,7 +22,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 	$ go get github.com/onsi/gomega
 	$ go get github.com/shirou/gopsutil
 	$ go get github.com/MeasureTheFuture/scout
-	$ go build scout
+	$ go build github.com/MeasureTheFuture/scout
 ```
 
 ## Compilation/Installation (OSX)

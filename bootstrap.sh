@@ -35,5 +35,3 @@ mkdir mtf/src
 echo "GOPATH=`pwd`/mtf" >> /etc/profile
 echo "export GOPATH PATH" >> /etc/profile
 source /etc/profile
-git clone https://github.com/MeasureTheFuture/scout.git mtf/src/scout/
-

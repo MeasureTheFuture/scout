@@ -132,11 +132,11 @@ func post(fileName string, url string, uuid string, src io.Reader) {
 	w.Close()
 
 	req, err := http.NewRequest("POST", url, &body)
+	req.Header.Add("Mothership-Authorization", uuid)
+	req.Header.Set("Content-Type", contentType)
 	if err != nil {
 		log.Printf("ERROR: Unable to create multipart message. %+v\n", err)
 	}
-	req.Header.Add("Mothership-Authorization", uuid)
-	req.Header.Set("Content-Type", contentType)
 
 	client := &http.Client{}
 	_, err = client.Do(req)

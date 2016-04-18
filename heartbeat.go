@@ -70,7 +70,7 @@ func getIpAddress() string {
 }
 
 func getCPULoad() float32 {
-	c, err := load.LoadAvg()
+	c, err := load.Avg()
 	if err != nil {
 		log.Printf("ERROR: Unable to get CPU load for the scout.")
 	}
