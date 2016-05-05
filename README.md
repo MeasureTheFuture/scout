@@ -7,7 +7,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 
 ## Compilation/Installation (Edison)
 
-1. [Upgrade the Firmware on your Intel Edison to Yocto 2.1*](http://reprage.com/post/bootstrapping-the-intel-edison/).
+1. [Upgrade the Firmware on your Intel Edison to Yocto 3.0](http://reprage.com/post/bootstrapping-the-intel-edison/).
 2. ssh into your Edison.
 3. Download and run the scout bootstrap script to configure and install all the development tooling:
 ```

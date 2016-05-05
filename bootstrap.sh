@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
-
-# Update opkg
-echo "src all     http://iotdk.intel.com/repos/1.1/iotdk/all" >> /etc/opkg/base-feeds.conf
-echo "src x86 http://iotdk.intel.com/repos/1.1/iotdk/x86" >> /etc/opkg/base-feeds.conf
-echo "src i586    http://iotdk.intel.com/repos/1.1/iotdk/i586" >> /etc/opkg/base-feeds.conf
-
+# Update opkg.
 opkg update
 opkg upgrade
 opkg install git
