@@ -43,7 +43,7 @@ var _ = Describe("Configuration", func() {
 			Ω(c.MogDetectShadows).Should(Equal(1))
 
 			Ω(c.ScoutAddress).Should(Equal(":8080"))
-			Ω(c.MothershipAddress).Should(Equal("127.0.0.1:8081"))
+			Ω(c.MothershipAddress).Should(Equal("192.168.42.1"))
 			Ω(c.SimplifyEpsilon).Should(Equal(5.0))
 		})
 
