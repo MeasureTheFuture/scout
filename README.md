@@ -25,19 +25,6 @@ This software powers measure the future 'scouts'. These are web cam based device
 	$ go build github.com/MeasureTheFuture/scout
 ```
 
-## Connecting to a mothership and running (Edison)
-
-```
-	$ configure_edison --wifi
-```
-The name of the mothership access point will be the same as the device name you configured on the mothership. The password will be the same as the root password you supplied when you ran configure_edison on the mothership.
-
-To run the scout:
-```
-	$ ./scout
-```
-
-
 ## Compilation/Installation (OSX)
 
 1. [Download & Install Go 1.5.1](https://golang.org/dl/)
@@ -84,6 +71,23 @@ The scout is a command line application that broadcasts interaction data to 'mot
 ```
 
 If the configuration doesn't exist at the specified place, the scout will create one for you. The scout will fill it with default values that can be customised.
+
+### Connecting to a mothership
+
+The wifi on the scout needs to be configured to connect to the Access Point running on the mothership:
+
+```
+	$ configure_edison --wifi
+```
+The name of the access point will be the same as the device name you configured for the mothership. The password will be the same as the root password you supplied when you ran `configure_edison` on the mothership.
+
+### Subsequent uses
+
+At the moment, the scout softare doesn't automatically start on boot. Each time the scout is powered up you need to login and run:
+
+```
+	$ ./scout
+```
 
 
 ## API:
