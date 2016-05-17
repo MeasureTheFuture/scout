@@ -25,6 +25,19 @@ This software powers measure the future 'scouts'. These are web cam based device
 	$ go build github.com/MeasureTheFuture/scout
 ```
 
+## Connecting to a mothership and running (Edison)
+
+```
+	$ configure_edison --wifi
+```
+The name of the mothership access point will be the same as the device name you configured on the mothership. The password will be the same as the root password you supplied when you ran configure_edison on the mothership.
+
+To run the scout:
+```
+	$ ./scout
+```
+
+
 ## Compilation/Installation (OSX)
 
 1. [Download & Install Go 1.5.1](https://golang.org/dl/)
@@ -174,8 +187,8 @@ If the configuration doesn't exist at the specified place, the scout will create
 * Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).
 
 * Do more testing on the Edison. I have been just developing locally on my laptop.
-	* Setup a test with mothership on edison, and latest code running on laptop.
-		* Depends on mothership supporting API.
+	* ~~Setup a test with mothership on edison, and latest code running on laptop.~~
+		* ~~Depends on mothership supporting API.~~
 	* Long running tests / memory leaks and any other hardware issues.
 	* Multiple people testing.
 		* Depends on mothership reporting data from the scout.
