@@ -11,7 +11,7 @@ The following is a set of guidelines for contributing to Measure the Future and 
   * [Current Contributors](#current-contributors)
 
 [How Can I Contribute?](#how-can-i-contribute)
-  * [Reporting Bugs](#reporting-bugs)s
+  * [Reporting Bugs](#reporting-bugs)
 
 [License](#license)
 
