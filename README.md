@@ -83,7 +83,7 @@ The name of the access point will be the same as the device name you configured 
 
 ### Subsequent uses
 
-At the moment, the scout softare doesn't automatically start on boot. Each time the scout is powered up you need to login and run:
+At the moment, the scout software doesn't automatically start on boot. Each time the scout is powered up you need to login and run:
 
 ```
 	$ ./scout
@@ -115,7 +115,7 @@ At the moment, the scout softare doesn't automatically start on boot. Each time 
 
 * Once calibrated, the scout will make the following request to the mothership:
 ```
-	POST http://moth.er.sh.ip/scout/calibrated
+	POST http://moth.er.sh.ip/scout_api/calibrated
 	This is a MIME multipart message with an attached file (file:calibrationFrame.jpg)
 
 	Within the request header is the following key "Mothership-Authorization", it
@@ -130,7 +130,7 @@ At the moment, the scout softare doesn't automatically start on boot. Each time 
 
 * During the measurement phase, the scout will make the following requests to the mothership:
 ```
-	POST http://moth.er.sh.ip/scout/interaction
+	POST http://moth.er.sh.ip/scout_api/interaction
 	This is a MIME multipart message with an attached file (file:interaction.json) containing:
 	{
 		"UUID":"59ef7180-f6b2-4129-99bf-970eb4312b4b",	// Unique identifier of scout.
@@ -160,7 +160,7 @@ At the moment, the scout softare doesn't automatically start on boot. Each time 
 
 * On startup, the scout will transmit the log file from its previous run to the mothership:
 ```
-	POST http://moth.er.sh.ip/scout/log
+	POST http://moth.er.sh.ip/scout_api/log
 	This is a MIME multipart message with an attached file (file:scout.log).
 
 	Within the request header is the following key "Mothership-Authorization", it
@@ -169,7 +169,7 @@ At the moment, the scout softare doesn't automatically start on boot. Each time 
 
 * When the scout is running, it will send periodic health heart beats to the mothership:
 ```
-	POST http://moth.er.sh.ip/scout/heartbeat
+	POST http://moth.er.sh.ip/scout_api/heartbeat
 	This is a MIME multipart message with an attached file (file:heartbeat.json) containing:
 	{
 		"UUID":"59ef7180-f6b2-4129-99bf-970eb4312b4b",	// Unique identifier of scout.

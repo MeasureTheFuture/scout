@@ -58,7 +58,7 @@ func saveConfiguration(configFile string, c Configuration) {
 
 func parseConfiguration(configFile string) (c Configuration, err error) {
 	u := NewUUID()
-	c = Configuration{14000.0, 10, 128, 5, 500, 30, 1, ":8080", "http://192.168.42.1", u.String(), 5.0}
+	c = Configuration{14000.0, 10, 128, 5, 500, 30, 1, "127.0.0.1:8080", "http://127.0.0.1", u.String(), 5.0}
 
 	// Open the configuration file.
 	file, err := os.Open(configFile)

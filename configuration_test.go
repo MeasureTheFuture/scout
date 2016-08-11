@@ -42,8 +42,8 @@ var _ = Describe("Configuration", func() {
 			Ω(c.MogThreshold).Should(Equal(30.0))
 			Ω(c.MogDetectShadows).Should(Equal(1))
 
-			Ω(c.ScoutAddress).Should(Equal(":8080"))
-			Ω(c.MothershipAddress).Should(Equal("http://192.168.42.1"))
+			Ω(c.ScoutAddress).Should(Equal("127.0.0.1:8080"))
+			Ω(c.MothershipAddress).Should(Equal("http://127.0.0.1"))
 			Ω(c.SimplifyEpsilon).Should(Equal(5.0))
 		})
 

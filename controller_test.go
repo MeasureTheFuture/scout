@@ -130,7 +130,7 @@ var _ = Describe("Controller", func() {
 			body := bytes.Buffer{}
 			err := json.NewEncoder(&body).Encode(t)
 
-			post(fName, s.URL, &body)
+			post(fName, s.URL, "aaa", &body)
 			Ω(err).Should(BeNil())
 
 			s.Close()
