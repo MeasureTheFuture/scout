@@ -17,25 +17,26 @@
 
 package main
 
-// #cgo darwin CFLAGS: -I/usr/local/opt/opencv3/include -I/usr/local/opt/opencv3/include/opencv
-// #cgo linux CFLAGS: -I/usr/local/include -I/usr/local/include/opencv
-// #cgo CFLAGS: -Wno-error
-// #cgo darwin LDFLAGS: -L/usr/local/opt/opencv3/lib
-// #cgo linux LDFLAGS: -L/usr/local/lib
-// #cgo darwin LDFLAGS: -lstdc++ -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lopencv_core -lopencv_features2d -lopencv_video -lopencv_hal -lCVBindings
-// #cgo linux LDFLAGS: -lm -lstdc++ -lz -ldl -lpthread -lippicv -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lIlmImf -llibpng -llibjasper -llibjpeg -llibwebp -llibtiff -lopencv_highgui -lCVBindings -lopencv_video -lopencv_core -lopencv_hal -ltbb
-// #include "cv.h"
-// #include "highgui.h"
-// #include "CVBindings.h"
+/*
+#cgo darwin CFLAGS: -I/usr/local/opt/opencv3/include -I/usr/local/opt/opencv3/include/opencv
+#cgo linux CFLAGS: -I/usr/local/include -I/usr/local/include/opencv
+#cgo CFLAGS: -Wno-error
+#cgo darwin LDFLAGS: -L/usr/local/opt/opencv3/lib
+#cgo linux LDFLAGS: -L/usr/local/lib -L/usr/lib
+#cgo darwin LDFLAGS: -lstdc++ -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lopencv_core -lopencv_features2d -lopencv_video -lopencv_hal -lCVBindings
+#cgo linux LDFLAGS: -lm -lstdc++ -lz -ldl -lpthread -lv4l1 -lv4l2 -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lCVBindings -lopencv_video -lopencv_core
+#include "cv.h"
+#include "highgui.h"
+#include "CVBindings.h"
+*/
 import "C"
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"runtime"
-	//"strconv"
-	"fmt"
 	"unsafe"
 )
 
@@ -50,7 +51,7 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 
 		return camera, nil
 	} else {
-		camera = C.cvCaptureFromCAM(-1)
+		camera = C.cvCreateCameraCapture(0)
 		if camera == nil {
 			return camera, errors.New("Unable to open webcam. Shutting down scout.")
 		}
@@ -102,6 +103,7 @@ func calibrate(videoFile string, config Configuration) {
 		log.Printf("ERROR: %s\n", err)
 		return
 	}
+	defer C.cvReleaseCapture(&camera)
 
 	// Build the calibration image from the first frame that comes off the camera.
 	calibrationFrame := C.cvQueryFrame(camera)
@@ -109,7 +111,6 @@ func calibrate(videoFile string, config Configuration) {
 	file := C.CString(fileName)
 	C.cvSaveImage(file, unsafe.Pointer(calibrationFrame), nil)
 	C.free(unsafe.Pointer(file))
-	C.cvReleaseCapture(&camera)
 
 	// Broadcast calibration results to the mothership.
 	f, err := os.Open(fileName)
