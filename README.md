@@ -7,28 +7,12 @@ This software powers measure the future 'scouts'. These are web cam based device
 
 ## Compilation/Installation (Edison)
 
-1. [Upgrade the Firmware on your Intel Edison to Yocto 3.0](http://reprage.com/post/bootstrapping-the-intel-edison/).
-2. ssh into your Edison.
-3. Download and run the scout bootstrap script to configure and install all the development tooling:
-```
-	$ wget https://raw.githubusercontent.com/MeasureTheFuture/scout/master/bootstrap.sh
-	$ chmod +x bootstrap.sh
-	$ ./bootstrap.sh
-```
-4. After the bootstrap script has installed go, 3rd-party dependencies and downloaded the scout source code, it can be built with the following:
-```
-	$ source /etc/profile
-	$ go get github.com/onsi/ginkgo
-	$ go get github.com/onsi/gomega
-	$ go get github.com/shirou/gopsutil
-	$ go get github.com/MeasureTheFuture/scout
-	$ go build github.com/MeasureTheFuture/scout
-```
+Installation Instructions for Measure The Future can be found [here](https://github.com/MeasureTheFuture/installer).
 
 ## Compilation/Installation (OSX)
 
-1. [Download & Install Go 1.5.1](https://golang.org/dl/)
-2. Install OpenCV-3.0 via [Brew](http://brew.sh/):
+1. [Download & Install Go 1.6](https://golang.org/dl/)
+2. Install OpenCV-3.1 via [Brew](http://brew.sh/):
 ```
 	$ brew install opencv3
 ```
@@ -201,17 +185,15 @@ At the moment, the scout software doesn't automatically start on boot. Each time
 	* Calibration frame of foreground subtractor could also be periodically updated when we have no
 	* people detected in the frame (to compensate for subtle lighting changes).
 
-* Build dependencies into ipk so that they are easier to install on the Edison.
-	* OpenCV
-	* Nginx
-	* Postgres
-	* Setup a little spot on reprage to host them.
-
-* Upgrade scout from OpenCV 3.0 to OpenCV 3.1
-
 * Configure and setup monit to automatically start and monitor the scout application on the Edison.
 
 ## Completed:
+* ~~Build dependencies into ipk so that they are easier to install on the Edison.~~
+	* ~~OpenCV~~
+	* ~~Nginx~~
+	* ~~Postgres~~
+	* ~~Setup a little spot on reprage to host them.~~
+* ~~Upgrade scout from OpenCV 3.0 to OpenCV 3.1~~
 * ~~Update bootstrap.sh with the latest dependencies used by the scout.~~
 * ~~Fix bug in simplification code (demo-data.mov)~~
 * ~~Remove UUID from URL structure used to communicate with mothership.~~
