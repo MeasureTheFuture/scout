@@ -119,15 +119,15 @@ At the moment, the scout software doesn't automatically start on boot. Each time
 	{
 		"UUID":"59ef7180-f6b2-4129-99bf-970eb4312b4b",	// Unique identifier of scout.
 		"Version":"0.1",								// Transmission protocol version.
-		"Entered":"2015-03-07 11:00:00 +0000 UTC",		// When interaction began, rounded to nearest half hour.
+		"Entered":"2015-03-07T11:00:00Z",				// When interaction began, rounded to nearest half hour.
 		"Duration":2.3,									// The duration in seconds.
 		"Path":[
 			{
-				XPixels:4,								// x-coordinate of waypoint centroid in pixels.
-				YPixels:5,								// y-coordinate of waypoint centroid in pixels.
-				HalfWidthPixels:2,						// Half the width of the waypoint in pixels.
-				HalfHeightPixels:2,						// Half the height of the waypoint in pixels.
-				T:0.5									// The number of seconds since the interaction start.
+				"XPixels":4,								// x-coordinate of waypoint centroid in pixels.
+				"YPixels":5,								// y-coordinate of waypoint centroid in pixels.
+				"HalfWidthPixels":2,						// Half the width of the waypoint in pixels.
+				"HalfHeightPixels":2,						// Half the height of the waypoint in pixels.
+				"T":0.5									// The number of seconds since the interaction start.
 			}
 		]
 	}
