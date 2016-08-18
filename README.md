@@ -123,10 +123,10 @@ At the moment, the scout software doesn't automatically start on boot. Each time
 		"Duration":2.3,									// The duration in seconds.
 		"Path":[
 			{
-				"XPixels":4,								// x-coordinate of waypoint centroid in pixels.
-				"YPixels":5,								// y-coordinate of waypoint centroid in pixels.
-				"HalfWidthPixels":2,						// Half the width of the waypoint in pixels.
-				"HalfHeightPixels":2,						// Half the height of the waypoint in pixels.
+				"XPixels":4,							// x-coordinate of waypoint centroid in pixels.
+				"YPixels":5,							// y-coordinate of waypoint centroid in pixels.
+				"HalfWidthPixels":2,					// Half the width of the waypoint in pixels.
+				"HalfHeightPixels":2,					// Half the height of the waypoint in pixels.
 				"T":0.5									// The number of seconds since the interaction start.
 			}
 		]
