@@ -59,6 +59,7 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 		// Make sure the webcam is set to 720p.
 		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, 1280)
 		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, 720)
+		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_BUFFERSIZE, 1)
 
 		return camera, nil
 	}

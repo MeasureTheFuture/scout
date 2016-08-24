@@ -7,7 +7,7 @@ This software powers measure the future 'scouts'. These are web cam based device
 
 ## Compilation/Installation (Edison)
 
-Installation Instructions for Measure The Future can be found [here](https://github.com/MeasureTheFuture/installer).
+Installation instructions for Measure The Future can be found [here](https://github.com/MeasureTheFuture/installer).
 
 ## Compilation/Installation (OSX)
 
@@ -172,63 +172,13 @@ At the moment, the scout software doesn't automatically start on boot. Each time
 ```
 
 ## TODO:
-* Build a couple more test datasets that are a bit more complicated (multiple people popping in and out of the frame).
 
-* Do more testing on the Edison. I have been just developing locally on my laptop.
-	* ~~Setup a test with mothership on edison, and latest code running on laptop.~~
-		* ~~Depends on mothership supporting API.~~
-	* Long running tests / memory leaks and any other hardware issues.
-	* Multiple people testing.
-		* Depends on mothership reporting data from the scout.
+- [ ] Build a couple of extra test datasets that are more complicated (multiple people popping in and out of the frame).
+- [ ] Edison testing - Long running tests / memory leaks and other hardware issues.
+- [ ] Edison testing - multiple people testing.
+- [ ] Look at using calibration frame to 'refresh' the foreground subtractor.
+- [ ] Calibration frame could also be periodically updated when we have no people detected in the frame (to compenstate for subtle lighting changes).
 
-* Look at using the calibration frame to 'refresh' the foreground subtractor.
-	* Calibration frame of foreground subtractor could also be periodically updated when we have no
-	* people detected in the frame (to compensate for subtle lighting changes).
-
-* Configure and setup monit to automatically start and monitor the scout application on the Edison.
-
-## Completed:
-* ~~Build dependencies into ipk so that they are easier to install on the Edison.~~
-	* ~~OpenCV~~
-	* ~~Nginx~~
-	* ~~Postgres~~
-	* ~~Setup a little spot on reprage to host them.~~
-* ~~Upgrade scout from OpenCV 3.0 to OpenCV 3.1~~
-* ~~Update bootstrap.sh with the latest dependencies used by the scout.~~
-* ~~Fix bug in simplification code (demo-data.mov)~~
-* ~~Remove UUID from URL structure used to communicate with mothership.~~
-	* ~~Remove UUID from calibrate and log endpoints (shifting it inside form metadata).~~
-* ~~Rename mothership URL endpoint from scout to scout_api.~~
-* ~~Free C.free(unsafe.Pointer(file)) for calibration image.~~
-* ~~Clean up existing code:~~
-	* ~~Add configuration file.~~
-	* ~~Command line option for overriding location of config file.~~
-	* ~~Command line options to specify video file or live feed from webcam.~~
-	* ~~Update monitor to loop while frames are available from the camera source.~~
-	* ~~Make sure all the metadata fields are populated in the scene when tracking people (frame times).~~
-	* ~~Make sure the calibration frame is always the one first pushed into the foreground subtractor.~~
-	* ~~Remove debug code from monitor, or add an optional flag for including it.~~
-* ~~Cleanup up the OpenCV bindings, and bundle them with the other third party-dependencies.~~
-* ~~Update compilation / installation instructions to suit.~~
-* ~~Start implementing the communication protocol with the mothership.~~
-	* ~~Need to store the mothership ip address/endpoint in the configuration.~~
-	* ~~Need to write tests for inbound API.~~
-	* ~~Expand calibrate GET request to accept parameters (that can be adjusted on the scout).~~
-	* ~~Need to implement calibrate response -> transmit calibration frame to the mothership.~~
-	* ~~Go over protocol document and double check that I'm sending everything that needs to be transmitted.~~
-		* ~~Need to send version identifiers with all communication to the motherhsip.~~
-		* ~~Need to include UUID with interactions transmitted to mothership.~~
-		* ~~Finish implementing new interaction utility in interaction.go~~
-	* ~~Health heart beat:~~
-		* ~~Send first heart beat on startup, and then every 15 minutes after that.~~
-		* ~~Get IP address for transmission~~
-		* ~~Get memory usage.~~
-		* ~~Get Disk usage.~~
-		* ~~Get CPU usage.~~
-		* ~~Transmit any application error logs.~~
-	* ~~Implement Douglas-Peucker to simplify interaction pathway before transmission (to reduce data size of transmitted interactions).~~
-	* ~~Need to implement broadcasting of interactions to mothership.~~
-* ~~Generate UUID on initial startup, store as part of configuration.~~
 
 ## License
 
