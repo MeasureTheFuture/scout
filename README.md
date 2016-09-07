@@ -173,9 +173,10 @@ At the moment, the scout software doesn't automatically start on boot. Each time
 
 ## TODO:
 
-- [ ] Build a couple of extra test datasets that are more complicated (multiple people popping in and out of the frame).
+- [x] Filter out interactions that are 'noise', ones that last less than a second.
+- [x] Build a couple of extra test datasets that are more complicated (multiple people popping in and out of the frame).
 - [ ] Edison testing - Long running tests / memory leaks and other hardware issues.
-- [ ] Edison testing - multiple people testing.
+- [ ] Integration testing.
 - [ ] Look at using calibration frame to 'refresh' the foreground subtractor.
 - [ ] Calibration frame could also be periodically updated when we have no people detected in the frame (to compenstate for subtle lighting changes).
 

@@ -53,8 +53,12 @@ func (x Waypoint) perpendicularDistance(a Waypoint, b Waypoint) float64 {
 }
 
 // compare returns true if two waypoints are the same, false otherwise.
-func (a Waypoint) compare(b Waypoint) bool {
-	return a.XPixels == b.XPixels && a.YPixels == b.YPixels && a.HalfHeightPixels == b.HalfHeightPixels && a.HalfWidthPixels == b.HalfWidthPixels && math.Abs(float64(a.T-b.T)) < 0.007
+func (a Waypoint) Equal(b Waypoint) bool {
+	return a.XPixels == b.XPixels &&
+		a.YPixels == b.YPixels &&
+		a.HalfHeightPixels == b.HalfHeightPixels &&
+		a.HalfWidthPixels == b.HalfWidthPixels &&
+		math.Abs(float64(a.T-b.T)) < 0.007
 }
 
 type Interaction struct {
@@ -66,13 +70,29 @@ type Interaction struct {
 	Path     []Waypoint // The pathway of the interaction through the scene.
 }
 
+func (i Interaction) Equal(wp []Waypoint) bool {
+	if len(i.Path) != len(wp) {
+		return false
+	}
+
+	for k, v := range i.Path {
+		if !v.Equal(wp[k]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func NewInteraction(w Waypoint, config Configuration) Interaction {
 	start := time.Now()
 
 	// The start time broadcasted for the interaction is truncated to the nearest 30 minutes.
 	apparentStart := start.Round(15 * time.Minute)
 
-	return Interaction{config.UUID, "0.1", apparentStart, start, 0.0, []Waypoint{w}}
+	i := Interaction{config.UUID, "0.1", apparentStart, start, 0.0, []Waypoint{}}
+	i.addWaypoint(w)
+	return i
 }
 
 // addWaypoint inserts a new waypoint to the end of the interaction.
@@ -80,6 +100,7 @@ func (i *Interaction) addWaypoint(w Waypoint) {
 	newW := w
 	newW.T = float32(time.Now().Sub(i.started).Seconds())
 
+	i.Duration = newW.T
 	i.Path = append(i.Path, newW)
 }
 
@@ -131,7 +152,7 @@ func (i *Interaction) post(config Configuration) {
 
 	err := encoder.Encode(i)
 	if err != nil {
-		log.Printf("ERROR: Unable to encode configuration for transport to mothership")
+		log.Printf("ERROR: Unable to encode interaction for transport to mothership")
 	}
 
 	post("interaction.json", config.MothershipAddress+"/scout_api/interaction", config.UUID, &body)
@@ -184,7 +205,7 @@ func (s *Scene) addInteraction(detected []Waypoint, config Configuration) {
 		// 	 work which of the existing interactions are closest.
 		//   for interactions that have more than one close detected waypoints
 		//		create a new interaction from the furthest detected waypoint
-		// 		the nearest waypoint is used to update the interaction.
+		// 		the nearest waypoint is used to update the existing interaction.
 		distances := s.buildDistanceMap(detected)
 		// assert(len(distances) == len(detected))
 
@@ -224,7 +245,11 @@ func (s *Scene) removeInteraction(detected []Waypoint, config Configuration) {
 		if v, ok := matched[i]; ok {
 			s.Interactions[i].addWaypoint(detected[v])
 		} else {
-			s.Interactions[i].post(config)
+			// Only transmit the interaction to the mothership if it is longer than the
+			// specified minimum duration. This is to filter out any detected noise.
+			if s.Interactions[i].Duration > config.MinDuration {
+				s.Interactions[i].post(config)
+			}
 			s.Interactions = append(s.Interactions[:i], s.Interactions[i+1:]...)
 		}
 	}
