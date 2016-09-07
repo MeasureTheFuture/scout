@@ -56,9 +56,9 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 			return camera, errors.New("Unable to open webcam. Shutting down scout.")
 		}
 
-		// Make sure the webcam is set to 720p.
-		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, 1280)
-		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, 720)
+		// Make sure the webcam is set to 1080p.
+		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, 1920)
+		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, 1080)
 		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_BUFFERSIZE, 1)
 
 		return camera, nil
@@ -221,7 +221,7 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 			contours = contours.h_next
 		}
 
-		scene.update(detectedObjects, config)
+		scene.update(detectedObjects, debug, config)
 
 		if debug {
 			// DEBUG -- render current interaction path for detected objects.
@@ -235,8 +235,13 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 			file := C.CString("f" + fmt.Sprintf("%03d", frame) + "-detected.png")
 			C.cvSaveImage(file, unsafe.Pointer(nextFrame), nil)
 			C.free(unsafe.Pointer(file))
-			//scene.save(string("f" + strconv.FormatInt(frame, 10) + "-metadata.json"))
 			frame++
 		}
 	}
+
+	log.Printf("INFO: Finished measure")
+	for _, i := range scene.Interactions {
+		i.post(debug, config)
+	}
+	scene.update([]Waypoint{}, debug, config)
 }

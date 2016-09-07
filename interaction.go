@@ -20,6 +20,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
@@ -144,7 +145,7 @@ func (i *Interaction) simplify(config Configuration) {
 	i.Path = douglasPeucker(i.Path, config.SimplifyEpsilon)
 }
 
-func (i *Interaction) post(config Configuration) {
+func (i *Interaction) post(debug bool, config Configuration) {
 	i.simplify(config) // Remove unessary segments from the pathway before sending.
 
 	body := bytes.Buffer{}
@@ -153,6 +154,12 @@ func (i *Interaction) post(config Configuration) {
 	err := encoder.Encode(i)
 	if err != nil {
 		log.Printf("ERROR: Unable to encode interaction for transport to mothership")
+	}
+
+	if debug {
+		b, _ := json.Marshal(i)
+		filename := string("f" + fmt.Sprintf("%09d", i.started.Unix()) + "-metadata.json")
+		ioutil.WriteFile(filename, b, 0611)
 	}
 
 	post("interaction.json", config.MothershipAddress+"/scout_api/interaction", config.UUID, &body)
@@ -233,7 +240,7 @@ func (s *Scene) addInteraction(detected []Waypoint, config Configuration) {
 	}
 }
 
-func (s *Scene) removeInteraction(detected []Waypoint, config Configuration) {
+func (s *Scene) removeInteraction(detected []Waypoint, debug bool, config Configuration) {
 	distances := s.buildDistanceMap(detected)
 	matched := map[int]int{}
 
@@ -248,18 +255,18 @@ func (s *Scene) removeInteraction(detected []Waypoint, config Configuration) {
 			// Only transmit the interaction to the mothership if it is longer than the
 			// specified minimum duration. This is to filter out any detected noise.
 			if s.Interactions[i].Duration > config.MinDuration {
-				s.Interactions[i].post(config)
+				s.Interactions[i].post(debug, config)
 			}
 			s.Interactions = append(s.Interactions[:i], s.Interactions[i+1:]...)
 		}
 	}
 }
 
-func (s *Scene) update(detected []Waypoint, config Configuration) {
+func (s *Scene) update(detected []Waypoint, debug bool, config Configuration) {
 	if len(detected) >= len(s.Interactions) {
 		s.addInteraction(detected, config)
 	} else {
-		s.removeInteraction(detected, config)
+		s.removeInteraction(detected, debug, config)
 	}
 }
 
