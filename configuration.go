@@ -39,6 +39,8 @@ type Configuration struct {
 	UUID              string  // Unique identifier for the scout.
 	SimplifyEpsilon   float64 // The perpendicular distance threshold for simplifying pathways.
 	MinDuration       float32 // We only transmit interactions that exceed the minimum duration.
+	IdleDuration      float32 // The number of seconds to wait before 'completing' an interaction.
+	ResumeDistance    float32 // The maximum distance in pixels a blob can be used to resume an idle interaction.
 }
 
 func saveConfiguration(configFile string, c Configuration) {
@@ -59,7 +61,7 @@ func saveConfiguration(configFile string, c Configuration) {
 
 func parseConfiguration(configFile string) (c Configuration, err error) {
 	u := NewUUID()
-	c = Configuration{14000.0, 10, 128, 5, 500, 30, 1, "127.0.0.1:8080", "http://127.0.0.1", u.String(), 5.0, float32(1.0)}
+	c = Configuration{14000.0, 10, 128, 5, 500, 30, 1, "127.0.0.1:8080", "http://127.0.0.1", u.String(), 5.0, float32(1.0), float32(1.0), float32(40.0)}
 
 	// Open the configuration file.
 	file, err := os.Open(configFile)

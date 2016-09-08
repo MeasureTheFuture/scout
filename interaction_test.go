@@ -87,7 +87,7 @@ var _ = Describe("Interaction", func() {
 	})
 
 	Context("NewInteraction", func() {
-		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc", 2.0, 0.01}
+		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc", 2.0, 0.01, 0.3, 0.2}
 
 		It("should create a new interaction", func() {
 			a := Waypoint{0, 0, 0, 0, 0.0}
@@ -120,7 +120,7 @@ var _ = Describe("Interaction", func() {
 		wpB := Waypoint{50, 50, 20, 20, 0.0}
 		wpBA := Waypoint{55, 53, 20, 20, 0.0}
 		wpC := Waypoint{150, 150, 20, 20, 0.0}
-		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc", 2.0, 0.01}
+		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc", 2.0, 0.01, 0.3, 0.2}
 
 		It("should be able to add an interaction to an empty scene", func() {
 			s := initScene()
@@ -173,7 +173,7 @@ var _ = Describe("Interaction", func() {
 		It("should be able to remove interactions when a person leaves the scene", func() {
 			s := initScene()
 			s.addInteraction([]Waypoint{wpA, wpB}, c)
-			s.removeInteraction([]Waypoint{wpAA}, c)
+			s.removeInteraction([]Waypoint{wpAA}, false, c)
 
 			Ω(len(s.Interactions)).Should(Equal(1))
 			Ω(s.Interactions[0].Equal([]Waypoint{wpA, wpAA})).Should(BeTrue())
@@ -182,7 +182,7 @@ var _ = Describe("Interaction", func() {
 		It("should be able to remove multiple interactions when more than one person leaves the scene", func() {
 			s := initScene()
 			s.addInteraction([]Waypoint{wpA, wpB, wpC}, c)
-			s.removeInteraction([]Waypoint{wpBA}, c)
+			s.removeInteraction([]Waypoint{wpBA}, false, c)
 
 			Ω(len(s.Interactions)).Should(Equal(1))
 			Ω(s.Interactions[0].Equal([]Waypoint{wpB, wpBA})).Should(BeTrue())
