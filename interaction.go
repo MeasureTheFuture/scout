@@ -33,6 +33,7 @@ type Interaction struct {
 	started  time.Time  // The actual time the interaction started. Private. Not to be transmitted for privacy concerns
 	Duration float32    // The total duration of the interaction.
 	Path     []Waypoint // The pathway of the interaction through the scene.
+	SceneID	 int
 }
 
 func (i Interaction) Equal(wp []Waypoint) bool {
@@ -49,13 +50,13 @@ func (i Interaction) Equal(wp []Waypoint) bool {
 	return true
 }
 
-func NewInteraction(w Waypoint, config Configuration) Interaction {
-	start := time.Now()
+func NewInteraction(w Waypoint, sId int, config Configuration) Interaction {
+	start := time.Now().UTC()
 
 	// The start time broadcasted for the interaction is truncated to the nearest 30 minutes.
 	apparentStart := start.Round(15 * time.Minute)
 
-	i := Interaction{config.UUID, "0.1", apparentStart, start, 0.0, []Waypoint{}}
+	i := Interaction{config.UUID, "0.1", apparentStart, start, 0.0, []Waypoint{}, sId}
 	i.addWaypoint(w)
 	return i
 }
@@ -63,7 +64,7 @@ func NewInteraction(w Waypoint, config Configuration) Interaction {
 // addWaypoint inserts a new waypoint to the end of the interaction.
 func (i *Interaction) addWaypoint(w Waypoint) {
 	newW := w
-	newW.T = float32(time.Now().Sub(i.started).Seconds())
+	newW.T = float32(time.Now().UTC().Sub(i.started).Seconds())
 
 	i.Duration = newW.T
 	i.Path = append(i.Path, newW)
@@ -122,7 +123,7 @@ func (i *Interaction) post(debug bool, config Configuration) {
 
 	if debug {
 		b, _ := json.Marshal(i)
-		filename := string("f" + fmt.Sprintf("%09d", i.started.Unix()) + "-metadata.json")
+		filename := string("f" + fmt.Sprintf("%10d", i.started.Unix()) + "-metadata.json")
 		ioutil.WriteFile(filename, b, 0611)
 	}
 

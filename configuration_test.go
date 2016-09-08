@@ -47,7 +47,7 @@ var _ = Describe("Configuration", func() {
 			Ω(c.SimplifyEpsilon).Should(Equal(5.0))
 			Ω(c.MinDuration).Should(Equal(float32(1.0)))
 			Ω(c.IdleDuration).Should(Equal(float32(1.0)))
-			Ω(c.ResumeDistance).Should(Equal(float32(40.0)))
+			Ω(c.ResumeSqDistance).Should(Equal(40))
 		})
 
 		It("should be able to parse a valid config file", func() {
@@ -67,13 +67,13 @@ var _ = Describe("Configuration", func() {
 			Ω(c.SimplifyEpsilon).Should(Equal(2.0))
 			Ω(c.MinDuration).Should(Equal(float32(0.2)))
 			Ω(c.IdleDuration).Should(Equal(float32(0.3)))
-			Ω(c.ResumeDistance).Should(Equal(float32(0.1)))
+			Ω(c.ResumeSqDistance).Should(Equal(1))
 		})
 	})
 
 	Context("Saving", func() {
 		It("should be able to save a config file", func() {
-			c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.2, 0.3, 0.1}
+			c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.2, 0.3, 1}
 			saveConfiguration("testdata/foo.json", c)
 
 			a, err := parseConfiguration("testdata/test-config.json")

@@ -21,12 +21,13 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"math"
+	"time"
 )
 
 type Scene struct {
 	Interactions     []Interaction  // The current interactions occuring within the scene.
-	idleInteractions []*Interaction // The current interactions that are idle. We wait
-	// a user specified time.
+	idleInteractions []Interaction  // The current interactions that are idle (resumable).
+	sId	 int
 }
 
 // initScene creates an empty scene that can be used for monitoring interactions.
@@ -62,18 +63,18 @@ func (s *Scene) addInteraction(detected []Waypoint, config Configuration) {
 	if len(s.Interactions) == 0 {
 		// Empty scene: just add a new interaction for each new waypoint.
 		for i := 0; i < len(detected); i++ {
-			s.Interactions = append(s.Interactions, NewInteraction(detected[i], config))
+			s.Interactions = append(s.Interactions, NewInteraction(detected[i], s.sId, config))
+			s.sId++
 		}
 
 	} else {
 		// Existing scene:
 		// for each of the detected waypoints
-		// 	 work which of the existing interactions are closest.
+		// 	 work which of the existing interactions is the closest.
 		//   for interactions that have more than one close detected waypoints
 		//		create a new interaction from the furthest detected waypoint
 		// 		the nearest waypoint is used to update the existing interaction.
 		distances := s.buildDistanceMap(detected)
-		// assert(len(distances) == len(detected))
 
 		for i := 0; i < len(distances); i++ {
 			dist := math.MaxInt32
@@ -92,11 +93,31 @@ func (s *Scene) addInteraction(detected []Waypoint, config Configuration) {
 				// detected waypoint.
 				s.Interactions[distances[i][1]].addWaypoint(detected[i])
 			} else {
-				// Detect if this belongs to a resumable interaction.
-				// check time and distance.
+				// This detected element doesn't appear to belong to an existing interaction within the scene.
+				// Before we create a new interaction, we check and if we can use the detected element to
+				// resume an existing interaction.
+				t := time.Now().UTC()
+				resumed := false
 
-				// Otherwise this must be a new interaction, create it and add it to the scene.
-				s.Interactions = append(s.Interactions, NewInteraction(detected[i], config))
+				for k := len(s.idleInteractions) - 1; k >= 0; k-- {
+					wp := s.idleInteractions[k].lastWaypoint()
+					wpt := s.idleInteractions[k].started.Add(time.Duration(wp.T) * time.Second)
+					dt := float32(t.Sub(wpt).Seconds())
+
+					if detected[i].distanceSq(wp) < config.ResumeSqDistance && dt < config.IdleDuration {
+						// Resume idle interaction.
+						s.idleInteractions[k].addWaypoint(detected[i])
+						s.Interactions = append(s.Interactions, s.idleInteractions[k])
+						s.idleInteractions = append(s.idleInteractions[:k], s.idleInteractions[k+1:]...)
+						resumed = true
+					}
+				}
+
+				// We haven't resumed an idle interaction, so the detected element must be a new interaction.
+				if !resumed {
+					s.Interactions = append(s.Interactions, NewInteraction(detected[i], s.sId, config))
+					s.sId++
+				}
 			}
 		}
 	}
@@ -114,12 +135,11 @@ func (s *Scene) removeInteraction(detected []Waypoint, debug bool, config Config
 		if v, ok := matched[i]; ok {
 			s.Interactions[i].addWaypoint(detected[v])
 		} else {
-			// // Only transmit the interaction to the mothership if it is longer than the
-			// // specified minimum duration. This is to filter out any detected noise.
-			if s.Interactions[i].Duration > config.MinDuration {
-				s.Interactions[i].post(debug, config)
-			}
-
+			// Interactions are not removed (and broadcasted to the mothership) immediately,
+			// they are marked as idle first and can be subsequently resumed by waypoints
+			// at a later time. Idle interactions eventual 'expire' and are removed completely
+			// from the scene and broadcasted to the mothership.
+			s.idleInteractions = append(s.idleInteractions, s.Interactions[i])
 			s.Interactions = append(s.Interactions[:i], s.Interactions[i+1:]...)
 		}
 	}
@@ -130,6 +150,35 @@ func (s *Scene) update(detected []Waypoint, debug bool, config Configuration) {
 		s.addInteraction(detected, config)
 	} else {
 		s.removeInteraction(detected, debug, config)
+	}
+
+	// broadcast idle interactions that have expired and are no longer resumable.
+	t := time.Now().UTC()
+	for i := len(s.idleInteractions) - 1; i >= 0; i-- {
+		wp := s.idleInteractions[i].lastWaypoint()
+		wpt := s.idleInteractions[i].started.Add(time.Duration(wp.T) * time.Second)
+		dt := float32(t.Sub(wpt).Seconds())
+
+		if dt > config.IdleDuration {
+			// Only transmit the interaction to the mothership if it is longer than the
+			// specified minimum duration. This is to filter out any detected noise.
+			if s.idleInteractions[i].Duration > config.MinDuration {
+				s.idleInteractions[i].post(debug, config)
+			}
+
+			s.idleInteractions = append(s.idleInteractions[:i], s.idleInteractions[i+1:]...)
+		}
+	}
+}
+
+func (s *Scene) close(debug bool, config Configuration) {
+	// Broadcast all results to the mothership.
+	for _, i := range s.Interactions {
+		i.post(debug, config)
+	}
+
+	for _, i := range s.idleInteractions {
+		i.post(debug, config)
 	}
 }
 

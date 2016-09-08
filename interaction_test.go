@@ -87,13 +87,13 @@ var _ = Describe("Interaction", func() {
 	})
 
 	Context("NewInteraction", func() {
-		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc", 2.0, 0.01, 0.3, 0.2}
+		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc", 2.0, 0.01, 0.3, 1}
 
 		It("should create a new interaction", func() {
 			a := Waypoint{0, 0, 0, 0, 0.0}
-			tr := time.Now().Round(15 * time.Minute)
+			tr := time.Now().UTC().Round(15 * time.Minute)
 
-			i := NewInteraction(a, c)
+			i := NewInteraction(a, 0, c)
 			Ω(i.UUID).Should(Equal(c.UUID))
 			Ω(i.Version).Should(Equal("0.1"))
 			Ω(i.Entered).Should(Equal(tr))
@@ -105,7 +105,7 @@ var _ = Describe("Interaction", func() {
 			a := Waypoint{0, 0, 0, 0, 0.0}
 			b := Waypoint{1, 1, 1, 1, 0.005}
 
-			i := NewInteraction(a, c)
+			i := NewInteraction(a, 0, c)
 			time.Sleep(50 * time.Millisecond)
 			i.addWaypoint(b)
 			Ω(i.Duration).Should(BeNumerically("~", float32(0.05), 0.007))
@@ -120,7 +120,7 @@ var _ = Describe("Interaction", func() {
 		wpB := Waypoint{50, 50, 20, 20, 0.0}
 		wpBA := Waypoint{55, 53, 20, 20, 0.0}
 		wpC := Waypoint{150, 150, 20, 20, 0.0}
-		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc", 2.0, 0.01, 0.3, 0.2}
+		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc", 2.0, 0.01, 0.3, 1}
 
 		It("should be able to add an interaction to an empty scene", func() {
 			s := initScene()
@@ -143,7 +143,7 @@ var _ = Describe("Interaction", func() {
 			s := initScene()
 			s.addInteraction([]Waypoint{wpA}, c)
 
-			Ω(s.Interactions[0].Entered).Should(Equal(time.Now().Round(15 * time.Minute)))
+			Ω(s.Interactions[0].Entered).Should(Equal(time.Now().UTC().Round(15 * time.Minute)))
 		})
 
 		It("should be able to add an interaction to a scene with stuff already going on", func() {
