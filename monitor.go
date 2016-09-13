@@ -37,6 +37,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"time"
 	"unsafe"
 )
 
@@ -98,16 +99,29 @@ func monitor(deltaC chan Command, deltaCFG chan Configuration,
 }
 
 func calibrate(videoFile string, config Configuration) {
+	// It takes a little while for the white balance to stabalise on the logitech.
+	// So grab a frame, wait to stabalise for white balance to stabalise, then grab again
+	// for and save as the calibration frame.
 	camera, err := getVideoSource(videoFile)
 	if err != nil {
-		// No valid webcam detected either. Shutdown the scout.
+		// No valid video source, abort.
+		log.Printf("ERROR: %s\n", err)
+		return
+	}
+	calibrationFrame := C.cvQueryFrame(camera)
+	time.Sleep(1250 * time.Millisecond)
+	C.cvReleaseCapture(&camera)
+
+	camera, err = getVideoSource(videoFile)
+	if err != nil {
+		// No valid video source, abort
 		log.Printf("ERROR: %s\n", err)
 		return
 	}
 	defer C.cvReleaseCapture(&camera)
 
 	// Build the calibration image from the first frame that comes off the camera.
-	calibrationFrame := C.cvQueryFrame(camera)
+	calibrationFrame = C.cvQueryFrame(camera)
 	fileName := "calibrationFrame.jpg"
 	file := C.CString(fileName)
 	C.cvSaveImage(file, unsafe.Pointer(calibrationFrame), nil)
@@ -225,9 +239,9 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 
 		if debug {
 			var font C.CvFont
-			C.cvInitFont(&font, C.CV_FONT_HERSHEY_SIMPLEX, C.double(0.5), C.double(0.5), C.double(1.0), C.int(2), C.CV_AA);
+			C.cvInitFont(&font, C.CV_FONT_HERSHEY_SIMPLEX, C.double(0.5), C.double(0.5), C.double(1.0), C.int(2), C.CV_AA)
 			txt := C.CString("Hello friend.")
-			C.cvPutText(unsafe.Pointer(nextFrame), txt, C.cvPoint(2, 2), &font, C.cvScalar(255.0, 255.0, 255.0, 255));
+			C.cvPutText(unsafe.Pointer(nextFrame), txt, C.cvPoint(2, 2), &font, C.cvScalar(255.0, 255.0, 255.0, 255))
 			C.free(unsafe.Pointer(txt))
 
 			// DEBUG -- render current interaction path for detected objects.
@@ -239,18 +253,18 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 
 				w := i.lastWaypoint()
 				txt := C.CString(fmt.Sprintf("%01d", i.SceneID))
-				C.cvPutText(unsafe.Pointer(nextFrame), txt, C.cvPoint(C.int(w.XPixels + 10), C.int(w.YPixels + 10)), &font, C.cvScalar(255.0, 255.0, 255.0, 255));
+				C.cvPutText(unsafe.Pointer(nextFrame), txt, C.cvPoint(C.int(w.XPixels+10), C.int(w.YPixels+10)), &font, C.cvScalar(255.0, 255.0, 255.0, 255))
 				C.free(unsafe.Pointer(txt))
 			}
 
 			for _, i := range scene.idleInteractions {
 				w := i.lastWaypoint()
-				pt1 := C.cvPoint(C.int(w.XPixels - w.HalfWidthPixels + 5), C.int(w.YPixels - w.HalfHeightPixels + 5))
-				pt2 := C.cvPoint(C.int(w.XPixels + w.HalfWidthPixels - 5), C.int(w.YPixels + w.HalfHeightPixels - 5))
+				pt1 := C.cvPoint(C.int(w.XPixels-w.HalfWidthPixels+5), C.int(w.YPixels-w.HalfHeightPixels+5))
+				pt2 := C.cvPoint(C.int(w.XPixels+w.HalfWidthPixels-5), C.int(w.YPixels+w.HalfHeightPixels-5))
 				C.cvRectangle(unsafe.Pointer(nextFrame), pt1, pt2, C.cvScalar(16.0, 186.0, 8.0, 255), C.int(5), C.int(8), C.int(0))
 
 				txt := C.CString("i:" + fmt.Sprintf("%01d", i.SceneID))
-				C.cvPutText(unsafe.Pointer(nextFrame), txt, C.cvPoint(C.int(w.XPixels + 10), C.int(w.YPixels + 10)), &font, C.cvScalar(255.0, 255.0, 255.0, 255));
+				C.cvPutText(unsafe.Pointer(nextFrame), txt, C.cvPoint(C.int(w.XPixels+10), C.int(w.YPixels+10)), &font, C.cvScalar(255.0, 255.0, 255.0, 255))
 				C.free(unsafe.Pointer(txt))
 			}
 
@@ -258,7 +272,6 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 			C.cvSaveImage(file, unsafe.Pointer(nextFrame), nil)
 			C.free(unsafe.Pointer(file))
 			frame++
-
 
 		}
 	}

@@ -25,9 +25,9 @@ import (
 )
 
 type Scene struct {
-	Interactions     []Interaction  // The current interactions occuring within the scene.
-	idleInteractions []Interaction  // The current interactions that are idle (resumable).
-	sId	 int
+	Interactions     []Interaction // The current interactions occuring within the scene.
+	idleInteractions []Interaction // The current interactions that are idle (resumable).
+	sId              int
 }
 
 // initScene creates an empty scene that can be used for monitoring interactions.

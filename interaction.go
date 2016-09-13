@@ -33,7 +33,7 @@ type Interaction struct {
 	started  time.Time  // The actual time the interaction started. Private. Not to be transmitted for privacy concerns
 	Duration float32    // The total duration of the interaction.
 	Path     []Waypoint // The pathway of the interaction through the scene.
-	SceneID	 int
+	SceneID  int
 }
 
 func (i Interaction) Equal(wp []Waypoint) bool {
