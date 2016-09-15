@@ -236,6 +236,7 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 		}
 
 		scene.update(detectedObjects, debug, config)
+		C.cvReleaseMemStorage(&storage)
 
 		if debug {
 			var font C.CvFont
