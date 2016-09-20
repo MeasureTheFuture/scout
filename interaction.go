@@ -119,6 +119,7 @@ func (i *Interaction) post(debug bool, config Configuration) {
 	err := encoder.Encode(i)
 	if err != nil {
 		log.Printf("ERROR: Unable to encode interaction for transport to mothership")
+		log.Print(err)
 	}
 
 	if debug {

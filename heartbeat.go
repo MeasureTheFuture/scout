@@ -55,6 +55,7 @@ func getIpAddress() string {
 	addys, err := net.InterfaceAddrs()
 	if err != nil {
 		log.Printf("ERROR: Unable to get the IP address for the scout.")
+		log.Print(err)
 		return ""
 	}
 
@@ -73,6 +74,7 @@ func getCPULoad() float32 {
 	c, err := load.Avg()
 	if err != nil {
 		log.Printf("ERROR: Unable to get CPU load for the scout.")
+		log.Print(err)
 	}
 
 	return float32(c.Load5)
@@ -82,6 +84,7 @@ func getMemoryUsage() (float32, float32) {
 	v, err := mem.VirtualMemory()
 	if err != nil {
 		log.Printf("ERROR: Unable to get memory usage for the scout.")
+		log.Print(err)
 	}
 
 	return float32(v.Total), (float32(v.UsedPercent) / 100.0)
@@ -101,6 +104,7 @@ func postLog(config Configuration, tmpLog string) {
 	f, err := os.Open(tmpLog)
 	if err != nil {
 		log.Printf("Unable to open temporary log")
+		log.Print(err)
 		return
 	}
 
@@ -116,6 +120,7 @@ func (h *Heartbeat) post(config Configuration) {
 	err := encoder.Encode(h)
 	if err != nil {
 		log.Printf("ERROR: Unable to encode configuration for transport to mothership")
+		log.Print(err)
 	}
 
 	post("heartbeat.json", config.MothershipAddress+"/scout_api/heartbeat", config.UUID, &body)

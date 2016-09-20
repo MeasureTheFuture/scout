@@ -119,12 +119,14 @@ func post(fileName string, url string, uuid string, src io.Reader) {
 	part, err := w.CreateFormFile("file", fileName)
 	if err != nil {
 		log.Printf("ERROR: Unable to create form element for broadcast")
+		log.Print(err)
 		w.Close()
 	}
 
 	_, err = io.Copy(part, src)
 	if err != nil {
 		log.Printf("ERROR: unable to copy frame into multipart message")
+		log.Print(err)
 		w.Close()
 	}
 
@@ -133,7 +135,8 @@ func post(fileName string, url string, uuid string, src io.Reader) {
 
 	req, err := http.NewRequest("POST", url, &body)
 	if err != nil {
-		log.Printf("ERROR: Unable to create multipart message. %+v\n", err)
+		log.Printf("ERROR: Unable to create multipart message.")
+		log.Print(err)
 	}
 	req.Header.Add("Mothership-Authorization", uuid)
 	req.Header.Set("Content-Type", contentType)
@@ -141,6 +144,7 @@ func post(fileName string, url string, uuid string, src io.Reader) {
 	client := &http.Client{}
 	_, err = client.Do(req)
 	if err != nil {
-		log.Printf("ERROR: Unable to send multipart message. %+v\n", err)
+		log.Printf("ERROR: Unable to send multipart message.")
+		log.Print(err)
 	}
 }

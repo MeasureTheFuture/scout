@@ -105,7 +105,8 @@ func calibrate(videoFile string, config Configuration) {
 	camera, err := getVideoSource(videoFile)
 	if err != nil {
 		// No valid video source, abort.
-		log.Printf("ERROR: %s\n", err)
+		log.Printf("ERROR: Unable to get video source")
+		log.Print(err)
 		return
 	}
 	calibrationFrame := C.cvQueryFrame(camera)
@@ -115,7 +116,8 @@ func calibrate(videoFile string, config Configuration) {
 	camera, err = getVideoSource(videoFile)
 	if err != nil {
 		// No valid video source, abort
-		log.Printf("ERROR: %s\n", err)
+		log.Printf("ERROR: Unable to get video source")
+		log.Print(err)
 		return
 	}
 	defer C.cvReleaseCapture(&camera)
@@ -131,6 +133,7 @@ func calibrate(videoFile string, config Configuration) {
 	f, err := os.Open(fileName)
 	if err != nil {
 		log.Printf("ERROR: Unable to open calibration frame to broadcast")
+		log.Print(err)
 		return
 	}
 	defer f.Close()
@@ -141,7 +144,8 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 	camera, err := getVideoSource(videoFile)
 	if err != nil {
 		// No valid video source. Abort measuring.
-		log.Printf("ERROR: %s\n", err)
+		log.Printf("ERROR: Unable to get video source")
+		log.Print(err)
 		return
 	}
 	defer C.cvReleaseCapture(&camera)
@@ -159,6 +163,7 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 		C.free(unsafe.Pointer(file))
 	} else {
 		log.Printf("ERROR: Unable to measure, missing calibration frame")
+		log.Print(err)
 		return
 	}
 

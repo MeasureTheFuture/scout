@@ -55,6 +55,7 @@ func saveConfiguration(configFile string, c Configuration) {
 	err = encoder.Encode(&c)
 	if err != nil {
 		log.Printf("ERROR: Unable to encode configuration file")
+		log.Print(err)
 	}
 	log.Printf("INFO: Saved configuration to disk")
 }
