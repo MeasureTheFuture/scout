@@ -80,5 +80,12 @@ func main() {
 	deltaCFG := make(chan Configuration, 1)
 
 	go controller(deltaC, deltaCFG, configFile, config)
+	// Test to see if the scout is still in measurement mode on boot and resume if necssary.
+	go func() {
+		if _, err := os.Stat(".mtf-measure"); err == nil {
+			log.Printf("INFO: Resuming.")
+			deltaC <- START_MEASURE
+		}
+	}()
 	monitor(deltaC, deltaCFG, videoFile, debug, config)
 }

@@ -87,11 +87,26 @@ func monitor(deltaC chan Command, deltaCFG chan Configuration,
 
 		case c == START_MEASURE:
 			log.Printf("INFO: Starting measure")
+
+			// Create a hidden file to store the measuring state across reboots.
+			f, err := os.Create(".mtf-measure")
+			f.Close()
+			if err != nil && os.IsNotExist(err) {
+				log.Printf("ERROR: Unable to create .mtf-measure file")
+				log.Print(err)
+			}
+
 			measure(deltaC, videoFile, debug, config)
 
 		case c == STOP_MEASURE:
 			log.Printf("INFO: Stopping measure")
-			// Nothing to do at the moment.
+
+			// Delete the hidden file to indicate that measuring has stopped across reboots.
+			err := os.Remove(".mtf-measure")
+			if err != nil && os.IsNotExist(err) {
+				log.Printf("ERROR: Unable to remove .mtf-measure file")
+				log.Print(err)
+			}
 		}
 	}
 
