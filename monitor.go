@@ -36,6 +36,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"runtime"
 	"time"
 	"unsafe"
@@ -164,6 +165,16 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 		return
 	}
 	defer C.cvReleaseCapture(&camera)
+
+	// Make sure we release the camera when the operating system crushes us.
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		log.Printf("INFO: The OS shut down the scout.")
+		C.cvReleaseCapture(&camera)
+		return
+	}()
 
 	scene := initScene()
 
