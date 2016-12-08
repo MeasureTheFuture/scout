@@ -140,6 +140,7 @@ func post(fileName string, url string, uuid string, src io.Reader) {
 	}
 	req.Header.Add("Mothership-Authorization", uuid)
 	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("Connection", "close")
 
 	client := &http.Client{}
 	_, err = client.Do(req)
