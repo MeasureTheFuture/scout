@@ -143,7 +143,7 @@ func post(fileName string, url string, uuid string, src io.Reader) {
 	req.Header.Set("Connection", "close")
 
 	client := &http.Client{}
-	resp, err = client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERROR: Unable to send multipart message.")
 		log.Print(err)
