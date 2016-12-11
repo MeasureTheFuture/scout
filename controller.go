@@ -20,6 +20,7 @@ package main
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
