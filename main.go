@@ -72,6 +72,8 @@ func main() {
 	}
 	defer db.Close()
 
+	//TODO: Init UUID for scout on first boot - this used to be done in parse above.
+
 	// Send old log to mothership on startup.
 	//postLog(config, tmpLog)
 
