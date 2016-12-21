@@ -150,6 +150,6 @@ func post(fileName string, url string, uuid string, src io.Reader) {
 		log.Print(err)
 	}
 
-	defer resp.Body.Close() // Client must close body when we are done.
+	defer resp.Body.Close()   // Client must close body when we are done.
 	ioutil.ReadAll(resp.Body) // Ignore the response.
 }

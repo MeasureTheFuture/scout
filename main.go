@@ -18,10 +18,13 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
+	"github.com/MeasureTheFuture/scout/processes"
 	"log"
 	"os"
-	"time"
+	//"time"
+	_ "github.com/lib/pq"
 )
 
 var mainfunc = make(chan func())
@@ -53,39 +56,46 @@ func main() {
 	log.SetOutput(f)
 	log.Printf("INFO: Starting scout.\n")
 
-	config, err := parseConfiguration(configFile)
+	config, err := configuration.Parse(configFile)
 	if err != nil {
-		log.Printf("INFO: %s", err)
-		log.Printf("INFO: Unable to open '%s', creating one with default values.", configFile)
-
-		// Save the default config file to disk.
-		saveConfiguration(configFile, config)
+		log.Fatalf("ERROR: Can't parse configuration - %s", err)
 	}
 
+	connection := "user=" + config.DBUserName + " dbname=" + config.DBName
+	if config.DBPassword != "" {
+		connection = connection + " password=" + config.DBPassword
+	}
+
+	db, err := sql.Open("postgres", connection)
+	if err != nil {
+		log.Fatalf("ERROR: Can't open database - %s", err)
+	}
+	defer db.Close()
+
+	// config, err := parseConfiguration(configFile)
+	// if err != nil {
+	// 	log.Printf("INFO: %s", err)
+	// 	log.Printf("INFO: Unable to open '%s', creating one with default values.", configFile)
+
+	// 	// Save the default config file to disk.
+	// 	saveConfiguration(configFile, config)
+	// }
+
 	// Send old log to mothership on startup.
-	postLog(config, tmpLog)
+	//postLog(config, tmpLog)
 
-	// Send initial health heartbeat on startup.
-	NewHeartbeat(config).post(config)
+	go processes.HealthHeartbeat(db, config)
 
-	// Send periodic health heartbeats to the mothership.
-	ticker := time.NewTicker(time.Minute * 15)
-	go func() {
-		for range ticker.C {
-			NewHeartbeat(config).post(config)
-		}
-	}()
+	// deltaC := make(chan Command)
+	// deltaCFG := make(chan Configuration, 1)
 
-	deltaC := make(chan Command)
-	deltaCFG := make(chan Configuration, 1)
-
-	go controller(deltaC, deltaCFG, configFile, config)
+	//go controller(deltaC, deltaCFG, configFile, config)
 	// Test to see if the scout is still in measurement mode on boot and resume if necssary.
-	go func() {
-		if _, err := os.Stat(".mtf-measure"); err == nil {
-			log.Printf("INFO: Resuming.")
-			deltaC <- START_MEASURE
-		}
-	}()
-	monitor(deltaC, deltaCFG, videoFile, debug, config)
+	// go func() {
+	// 	if _, err := os.Stat(".mtf-measure"); err == nil {
+	// 		log.Printf("INFO: Resuming.")
+	// 		deltaC <- START_MEASURE
+	// 	}
+	// }()
+	// monitor(deltaC, deltaCFG, videoFile, debug, config)
 }

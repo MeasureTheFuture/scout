@@ -15,11 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package main
+package processes
 
 import (
 	"bufio"
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
@@ -42,6 +43,21 @@ type HealthData struct {
 	Memory      float32 // The amount of memory consumed on the scout. 0.0 - no memory used, 1.0 no memory available.
 	TotalMemory float32 // The total number of gigabytes of virtual memory currently available.
 	Storage     float32 // The amount of storage consumed on the scout. 0.0 - disk unused, 1.0 disk full.
+}
+
+func HealthHeartbeat(db *sql.DB, config Configuration) {
+
+	// Send initial health heartbeat on startup.
+	NewHeartbeat(config).post(config)
+
+	// Send periodic health heartbeats to the mothership.
+	poll := time.NewTicker(time.Minute * 15).C
+	for {
+		select {
+		case <-poll:
+			NewHeartbeat(config).post(config)
+		}
+	}
 }
 
 func NewHeartbeat(config Configuration) *Heartbeat {
