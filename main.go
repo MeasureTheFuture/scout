@@ -21,10 +21,9 @@ import (
 	"database/sql"
 	"flag"
 	"github.com/MeasureTheFuture/scout/processes"
+	_ "github.com/lib/pq"
 	"log"
 	"os"
-	//"time"
-	_ "github.com/lib/pq"
 )
 
 var mainfunc = make(chan func())
@@ -59,6 +58,7 @@ func main() {
 	config, err := configuration.Parse(configFile)
 	if err != nil {
 		log.Fatalf("ERROR: Can't parse configuration - %s", err)
+
 	}
 
 	connection := "user=" + config.DBUserName + " dbname=" + config.DBName
@@ -71,15 +71,6 @@ func main() {
 		log.Fatalf("ERROR: Can't open database - %s", err)
 	}
 	defer db.Close()
-
-	// config, err := parseConfiguration(configFile)
-	// if err != nil {
-	// 	log.Printf("INFO: %s", err)
-	// 	log.Printf("INFO: Unable to open '%s', creating one with default values.", configFile)
-
-	// 	// Save the default config file to disk.
-	// 	saveConfiguration(configFile, config)
-	// }
 
 	// Send old log to mothership on startup.
 	//postLog(config, tmpLog)

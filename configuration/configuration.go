@@ -18,7 +18,7 @@
 package configuration
 
 import (
- 	"bufio"
+	"bufio"
 	"encoding/json"
 	"path/filepath"
 	//"log"
@@ -92,8 +92,8 @@ func SaveAsJSON(v interface{}, fileName string) error {
 func Parse(configFile string) (c Configuration, err error) {
 	u := NewUUID()
 	c = Configuration{"mtf", "", "mothership", "mothership_test", ":80", "public", 1000,
-					  14000.0, 10, 128, 5, 500, 30, 1, "127.0.0.1:8080", "http://127.0.0.1",
-					  u.String(), 5.0, float32(1.0), float32(1.0), 40}
+		14000.0, 10, 128, 5, 500, 30, 1, "127.0.0.1:8080", "http://127.0.0.1",
+		u.String(), 5.0, float32(1.0), float32(1.0), 40}
 
 	// Open the configuration file.
 	file, err := os.Open(configFile)

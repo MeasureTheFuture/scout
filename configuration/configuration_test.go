@@ -65,8 +65,8 @@ var _ = Describe("Configuration", func() {
 	Context("Saving", func() {
 		It("should be able to save a config file", func() {
 			c := Configuration{"mtf", "", "mothership", "mothership_test", ":80", "public", 1000,
-							   2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091",
-							   "0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091",
+				"0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.2, 0.3, 1}
 			SaveAsJSON(c, "../testdata/foo.json")
 
 			a, err := Parse("../scout.json_example")
