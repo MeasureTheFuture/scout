@@ -71,20 +71,11 @@ func updateUnprocessed(db *sql.DB) {
 	}
 }
 
-const (
-	FrameW   = 1920
-	FrameH   = 1080
-	WBuckets = 20
-	HBuckets = 20
-	BucketW  = FrameW / WBuckets
-	BucketH  = FrameH / HBuckets
-)
-
 func maxTravelTime(a models.Waypoint, b models.Waypoint) float32 {
 	travelD := vec.Vec{(b.XPixels - a.XPixels), (b.YPixels - a.YPixels)}
 	travelG := float32(travelD[1]) / float32(travelD[0])
 
-	x := float32(FrameW) / float32(WBuckets)
+	x := float32(configuration.FrameW) / float32(configuration.WBuckets)
 	y := x * travelG
 	bucketD := vec.Vec{int(x), int(y)}
 
@@ -106,16 +97,16 @@ func updateTimeBuckets(db *sql.DB, ss *models.ScoutSummary, si *models.ScoutInte
 		wpB := models.Waypoint{si.Waypoints[k+1][0], si.Waypoints[k+1][1],
 			si.WaypointWidths[k+1][0], si.WaypointWidths[k+1][1], si.WaypointTimes[k+1]}
 
-		s := vec.ShaftFromWaypoints(wpA, wpB, FrameW, FrameH)
+		s := vec.ShaftFromWaypoints(wpA, wpB, configuration.FrameW, configuration.FrameH)
 
 		// Work out maximum travel time that can be spent in a bucket.
 		mt := maxTravelTime(wpA, wpB)
 
 		// For each of the buckets, see if it intersects the shaft AABB and if it does
 		// increment the bucket time by the maximum travel time.
-		for i := 0; i < WBuckets; i++ {
-			for j := 0; j < HBuckets; j++ {
-				bucket := vec.AABBFromIndex(i, j, BucketW, BucketH)
+		for i := 0; i < configuration.WBuckets; i++ {
+			for j := 0; j < configuration.HBuckets; j++ {
+				bucket := vec.AABBFromIndex(i, j, configuration.BucketW, configuration.BucketH)
 				// TODO: Possibly improve time estimate by working out how much of
 				// the bucket overlaps the shaft. Use it as a ratio between 0 and 1
 				// to multiply max time.

@@ -73,11 +73,49 @@ func main() {
 	defer db.Close()
 
 	//TODO: Init UUID for scout on first boot - this used to be done in parse above.
+	//TODO: Shift much of the config metadata into the DB.
+	//TODO: Remove the scout ID and just have UUID.
 
-	// Send old log to mothership on startup.
-	//postLog(config, tmpLog)
+	//TODO: Store old log in DB.
+	// postLog(config, tmpLog)
+
+	//TODO: Remove the old scoutAPI interface completely.
+	//TODO: Merge interaction and ScoutInteraction.
 
 	go processes.HealthHeartbeat(db, config)
+	go processes.Summarise(db, config)
+
+	e := echo.New()
+	e.Static("/", config.StaticAssets)
+	e.Static("/css", config.StaticAssets+"/css")
+	e.Static("/fonts", config.StaticAssets+"/fonts")
+	e.Static("/img", config.StaticAssets+"/img")
+
+	// Front-end API for displaying results from the scouts.
+	e.GET("/scouts", func(c echo.Context) error {
+		return controllers.GetScouts(db, c)
+	})
+
+	e.GET("/scouts/:id/frame.jpg", func(c echo.Context) error {
+		return controllers.GetScoutFrame(db, c)
+	})
+
+	e.GET("/scouts/:id", func(c echo.Context) error {
+		return controllers.GetScout(db, c)
+	})
+
+	e.PUT("/scouts/:id", func(c echo.Context) error {
+		return controllers.UpdateScout(db, c)
+	})
+
+	e.GET("/download.zip", func(c echo.Context) error {
+		return controllers.DownloadData(db, c)
+	})
+
+	// Start scout user-interface.
+	if err := e.Start(config.Address); err != nil {
+		e.Logger.Fatal(err)
+	}
 
 	// deltaC := make(chan Command)
 	// deltaCFG := make(chan Configuration, 1)
