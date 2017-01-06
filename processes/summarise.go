@@ -19,9 +19,9 @@ package processes
 
 import (
 	"database/sql"
-	"github.com/MeasureTheFuture/scout/configuration"
-	"github.com/MeasureTheFuture/scout/models"
-	"github.com/MeasureTheFuture/scout/vec"
+	"github.com/MeasureTheFuture/mothership/configuration"
+	"github.com/MeasureTheFuture/mothership/models"
+	"github.com/MeasureTheFuture/mothership/vec"
 	"log"
 	"time"
 )
@@ -96,9 +96,10 @@ func maxTravelTime(a models.Waypoint, b models.Waypoint) float32 {
 }
 
 func updateTimeBuckets(db *sql.DB, ss *models.ScoutSummary, si *models.ScoutInteraction) {
+	var intersected [configuration.HBuckets][configuration.WBuckets]bool
+
 	// For each segment in an interaction.
 	for k := 0; k < (len(si.Waypoints) - 1); k++ {
-
 		// Generate a shaft AABB from the two waypoints.
 		wpA := models.Waypoint{si.Waypoints[k][0], si.Waypoints[k][1],
 			si.WaypointWidths[k][0], si.WaypointWidths[k][1], si.WaypointTimes[k]}
@@ -118,8 +119,16 @@ func updateTimeBuckets(db *sql.DB, ss *models.ScoutSummary, si *models.ScoutInte
 				// TODO: Possibly improve time estimate by working out how much of
 				// the bucket overlaps the shaft. Use it as a ratio between 0 and 1
 				// to multiply max time.
+				//
+				// At the moment we allocate mt (the maximum possible travel time)
+				// to the bucket once per interaction. Event if more than one segment
+				// intersects this bucket.
 				if s.Intersects(&bucket) {
-					ss.VisitTimeBuckets[i][j] += mt
+					if !intersected[i][j] {
+						ss.VisitTimeBuckets[i][j] += mt
+						ss.VisitorBuckets[i][j] += 1
+						intersected[i][j] = true
+					}
 				}
 			}
 		}

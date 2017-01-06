@@ -113,20 +113,26 @@ var Heatmap = React.createClass({
       +this.lerp(0.5, 0.5, t)+")"
   },
 
-  maxTime: function(buckets) {
-    var maxT = 0.0;
+  maxLoiter: function(buckets, vBuckets) {
+    var maxL = 0.0;
 
-    buckets.map(function(i) {
-      i.map(function(j) {
-        maxT = Math.max(maxT, j);
+    buckets.map(function(v, i) {
+      v.map(function(t, j) {
+        var l = 0.0;
+
+        if (vBuckets[i][j] > 0) {
+          l = t / vBuckets[i][j];
+        }
+
+        maxL = Math.max(maxL, l);
       })
     })
 
-    if (maxT < 0.1) {
+    if (maxL < 0.1) {
       return 10.0;
     }
 
-    return maxT;
+    return maxL;
   },
 
   pluralize :function(n) {
@@ -163,24 +169,26 @@ var Heatmap = React.createClass({
     const { store } = this.context;
     var url = 'scouts/'+ActiveLocation(store).id+'/frame.jpg?d=' + new Date().getTime();
     var buckets = ActiveLocation(store).summary.VisitTimeBuckets;
+    var vBuckets = ActiveLocation(store).summary.VisitorBuckets;
     var w = 1920;
     var h = 1080;
     var iBuckets = buckets.length;
     var jBuckets = buckets[0].length;
     var bucketW = w/iBuckets;
     var bucketH = h/jBuckets;
-    var maxT = this.maxTime(buckets);
+    var maxL = this.maxLoiter(buckets, vBuckets);
     var viewBox="0 0 " + w + " " + 1165;
 
     var data = []
     for (var i = 0; i < iBuckets; i++) {
       for (var j = 0; j < jBuckets; j++) {
-        var t = 0.0;
-        if (maxT > 0.0) {
-          t = buckets[i][j] / maxT;
+        var l = 0.0;
+        if (maxL > 0.0 && vBuckets[i][j] > 0) {
+          l = (buckets[i][j] / vBuckets[i][j]) / maxL;
         }
 
-        data.push(<rect key={i*iBuckets+j} x={i*bucketW} y={j*bucketH} width={bucketW} height={bucketH} style={{fill:this.generateFill(t)}} />);
+        data.push(<rect key={i*iBuckets+j} x={i*bucketW} y={j*bucketH} width={bucketW} height={bucketH} style={{fill:this.generateFill(l)}} />);
+        //data.push(<text x={i*bucketW} y={j*bucketH} textAnchor="right" style={{fontSize:26,fontFamily:"Verdana, Geneva, sans-serif",fontWeight:"bold",letterSpacing:"-2px"}}>{vBuckets[i][j].toFixed(2)}</text>)
       }
     }
 
@@ -191,13 +199,13 @@ var Heatmap = React.createClass({
 
     return (
       <div id="heatmap">
-      <h3>ACCUMULATED INTERACTION TIME</h3>
+      <h3>AVERAGE LOITER TIME</h3>
       <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox={viewBox}>
         <image x="0" y="0" width={w} height={h} xlinkHref={url}/>
         {data}{scale}
         <text x="2" y={h+65} style={{fontSize:36,fontFamily:"Verdana, Geneva, sans-serif",fontWeight:"bold",letterSpacing:"-2px"}}>{this.secondsToStr(0.0)}</text>
-        <text x="957" y={h+65} textAnchor="middle" style={{fontSize:36,fontFamily:"Verdana, Geneva, sans-serif",fontWeight:"bold",letterSpacing:"-2px"}}>{this.secondsToStr(0.5*maxT)}</text>
-        <text x="1918" y={h+65} textAnchor="end" style={{fontSize:36,fontFamily:"Verdana, Geneva, sans-serif",fontWeight:"bold",letterSpacing:"-2px"}}>{this.secondsToStr(maxT)}</text>
+        <text x="957" y={h+65} textAnchor="middle" style={{fontSize:36,fontFamily:"Verdana, Geneva, sans-serif",fontWeight:"bold",letterSpacing:"-2px"}}>{this.secondsToStr(0.5*maxL)}</text>
+        <text x="1918" y={h+65} textAnchor="end" style={{fontSize:36,fontFamily:"Verdana, Geneva, sans-serif",fontWeight:"bold",letterSpacing:"-2px"}}>{this.secondsToStr(maxL)}</text>
       </svg>
       </div>
     )

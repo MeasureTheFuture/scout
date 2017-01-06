@@ -21,18 +21,43 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	"github.com/MeasureTheFuture/scout/configuration"
+	"github.com/MeasureTheFuture/mothership/configuration"
 	_ "github.com/lib/pq"
 	"strconv"
 	"strings"
 )
 
-type Buckets [20][20]float32
+type Buckets [configuration.HBuckets][configuration.WBuckets]float32
+type IntBuckets [configuration.HBuckets][configuration.WBuckets]int
 
 type ScoutSummary struct {
 	ScoutId          int64
 	VisitorCount     int64
 	VisitTimeBuckets Buckets
+	VisitorBuckets   IntBuckets
+}
+
+func (b IntBuckets) Value() (driver.Value, error) {
+	res := "{"
+	for i, r := range b {
+		res = res + "{"
+
+		for j, v := range r {
+			res = res + strconv.Itoa(v)
+
+			if j < len(r)-1 {
+				res = res + ","
+			}
+		}
+
+		res = res + "}"
+		if i < len(r)-1 {
+			res = res + ","
+		}
+	}
+	res = res + "}"
+
+	return res, nil
 }
 
 func (b Buckets) Value() (driver.Value, error) {
@@ -58,10 +83,37 @@ func (b Buckets) Value() (driver.Value, error) {
 	return res, nil
 }
 
+func (b *IntBuckets) Scan(value interface{}) error {
+	asBytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("Unable to deserialise IntBuckets")
+	}
+
+	asString := string(asBytes)
+	asString = asString[2 : len(asString)-2]
+	elements := strings.Split(asString, "},{")
+
+	var res IntBuckets
+	for i, r := range elements {
+		wp := strings.Split(r, ",")
+		for j, v := range wp {
+			bv, err := strconv.Atoi(v)
+			if err != nil {
+				return err
+			}
+
+			res[i][j] = bv
+		}
+	}
+
+	*b = res
+	return nil
+}
+
 func (b *Buckets) Scan(value interface{}) error {
 	asBytes, ok := value.([]byte)
 	if !ok {
-		return errors.New("Unable to deserialise Path")
+		return errors.New("Unable to deserialise Buckets")
 	}
 
 	asString := string(asBytes)
@@ -86,10 +138,10 @@ func (b *Buckets) Scan(value interface{}) error {
 }
 
 func GetScoutSummaryById(db *sql.DB, scoutId int64) (*ScoutSummary, error) {
-	const query = `SELECT visitor_count, visit_time_buckets FROM scout_summaries WHERE scout_id = $1`
+	const query = `SELECT visitor_count, visit_time_buckets, visitor_buckets FROM scout_summaries WHERE scout_id = $1`
 
 	var result ScoutSummary
-	err := db.QueryRow(query, scoutId).Scan(&result.VisitorCount, &result.VisitTimeBuckets)
+	err := db.QueryRow(query, scoutId).Scan(&result.VisitorCount, &result.VisitTimeBuckets, &result.VisitorBuckets)
 	result.ScoutId = scoutId
 
 	return &result, err
@@ -98,20 +150,21 @@ func GetScoutSummaryById(db *sql.DB, scoutId int64) (*ScoutSummary, error) {
 func (si *ScoutSummary) Clear(db *sql.DB) error {
 	si.VisitorCount = 0
 	si.VisitTimeBuckets = Buckets{}
+	si.VisitorBuckets = IntBuckets{}
 
 	return si.Update(db)
 }
 
 func (si *ScoutSummary) Insert(db *sql.DB) error {
-	const query = `INSERT INTO scout_summaries (scout_id, visitor_count, visit_time_buckets) VALUES ($1, $2, $3)`
-	_, err := db.Exec(query, si.ScoutId, si.VisitorCount, si.VisitTimeBuckets)
+	const query = `INSERT INTO scout_summaries (scout_id, visitor_count, visit_time_buckets, visitor_buckets) VALUES ($1, $2, $3, $4)`
+	_, err := db.Exec(query, si.ScoutId, si.VisitorCount, si.VisitTimeBuckets, si.VisitorBuckets)
 
 	return err
 }
 
 func (si *ScoutSummary) Update(db *sql.DB) error {
-	const query = `UPDATE scout_summaries SET visitor_count = $1, visit_time_buckets = $2 WHERE scout_id = $3`
-	_, err := db.Exec(query, si.VisitorCount, si.VisitTimeBuckets, si.ScoutId)
+	const query = `UPDATE scout_summaries SET visitor_count = $1, visit_time_buckets = $2, visitor_buckets = $3 WHERE scout_id = $4`
+	_, err := db.Exec(query, si.VisitorCount, si.VisitTimeBuckets, si.VisitorBuckets, si.ScoutId)
 
 	return err
 }
@@ -131,7 +184,7 @@ func ScoutSummariesAsJSON(db *sql.DB) (string, error) {
 	var result []ScoutSummary
 	for rows.Next() {
 		var ss ScoutSummary
-		err = rows.Scan(&ss.ScoutId, &ss.VisitorCount, &ss.VisitTimeBuckets)
+		err = rows.Scan(&ss.ScoutId, &ss.VisitorCount, &ss.VisitTimeBuckets, &ss.VisitorBuckets)
 		if err != nil {
 			return file, err
 		}

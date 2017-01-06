@@ -22,7 +22,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
-	"github.com/MeasureTheFuture/scout/configuration"
+	"github.com/MeasureTheFuture/mothership/configuration"
 	_ "github.com/lib/pq"
 	"io/ioutil"
 )
@@ -82,6 +82,7 @@ func GetScoutByUUID(db *sql.DB, uuid string) (*Scout, error) {
 	var result Scout
 	err := db.QueryRow(query, uuid).Scan(&result.Id, &result.IpAddress, &result.Port, &result.Authorised,
 		&result.Name, &result.State)
+
 	result.UUID = uuid
 	result.Summary, err = GetScoutSummaryById(db, result.Id)
 	if err != nil {
@@ -157,7 +158,7 @@ func (s *Scout) Insert(db *sql.DB) error {
 	}
 
 	// Create matching empty summary.
-	s.Summary = &ScoutSummary{s.Id, 0, Buckets{}}
+	s.Summary = &ScoutSummary{s.Id, 0, Buckets{}, IntBuckets{}}
 	return s.Summary.Insert(db)
 }
 

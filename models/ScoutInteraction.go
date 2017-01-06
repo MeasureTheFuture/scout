@@ -21,7 +21,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	"github.com/MeasureTheFuture/scout/configuration"
+	"github.com/MeasureTheFuture/mothership/configuration"
 	_ "github.com/lib/pq"
 	"strconv"
 	"strings"

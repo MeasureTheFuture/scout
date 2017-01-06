@@ -19,8 +19,8 @@ package processes
 
 import (
 	"database/sql"
-	"github.com/MeasureTheFuture/scout/configuration"
-	"github.com/MeasureTheFuture/scout/models"
+	"github.com/MeasureTheFuture/mothership/configuration"
+	"github.com/MeasureTheFuture/mothership/models"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"os"
@@ -130,23 +130,31 @@ var _ = Describe("Summarise Process", func() {
 
 	Context("updateTimeBuckets", func() {
 		PIt("it should update the travel times for the buckets in a scout summary", func() {
-			// wpA :=
+			ss := &models.ScoutSummary{}
+			s := models.Scout{-1, "59ef7180-f6b2-4129-99bf-970eb4312b4b",
+				"192.168.0.1", 8080, true, "foo", "calibrating", ss}
+			err := s.Insert(db)
+			Ω(err).Should(BeNil())
 
-			//       {
-			//       "XPixels":1153,
-			//       "YPixels":254,
-			//       "HalfWidthPixels":24,
-			//       "HalfHeightPixels":64,
-			//       "T":5.23e-07
-			//    },
-			//    {
-			//       "XPixels":1166,
-			//       "YPixels":267,
-			//       "HalfWidthPixels":36,
-			//       "HalfHeightPixels":77,
-			//       "T":1.6694527
-			//    },
-			// TODO.
+			et := time.Now().UTC().Round(15 * time.Minute)
+			si := &models.ScoutInteraction{-1, s.Id, 0.2, models.Path{[2]int{1, 2}},
+				models.Path{[2]int{0, 0}, [2]int{0, 25}}, models.RealArray{0.0, 1.0}, false, et}
+			err = si.Insert(db)
+			Ω(err).Should(BeNil())
+
+			updateTimeBuckets(db, ss, si)
+
+			ssA, err := models.GetScoutSummaryById(db, s.Id)
+			Ω(err).Should(BeNil())
+			Ω(ssA.VisitorCount).Should(Equal(int64(1)))
+
+			tBuckets := models.Buckets{}
+			tBuckets[0][0] = 1.0
+			vBuckets := models.IntBuckets{}
+			vBuckets[0][0] = 1
+
+			Ω(ssA.VisitTimeBuckets).Should(Equal(tBuckets))
+			Ω(ssA.VisitorBuckets).Should(Equal(vBuckets))
 		})
 	})
 })

@@ -40,7 +40,7 @@ var _ = Describe("Scout Summary Model", func() {
 
 			ss, err := GetScoutSummaryById(db, s.Id)
 			Ω(err).Should(BeNil())
-			Ω(ss).Should(Equal(&ScoutSummary{s.Id, 0, Buckets{}}))
+			Ω(ss).Should(Equal(&ScoutSummary{s.Id, 0, Buckets{}, IntBuckets{}}))
 		})
 
 		It("Should be able to update existing scout summary.", func() {
@@ -53,6 +53,7 @@ var _ = Describe("Scout Summary Model", func() {
 			Ω(err).Should(BeNil())
 			ss.VisitorCount = 2
 			ss.VisitTimeBuckets[1][5] = 0.1
+			ss.VisitorBuckets[2][5] = 2
 			err = ss.Update(db)
 			Ω(err).Should(BeNil())
 
@@ -73,6 +74,7 @@ var _ = Describe("Scout Summary Model", func() {
 			Ω(err).Should(BeNil())
 			ss.VisitorCount = 2
 			ss.VisitTimeBuckets[1][5] = 0.1
+			ss.VisitorBuckets[2][5] = 2
 			err = ss.Update(db)
 			Ω(err).Should(BeNil())
 
@@ -84,6 +86,7 @@ var _ = Describe("Scout Summary Model", func() {
 			Ω(ss2).Should(Equal(ss))
 			Ω(ss2.VisitorCount).Should(Equal(int64(0)))
 			Ω(ss2.VisitTimeBuckets[1][5]).Should(Equal(float32(0)))
+			Ω(ss2.VisitorBuckets[2][5]).Should(Equal(int(0)))
 		})
 	})
 })

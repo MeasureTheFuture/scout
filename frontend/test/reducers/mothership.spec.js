@@ -35,53 +35,70 @@ describe('reducers', () => {
     it('should provide the initial state', () => {
       expect(
         Mothership(undefined, {})
-      ).toEqual({locations:[], active:0})
+      ).toEqual({locations:[], editLocation:false,  active:0})
     })
 
     it('should handle update locations', () => {
       expect(
-        Mothership({locations:[], active:0}, {
+        Mothership({locations:[], editLocation:false, active:0}, {
           type:'UPDATE_LOCATIONS',
           locations:locations})
       ).toEqual({
         locations:locations,
+        editLocation:false,
         active:0
       })
     })
 
     it('should not allow a negative active index', () => {
       expect(
-        Mothership({locations:locations, active:0}, {
+        Mothership({locations:locations, editLocation:false, active:0}, {
           type:'SET_ACTIVE',
           active: -1
         })
       ).toEqual({
         locations:locations,
+        editLocation:false,
         active: 0
       })
     })
 
     it('should not allow an index larger than length of locations', () => {
       expect(
-        Mothership({locations:locations, active: 0}, {
+        Mothership({locations:locations, editLocation:false, active: 0}, {
           type:'SET_ACTIVE',
           active: 3
         })
       ).toEqual({
         locations:locations,
+        editLocation:false,
         active: 1
       })
     })
 
     it('should set a valid index between 0 and the upper range', () => {
       expect(
-        Mothership({locations:locations, active:0}, {
+        Mothership({locations:locations, editLocation:false, active:0}, {
           type:'SET_ACTIVE',
           active: 1
         })
       ).toEqual({
         locations:locations,
+        editLocation:false,
         active: 1
+      })
+    })
+
+    it('should be able to set the location as being edited', () => {
+      expect(
+        Mothership({locations:locations, editLocation:false, active:0}, {
+          type:'EDIT_LOCATION',
+          active: 1
+        })
+      ).toEqual({
+        locations:locations,
+        editLocation:true,
+        active:0
       })
     })
   })
