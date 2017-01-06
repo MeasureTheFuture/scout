@@ -106,17 +106,7 @@ func GetScouts(db *sql.DB, c echo.Context) error {
 }
 
 func GetScoutFrame(db *sql.DB, c echo.Context) error {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		return err
-	}
-
-	s, err := models.GetScoutById(db, id)
-	if err != nil {
-		return err
-	}
-
-	frame, err := s.GetCalibrationFrame(db)
+	frame, err := ioutil.ReadFile("calibrationFrame.jpg")
 	if err != nil {
 		return err
 	}

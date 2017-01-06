@@ -32,8 +32,12 @@ package processes
 import "C"
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/MeasureTheFuture/scout/configuration"
+	"github.com/MeasureTheFuture/scout/models"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -67,8 +71,8 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 	}
 }
 
-func monitor(deltaC chan Command, deltaCFG chan Configuration,
-	videoFile string, debug bool, config Configuration) {
+func monitor(db *sql.DB, deltaC chan models.Command, deltaCFG chan configuration.Configuration,
+	videoFile string, debug bool, config configuration.Configuration) {
 
 	runtime.LockOSThread() // All OpenCV operations must run on the OS thread to access the webcam.
 
@@ -82,11 +86,11 @@ func monitor(deltaC chan Command, deltaCFG chan Configuration,
 		}
 
 		switch {
-		case c == CALIBRATE:
+		case c == models.CALIBRATE:
 			log.Printf("INFO: Calibrating scout.")
-			calibrate(videoFile, config)
+			calibrate(db, videoFile, config)
 
-		case c == START_MEASURE:
+		case c == models.START_MEASURE:
 			log.Printf("INFO: Starting measure")
 
 			// Create a hidden file to store the measuring state across reboots.
@@ -97,9 +101,9 @@ func monitor(deltaC chan Command, deltaCFG chan Configuration,
 				log.Print(err)
 			}
 
-			measure(deltaC, videoFile, debug, config)
+			measure(db, deltaC, videoFile, debug, config)
 
-		case c == STOP_MEASURE:
+		case c == models.STOP_MEASURE:
 			log.Printf("INFO: Stopping measure")
 
 			// Delete the hidden file to indicate that measuring has stopped across reboots.
@@ -114,7 +118,7 @@ func monitor(deltaC chan Command, deltaCFG chan Configuration,
 	runtime.UnlockOSThread()
 }
 
-func calibrate(videoFile string, config Configuration) {
+func calibrate(db *sql.DB, videoFile string, config configuration.Configuration) {
 	// It takes a little while for the white balance to stabalise on the logitech.
 	// So grab a frame, wait to stabalise for white balance to stabalise, then grab again
 	// for and save as the calibration frame.
@@ -145,18 +149,32 @@ func calibrate(videoFile string, config Configuration) {
 	C.cvSaveImage(file, unsafe.Pointer(calibrationFrame), nil)
 	C.free(unsafe.Pointer(file))
 
-	// Broadcast calibration results to the mothership.
-	f, err := os.Open(fileName)
+	// Update the DB with the latest calibration details.
+	s, err := models.GetScoutByUUID(db, config.UUID)
 	if err != nil {
-		log.Printf("ERROR: Unable to open calibration frame to broadcast")
+		log.Printf("ERROR: Unable to calibrate, can't fetch scout from DB")
 		log.Print(err)
 		return
 	}
-	defer f.Close()
-	post(fileName, config.MothershipAddress+"/scout_api/calibrated", config.UUID, f)
+
+	frame, err := ioutil.ReadFile("calibrationFrame.jpg")
+	if err != nil {
+		log.Printf("ERROR: Unable to calibrate, can't fetch frame from disk.")
+		log.Print(err)
+		return
+	}
+	s.UpdateCalibrationFrame(db, frame)
+
+	s.State = models.CALIBRATED
+	err = s.Update(db)
+	if err != nil {
+		log.Printf("ERROR: Unable to calibrate. can't update scout DB")
+		log.Print(err)
+		return
+	}
 }
 
-func measure(deltaC chan Command, videoFile string, debug bool, config Configuration) {
+func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug bool, config configuration.Configuration) {
 	camera, err := getVideoSource(videoFile)
 	if err != nil {
 		// No valid video source. Abort measuring.
@@ -176,7 +194,7 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 		return
 	}()
 
-	scene := initScene()
+	scene := models.InitScene()
 
 	// Build the calibration frame from disk.
 	var calibrationFrame *C.IplImage
@@ -211,7 +229,7 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 		select {
 		case c := <-deltaC:
 			switch {
-			case c == STOP_MEASURE:
+			case c == models.STOP_MEASURE:
 				log.Printf("INFO: Stopping measure")
 				measuring = false
 			}
@@ -236,7 +254,7 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 		num := int(C.cvFindContours(unsafe.Pointer(mask), storage, &contours, C.int(unsafe.Sizeof(C.CvContour{})),
 			C.CV_RETR_LIST, C.CV_CHAIN_APPROX_SIMPLE, offset))
 
-		var detectedObjects []Waypoint
+		var detectedObjects []models.Waypoint
 
 		// Track each of the detected contours.
 		for contours != nil {
@@ -250,7 +268,7 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 				x := int(boundingBox.x) + w
 				y := int(boundingBox.y) + h
 
-				detectedObjects = append(detectedObjects, Waypoint{x, y, w, h, 0.0})
+				detectedObjects = append(detectedObjects, models.Waypoint{x, y, w, h, 0.0})
 
 				if debug {
 					// DEBUG -- Render contours and bounding boxes around detected objects.
@@ -266,7 +284,7 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 			contours = contours.h_next
 		}
 
-		scene.update(detectedObjects, debug, config)
+		scene.Update(db, detectedObjects, config)
 		C.cvClearMemStorage(storage)
 		C.cvReleaseMemStorage(&storage)
 
@@ -284,14 +302,14 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 					C.cvCircle(unsafe.Pointer(nextFrame), pt1, C.int(10), C.cvScalar(109.0, 46.0, 0.0, 255), C.int(2), C.int(8), C.int(0))
 				}
 
-				w := i.lastWaypoint()
+				w := i.LastWaypoint()
 				txt := C.CString(fmt.Sprintf("%01d", i.SceneID))
 				C.cvPutText(unsafe.Pointer(nextFrame), txt, C.cvPoint(C.int(w.XPixels+10), C.int(w.YPixels+10)), &font, C.cvScalar(255.0, 255.0, 255.0, 255))
 				C.free(unsafe.Pointer(txt))
 			}
 
-			for _, i := range scene.idleInteractions {
-				w := i.lastWaypoint()
+			for _, i := range scene.IdleInteractions {
+				w := i.LastWaypoint()
 				pt1 := C.cvPoint(C.int(w.XPixels-w.HalfWidthPixels+5), C.int(w.YPixels-w.HalfHeightPixels+5))
 				pt2 := C.cvPoint(C.int(w.XPixels+w.HalfWidthPixels-5), C.int(w.YPixels+w.HalfHeightPixels-5))
 				C.cvRectangle(unsafe.Pointer(nextFrame), pt1, pt2, C.cvScalar(16.0, 186.0, 8.0, 255), C.int(5), C.int(8), C.int(0))
@@ -310,5 +328,5 @@ func measure(deltaC chan Command, videoFile string, debug bool, config Configura
 	}
 
 	log.Printf("INFO: Finished measure")
-	scene.close(debug, config)
+	scene.Close(db, config)
 }

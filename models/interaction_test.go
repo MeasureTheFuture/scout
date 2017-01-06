@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package main
+package models
 
 import (
 	. "github.com/onsi/ginkgo"

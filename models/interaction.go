@@ -15,13 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package main
+package models
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"database/sql"
+	"github.com/MeasureTheFuture/scout/configuration"
 	"log"
 	"time"
 )
@@ -50,7 +48,7 @@ func (i Interaction) Equal(wp []Waypoint) bool {
 	return true
 }
 
-func NewInteraction(w Waypoint, sId int, config Configuration) Interaction {
+func NewInteraction(w Waypoint, sId int, config configuration.Configuration) Interaction {
 	start := time.Now().UTC()
 
 	// The start time broadcasted for the interaction is truncated to the nearest 30 minutes.
@@ -102,31 +100,29 @@ func douglasPeucker(path []Waypoint, epsilon float64) []Waypoint {
 }
 
 // lastWaypoint returns the last waypoint within the interaction.
-func (i *Interaction) lastWaypoint() Waypoint {
+func (i *Interaction) LastWaypoint() Waypoint {
 	return i.Path[len(i.Path)-1]
 }
 
-func (i *Interaction) simplify(config Configuration) {
+func (i *Interaction) simplify(config configuration.Configuration) {
 	i.Path = douglasPeucker(i.Path, config.SimplifyEpsilon)
 }
 
-func (i *Interaction) post(debug bool, config Configuration) {
-	i.simplify(config) // Remove unessary segments from the pathway before sending.
-
-	body := bytes.Buffer{}
-	encoder := json.NewEncoder(&body)
-
-	err := encoder.Encode(i)
+func (i *Interaction) saveToDB(db *sql.DB, config configuration.Configuration) {
+	s, err := GetScoutByUUID(db, config.UUID)
 	if err != nil {
-		log.Printf("ERROR: Unable to encode interaction for transport to mothership")
+		log.Printf("ERROR: Unable to start health heartbeat. Scout UUID missing")
+		log.Print(err)
+		return
+	}
+
+	i.simplify(config) // Remove unnecessary segments from the pathway before storing in the DB.
+
+	si := CreateScoutInteraction(i)
+	si.ScoutId = s.Id
+	err = si.Insert(db)
+	if err != nil {
+		log.Printf("ERROR: Unable to save Interaction to DB.")
 		log.Print(err)
 	}
-
-	if debug {
-		b, _ := json.Marshal(i)
-		filename := string("f" + fmt.Sprintf("%10d", i.started.Unix()) + "-metadata.json")
-		ioutil.WriteFile(filename, b, 0611)
-	}
-
-	post("interaction.json", config.MothershipAddress+"/scout_api/interaction", config.UUID, &body)
 }

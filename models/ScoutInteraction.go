@@ -21,7 +21,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	"github.com/MeasureTheFuture/mothership/configuration"
+	"github.com/MeasureTheFuture/scout/configuration"
 	_ "github.com/lib/pq"
 	"strconv"
 	"strings"
@@ -30,22 +30,6 @@ import (
 
 type RealArray []float32
 type Path [][2]int
-
-type Waypoint struct {
-	XPixels          int     // x-coordinate of waypoint centroid in pixels
-	YPixels          int     // y-coordinate of waypoint centroid in pixels
-	HalfWidthPixels  int     // Half the width of the waypoint in pixels
-	HalfHeightPixels int     // Half the height of the waypoint in pixels
-	T                float32 // The number of seconds elapsed since the beginning of the interaction
-}
-
-type Interaction struct {
-	UUID     string     // The UUID for the scout that detected the interaction.
-	Version  string     // The Version of the protocol used for transmitting data to the mothership
-	Entered  time.Time  // The time the interaction started (rounded to nearest half hour)
-	Duration float32    // The total duration of the interaction.
-	Path     []Waypoint // The pathway of the interaction through the scene.
-}
 
 type ScoutInteraction struct {
 	Id             int64

@@ -27,14 +27,6 @@ import (
 	"strconv"
 )
 
-type Command int
-
-const (
-	CALIBRATE Command = iota
-	START_MEASURE
-	STOP_MEASURE
-)
-
 func calibrateHandler(deltaC chan Command, deltaCFG chan Configuration, configFile string,
 	config Configuration, w http.ResponseWriter, r *http.Request) {
 

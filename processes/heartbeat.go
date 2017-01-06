@@ -25,8 +25,8 @@ import (
 	"github.com/shirou/gopsutil/mem"
 	"log"
 	"net"
-	"time"
 	"syscall"
+	"time"
 )
 
 func HealthHeartbeat(db *sql.DB, config configuration.Configuration) {

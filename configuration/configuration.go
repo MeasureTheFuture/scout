@@ -20,9 +20,8 @@ package configuration
 import (
 	"bufio"
 	"encoding/json"
-	"path/filepath"
-	//"log"
 	"os"
+	"path/filepath"
 )
 
 type Configuration struct {
