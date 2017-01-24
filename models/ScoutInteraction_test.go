@@ -20,6 +20,7 @@ package models
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/MeasureTheFuture/scout/configuration"
 	"testing"
 	"time"
 )
@@ -37,7 +38,7 @@ var _ = Describe("Scout Interaction Model", func() {
 			t := time.Now().UTC()
 
 			wp := []Waypoint{Waypoint{1, 2, 3, 4, 0.1}}
-			i := Interaction{"abc", "0.1", t, 0.1, wp}
+			i := Interaction{"abc", "0.1", t, t, 0.1, wp, 1}
 
 			si := CreateScoutInteraction(&i)
 			Ω(si.ScoutId).Should(Equal(int64(-1)))
@@ -141,7 +142,7 @@ var _ = Describe("Scout Interaction Model", func() {
 
 	Context("Init scene", func() {
 		It("should be able to init an empty scene", func() {
-			s := initScene()
+			s := InitScene()
 			Ω(*s).Should(Equal(Scene{}))
 		})
 	})
@@ -196,7 +197,9 @@ var _ = Describe("Scout Interaction Model", func() {
 	})
 
 	Context("NewInteraction", func() {
-		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc", 2.0, 0.01, 0.3, 1}
+		c := configuration.Configuration{"mtf", "", "mothership", "mothership_test", ":80", "public", 1000,
+				2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091",
+				"0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.01, 0.3, 1}
 
 		It("should create a new interaction", func() {
 			a := Waypoint{0, 0, 0, 0, 0.0}
@@ -229,10 +232,12 @@ var _ = Describe("Scout Interaction Model", func() {
 		wpB := Waypoint{50, 50, 20, 20, 0.0}
 		wpBA := Waypoint{55, 53, 20, 20, 0.0}
 		wpC := Waypoint{150, 150, 20, 20, 0.0}
-		c := Configuration{2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", "abc", 2.0, 0.01, 0.3, 1}
+		c := configuration.Configuration{"mtf", "", "mothership", "mothership_test", ":80", "public", 1000,
+				2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091",
+				"0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.01, 0.3, 1}
 
 		It("should be able to add an interaction to an empty scene", func() {
-			s := initScene()
+			s := InitScene()
 			s.addInteraction([]Waypoint{wpA}, c)
 
 			Ω(len(s.Interactions)).Should(Equal(1))
@@ -240,7 +245,7 @@ var _ = Describe("Scout Interaction Model", func() {
 		})
 
 		It("should be able to add multiple interactions to an empty scene,", func() {
-			s := initScene()
+			s := InitScene()
 			s.addInteraction([]Waypoint{wpA, wpB}, c)
 
 			Ω(len(s.Interactions)).Should(Equal(2))
@@ -249,14 +254,14 @@ var _ = Describe("Scout Interaction Model", func() {
 		})
 
 		It("should list the interaction start time truncated to 30 mins", func() {
-			s := initScene()
+			s := InitScene()
 			s.addInteraction([]Waypoint{wpA}, c)
 
 			Ω(s.Interactions[0].Entered).Should(Equal(time.Now().UTC().Round(15 * time.Minute)))
 		})
 
 		It("should be able to add an interaction to a scene with stuff already going on", func() {
-			s := initScene()
+			s := InitScene()
 			s.addInteraction([]Waypoint{wpA}, c)
 
 			time.Sleep(100 * time.Millisecond)
@@ -268,7 +273,7 @@ var _ = Describe("Scout Interaction Model", func() {
 		})
 
 		It("should be able to add multiple interactions to a scene with stuff already going on", func() {
-			s := initScene()
+			s := InitScene()
 			s.addInteraction([]Waypoint{wpA}, c)
 			s.addInteraction([]Waypoint{wpAA, wpB}, c)
 			s.addInteraction([]Waypoint{wpAA, wpBA, wpC}, c)
@@ -280,18 +285,18 @@ var _ = Describe("Scout Interaction Model", func() {
 		})
 
 		It("should be able to remove interactions when a person leaves the scene", func() {
-			s := initScene()
+			s := InitScene()
 			s.addInteraction([]Waypoint{wpA, wpB}, c)
-			s.removeInteraction([]Waypoint{wpAA}, false, c)
+			s.removeInteraction([]Waypoint{wpAA}, c)
 
 			Ω(len(s.Interactions)).Should(Equal(1))
 			Ω(s.Interactions[0].Equal([]Waypoint{wpA, wpAA})).Should(BeTrue())
 		})
 
 		It("should be able to remove multiple interactions when more than one person leaves the scene", func() {
-			s := initScene()
+			s := InitScene()
 			s.addInteraction([]Waypoint{wpA, wpB, wpC}, c)
-			s.removeInteraction([]Waypoint{wpBA}, false, c)
+			s.removeInteraction([]Waypoint{wpBA}, c)
 
 			Ω(len(s.Interactions)).Should(Equal(1))
 			Ω(s.Interactions[0].Equal([]Waypoint{wpB, wpBA})).Should(BeTrue())
