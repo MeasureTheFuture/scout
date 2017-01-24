@@ -57,7 +57,7 @@ func cleaner() {
 var _ = Describe("Scout Model", func() {
 
 	BeforeSuite(func() {
-		config, err := configuration.Parse(os.Getenv("GOPATH") + "/mothership.json")
+		config, err := configuration.Parse(os.Getenv("GOPATH") + "/scout.json")
 		Ω(err).Should(BeNil())
 		db, err = sql.Open("postgres", "user="+config.DBUserName+" dbname="+config.DBTestName)
 		Ω(err).Should(BeNil())
