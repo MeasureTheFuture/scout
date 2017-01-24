@@ -19,9 +19,9 @@ package processes
 
 import (
 	"database/sql"
-	"github.com/MeasureTheFuture/mothership/configuration"
-	"github.com/MeasureTheFuture/mothership/models"
-	"github.com/MeasureTheFuture/mothership/vec"
+	"github.com/MeasureTheFuture/scout/configuration"
+	"github.com/MeasureTheFuture/scout/models"
+	"github.com/MeasureTheFuture/scout/vec"
 	"log"
 	"time"
 )

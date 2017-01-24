@@ -22,7 +22,6 @@ import (
 	"github.com/MeasureTheFuture/scout/configuration"
 	_ "github.com/lib/pq"
 	"io/ioutil"
-	"os"
 	"time"
 )
 
@@ -44,7 +43,7 @@ func CreateLogFromFile(tmpLog string, db *sql.DB, config configuration.Configura
 	}
 
 	sl := ScoutLog{s.Id, b, time.Now().UTC()}
-	return &sl, os.Remove(tmpLog)
+	return &sl, nil
 }
 
 func GetScoutLogById(db *sql.DB, scoutId int64, time time.Time) (*ScoutLog, error) {

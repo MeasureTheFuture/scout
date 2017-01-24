@@ -20,10 +20,15 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"github.com/MeasureTheFuture/scout/configuration"
+	"github.com/MeasureTheFuture/scout/controllers"
+	"github.com/MeasureTheFuture/scout/models"
 	"github.com/MeasureTheFuture/scout/processes"
+	"github.com/labstack/echo"
 	_ "github.com/lib/pq"
 	"log"
 	"os"
+	"strconv"
 )
 
 var mainfunc = make(chan func())
@@ -55,12 +60,13 @@ func main() {
 	log.SetOutput(f)
 	log.Printf("INFO: Starting scout.\n")
 
+	//
 	config, err := configuration.Parse(configFile)
 	if err != nil {
 		log.Fatalf("ERROR: Can't parse configuration - %s", err)
-
 	}
 
+	// Open a connection to the database.
 	connection := "user=" + config.DBUserName + " dbname=" + config.DBName
 	if config.DBPassword != "" {
 		connection = connection + " password=" + config.DBPassword
@@ -72,22 +78,48 @@ func main() {
 	}
 	defer db.Close()
 
-	//TODO: Shift much of the config metadata into the DB.
-	//TODO: Remove the scout ID and just have UUID.
-	//TODO: Init UUID for scout on first boot - this used to be done in parse above.
-	//TODO: Merge interaction and ScoutInteraction.
-
+	// Store the old log in the DB.
 	l, err := models.CreateLogFromFile(tmpLog, db, config)
 	if err != nil {
-		log.FatalF("ERROR: Unable to create log from file - %s", err)
+		log.Fatalf("ERROR: Unable to create log from file - %s", err)
 	}
 	err = l.Insert(db)
 	if err != nil {
-		lgo.FatalF("ERROR: Unable to save log to database - %s", err)
+		log.Fatalf("ERROR: Unable to save log to database - %s", err)
+	}
+	err = os.Remove(tmpLog)
+	if err != nil {
+		log.Fatalf("ERROR: Unable to delete temporary log - %s", err)
+	}
+
+	// If no scout exists in the DB, bootstrap it by creating one.
+	c, err := models.NumScouts(db)
+	if err != nil {
+		log.Fatalf("ERROR: Unable to cound scouts in DB - %s", err)
+	}
+	if c == 0 {
+		ns := models.Scout{-1, configuration.NewUUID().String(), "0.0.0.0", 8080, false, "Location " + strconv.FormatInt(c+1, 10), "idle", &models.ScoutSummary{}}
+		err = ns.Insert(db)
+		if err != nil {
+			log.Fatalf("ERROR: Unable to add initial scout to DB.")
+		}
 	}
 
 	go processes.HealthHeartbeat(db, config)
 	go processes.Summarise(db, config)
+
+	// deltaC := make(chan Command)
+	// deltaCFG := make(chan Configuration, 1)
+
+	// go controller(deltaC, deltaCFG, configFile, config)
+	// Test to see if the scout is still in measurement mode on boot and resume if necessary.
+	// go func() {
+	// 	if _, err := os.Stat(".mtf-measure"); err == nil {
+	// 		log.Printf("INFO: Resuming.")
+	// 		deltaC <- START_MEASURE
+	// 	}
+	// }()
+	// monitor(deltaC, deltaCFG, videoFile, debug, config)
 
 	e := echo.New()
 	e.Static("/", config.StaticAssets)
@@ -120,17 +152,4 @@ func main() {
 	if err := e.Start(config.Address); err != nil {
 		e.Logger.Fatal(err)
 	}
-
-	// deltaC := make(chan Command)
-	// deltaCFG := make(chan Configuration, 1)
-
-	//go controller(deltaC, deltaCFG, configFile, config)
-	// Test to see if the scout is still in measurement mode on boot and resume if necssary.
-	// go func() {
-	// 	if _, err := os.Stat(".mtf-measure"); err == nil {
-	// 		log.Printf("INFO: Resuming.")
-	// 		deltaC <- START_MEASURE
-	// 	}
-	// }()
-	// monitor(deltaC, deltaCFG, videoFile, debug, config)
 }
