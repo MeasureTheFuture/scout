@@ -72,15 +72,19 @@ func main() {
 	}
 	defer db.Close()
 
-	//TODO: Init UUID for scout on first boot - this used to be done in parse above.
 	//TODO: Shift much of the config metadata into the DB.
 	//TODO: Remove the scout ID and just have UUID.
-
-	//TODO: Store old log in DB.
-	// postLog(config, tmpLog)
-
-	//TODO: Remove the old scoutAPI interface completely.
+	//TODO: Init UUID for scout on first boot - this used to be done in parse above.
 	//TODO: Merge interaction and ScoutInteraction.
+
+	l, err := models.CreateLogFromFile(tmpLog, db, config)
+	if err != nil {
+		log.FatalF("ERROR: Unable to create log from file - %s", err)
+	}
+	err = l.Insert(db)
+	if err != nil {
+		lgo.FatalF("ERROR: Unable to save log to database - %s", err)
+	}
 
 	go processes.HealthHeartbeat(db, config)
 	go processes.Summarise(db, config)

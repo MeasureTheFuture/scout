@@ -19,7 +19,10 @@ package models
 
 import (
 	"database/sql"
+	"github.com/MeasureTheFuture/scout/configuration"
 	_ "github.com/lib/pq"
+	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -27,6 +30,21 @@ type ScoutLog struct {
 	ScoutId   int64
 	Log       []byte
 	CreatedAt time.Time
+}
+
+func CreateLogFromFile(tmpLog string, db *sql.DB, config configuration.Configuration) (*ScoutLog, error) {
+	s, err := GetScoutByUUID(db, config.UUID)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := ioutil.ReadFile(tmpLog)
+	if err != nil {
+		return nil, err
+	}
+
+	sl := ScoutLog{s.Id, b, time.Now().UTC()}
+	return &sl, os.Remove(tmpLog)
 }
 
 func GetScoutLogById(db *sql.DB, scoutId int64, time time.Time) (*ScoutLog, error) {

@@ -24,7 +24,6 @@ import (
 	"github.com/MeasureTheFuture/scout/configuration"
 	"github.com/MeasureTheFuture/scout/models"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/standard"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"net/http"
@@ -80,7 +79,7 @@ var _ = Describe("Scout controller", func() {
 			req, err := http.NewRequest(echo.GET, "/scouts", strings.NewReader(""))
 			Ω(err).Should(BeNil())
 			rec := httptest.NewRecorder()
-			c := e.NewContext(standard.NewRequest(req, e.Logger()), standard.NewResponse(rec, e.Logger()))
+			c := e.NewContext(req, rec)
 
 			err = GetScouts(db, c)
 			Ω(err).Should(BeNil())
@@ -108,7 +107,7 @@ var _ = Describe("Scout controller", func() {
 			req, err := http.NewRequest(echo.GET, "/scouts", strings.NewReader(""))
 			Ω(err).Should(BeNil())
 			rec := httptest.NewRecorder()
-			c := e.NewContext(standard.NewRequest(req, e.Logger()), standard.NewResponse(rec, e.Logger()))
+			c := e.NewContext(req, rec)
 
 			err = GetScouts(db, c)
 			Ω(err).Should(BeNil())
@@ -133,7 +132,7 @@ var _ = Describe("Scout controller", func() {
 			req, err := http.NewRequest(echo.GET, "/scouts/", strings.NewReader(""))
 			Ω(err).Should(BeNil())
 			rec := httptest.NewRecorder()
-			c := e.NewContext(standard.NewRequest(req, e.Logger()), standard.NewResponse(rec, e.Logger()))
+			c := e.NewContext(req, rec)
 			c.SetPath("/scouts/:id")
 			c.SetParamNames("id")
 			c.SetParamValues(strconv.FormatInt(s.Id, 10))
@@ -165,7 +164,7 @@ var _ = Describe("Scout controller", func() {
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 			rec := httptest.NewRecorder()
-			c := e.NewContext(standard.NewRequest(req, e.Logger()), standard.NewResponse(rec, e.Logger()))
+			c := e.NewContext(req, rec)
 			c.SetPath("/scouts/:id")
 			c.SetParamNames("id")
 			c.SetParamValues(strconv.FormatInt(s.Id, 10))

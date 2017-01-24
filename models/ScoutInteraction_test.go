@@ -18,9 +18,9 @@
 package models
 
 import (
+	"github.com/MeasureTheFuture/scout/configuration"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/MeasureTheFuture/scout/configuration"
 	"testing"
 	"time"
 )
@@ -198,8 +198,8 @@ var _ = Describe("Scout Interaction Model", func() {
 
 	Context("NewInteraction", func() {
 		c := configuration.Configuration{"mtf", "", "mothership", "mothership_test", ":80", "public", 1000,
-				2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091",
-				"0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.01, 0.3, 1}
+			2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091",
+			"0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.01, 0.3, 1}
 
 		It("should create a new interaction", func() {
 			a := Waypoint{0, 0, 0, 0, 0.0}
@@ -233,8 +233,8 @@ var _ = Describe("Scout Interaction Model", func() {
 		wpBA := Waypoint{55, 53, 20, 20, 0.0}
 		wpC := Waypoint{150, 150, 20, 20, 0.0}
 		c := configuration.Configuration{"mtf", "", "mothership", "mothership_test", ":80", "public", 1000,
-				2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091",
-				"0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.01, 0.3, 1}
+			2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091",
+			"0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.01, 0.3, 1}
 
 		It("should be able to add an interaction to an empty scene", func() {
 			s := InitScene()
