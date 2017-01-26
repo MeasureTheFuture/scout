@@ -33,23 +33,21 @@ var _ = Describe("Scout Summary Model", func() {
 
 	Context("Insert", func() {
 		It("Scout insert should create matching scout summary", func() {
-			s := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1",
-				8080, true, "foo", "idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
-			ss, err := GetScoutSummaryById(db, s.Id)
+			ss, err := GetScoutSummaryByUUID(db, s.UUID)
 			Ω(err).Should(BeNil())
-			Ω(ss).Should(Equal(&ScoutSummary{s.Id, 0, Buckets{}, IntBuckets{}}))
+			Ω(ss).Should(Equal(&ScoutSummary{s.UUID, 0, Buckets{}, IntBuckets{}}))
 		})
 
 		It("Should be able to update existing scout summary.", func() {
-			s := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1",
-				8080, true, "foo", "idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
-			ss, err := GetScoutSummaryById(db, s.Id)
+			ss, err := GetScoutSummaryByUUID(db, s.UUID)
 			Ω(err).Should(BeNil())
 			ss.VisitorCount = 2
 			ss.VisitTimeBuckets[1][5] = 0.1
@@ -57,7 +55,7 @@ var _ = Describe("Scout Summary Model", func() {
 			err = ss.Update(db)
 			Ω(err).Should(BeNil())
 
-			ss2, err := GetScoutSummaryById(db, s.Id)
+			ss2, err := GetScoutSummaryByUUID(db, s.UUID)
 			Ω(err).Should(BeNil())
 			Ω(ss2).Should(Equal(ss))
 		})
@@ -65,12 +63,11 @@ var _ = Describe("Scout Summary Model", func() {
 
 	Context("Clear", func() {
 		It("Should be able to clear an existing scout summary", func() {
-			s := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1",
-				8080, true, "foo", "idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
-			ss, err := GetScoutSummaryById(db, s.Id)
+			ss, err := GetScoutSummaryByUUID(db, s.UUID)
 			Ω(err).Should(BeNil())
 			ss.VisitorCount = 2
 			ss.VisitTimeBuckets[1][5] = 0.1
@@ -81,7 +78,7 @@ var _ = Describe("Scout Summary Model", func() {
 			err = ss.Clear(db)
 			Ω(err).Should(BeNil())
 
-			ss2, err := GetScoutSummaryById(db, s.Id)
+			ss2, err := GetScoutSummaryByUUID(db, s.UUID)
 			Ω(err).Should(BeNil())
 			Ω(ss2).Should(Equal(ss))
 			Ω(ss2.VisitorCount).Should(Equal(int64(0)))

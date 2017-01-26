@@ -35,24 +35,23 @@ var _ = Describe("Scout Health Model", func() {
 
 	Context("Insert", func() {
 		It("should insert a valid scouthealth into the DB.", func() {
-			s := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1",
-				8080, true, "foo", "idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
 			t := time.Now()
-			sh := ScoutHealth{s.Id, 0.1, 0.2, 0.3, 0.4, t}
+			sh := ScoutHealth{s.UUID, 0.1, 0.2, 0.3, 0.4, t}
 			err = sh.Insert(db)
 			Ω(err).Should(BeNil())
 
-			sh2, err := GetScoutHealthById(db, s.Id, t)
+			sh2, err := GetScoutHealthByUUID(db, s.UUID, t)
 			Ω(err).Should(BeNil())
 			Ω(&sh).Should(Equal(sh2))
 
 		})
 
 		It("should return an error when an invalid scout health is inserted into the DB.", func() {
-			sh := ScoutHealth{-1, 0.1, 0.2, 0.3, 0.4, time.Now()}
+			sh := ScoutHealth{"", 0.1, 0.2, 0.3, 0.4, time.Now()}
 			err := sh.Insert(db)
 			Ω(err).ShouldNot(BeNil())
 		})
@@ -60,18 +59,17 @@ var _ = Describe("Scout Health Model", func() {
 
 	Context("Delete", func() {
 		It("should be able to delete healths for a specified scout", func() {
-			s := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1",
-				8080, true, "foo", "idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
-			sh := ScoutHealth{s.Id, 0.1, 0.2, 0.3, 0.4, time.Now()}
+			sh := ScoutHealth{s.UUID, 0.1, 0.2, 0.3, 0.4, time.Now()}
 			err = sh.Insert(db)
 
-			sh2 := ScoutHealth{s.Id, 0.1, 0.2, 0.3, 0.4, time.Now()}
+			sh2 := ScoutHealth{s.UUID, 0.1, 0.2, 0.3, 0.4, time.Now()}
 			err = sh2.Insert(db)
 
-			err = DeleteScoutHealths(db, s.Id)
+			err = DeleteScoutHealths(db, s.UUID)
 			Ω(err).Should(BeNil())
 
 			n, err := NumScoutHealths(db)

@@ -68,21 +68,20 @@ var _ = Describe("Scout Model", func() {
 
 	Context("Insert", func() {
 		It("should insert a valid scout into the DB.", func() {
-			s := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1",
-				8080, true, "foo", "calibrated", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "calibrated", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
-			s2, err := GetScoutById(db, s.Id)
+			s2, err := GetScoutByUUID(db, s.UUID)
 			Ω(err).Should(BeNil())
 			Ω(&s).Should(Equal(s2))
 		})
 
 		It("should return an error when an invalid scout is inserted into the DB.", func() {
-			s := Scout{-1, "aa", "192.168.0.1", 8080, true, "foo", "calibrating", &ScoutSummary{}}
+			s := Scout{"aa", "192.168.0.1", 8080, true, "foo", "calibratingas", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).ShouldNot(BeNil())
-			Ω(s.Id).Should(Equal(int64(-1)))
+			Ω(s.UUID).Should(Equal("aa"))
 		})
 	})
 
@@ -92,13 +91,11 @@ var _ = Describe("Scout Model", func() {
 			Ω(err).Should(BeNil())
 			Ω(len(al)).Should(Equal(0))
 
-			s1 := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1",
-				8080, true, "foo", "calibrated", &ScoutSummary{}}
+			s1 := Scout{"", "192.168.0.1", 8080, true, "foo", "calibrated", &ScoutSummary{}}
 			err = s1.Insert(db)
 			Ω(err).Should(BeNil())
 
-			s2 := Scout{-1, "801fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1",
-				8080, true, "foo", "calibrated", &ScoutSummary{}}
+			s2 := Scout{"", "192.168.0.2", 8080, true, "foo", "calibrated", &ScoutSummary{}}
 			err = s2.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -107,39 +104,19 @@ var _ = Describe("Scout Model", func() {
 			Ω(len(al)).Should(Equal(2))
 			Ω(al).Should(Equal([]*Scout{&s1, &s2}))
 		})
-
-		It("should be able to get a scout by UUID", func() {
-			s, err := GetScoutByUUID(db, "800fd548-2d2b-4185-885d-6323ccbe88a0")
-			Ω(err).ShouldNot(BeNil())
-
-			s2 := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1",
-				8080, true, "foo", "calibrated", &ScoutSummary{}}
-			err = s2.Insert(db)
-			Ω(err).Should(BeNil())
-
-			s, err = GetScoutByUUID(db, "800fd548-2d2b-4185-885d-6323ccbe88a0")
-			Ω(err).Should(BeNil())
-			Ω(s).Should(Equal(&s2))
-
-			c, err := NumScouts(db)
-			Ω(err).Should(BeNil())
-			Ω(c).Should(Equal(int64(1)))
-		})
 	})
 
 	Context("Update", func() {
 		It("should be able to update a scout in the DB", func() {
-			s := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1",
-				8080, true, "foo", "measuring", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "measuring", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
 			s.IpAddress = "192.168.0.2"
 			err = s.Update(db)
 			Ω(err).Should(BeNil())
-			s2, err := GetScoutById(db, s.Id)
+			s2, err := GetScoutByUUID(db, s.UUID)
 			Ω(err).Should(BeNil())
-
 			Ω(&s).Should(Equal(s2))
 		})
 	})

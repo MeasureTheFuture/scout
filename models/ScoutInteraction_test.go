@@ -41,7 +41,7 @@ var _ = Describe("Scout Interaction Model", func() {
 			i := Interaction{"abc", "0.1", t, t, 0.1, wp, 1}
 
 			si := CreateScoutInteraction(&i)
-			Ω(si.ScoutId).Should(Equal(int64(-1)))
+			Ω(si.ScoutUUID).Should(Equal(""))
 			Ω(si.Duration).Should(Equal(i.Duration))
 			Ω(si.EnteredAt).Should(Equal(t))
 			Ω(si.Waypoints).Should(Equal(Path{[2]int{1, 2}}))
@@ -52,13 +52,12 @@ var _ = Describe("Scout Interaction Model", func() {
 
 	Context("Insert", func() {
 		It("Should be able to insert a scout interaction", func() {
-			s := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1", 8080, true, "foo",
-				"idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
 			et := time.Now().UTC().Round(15 * time.Minute)
-			si := ScoutInteraction{-1, s.Id, 0.2, Path{[2]int{1, 2}, [2]int{5, 6}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, et}
+			si := ScoutInteraction{-1, s.UUID, 0.2, Path{[2]int{1, 2}, [2]int{5, 6}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, et}
 			err = si.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -70,20 +69,19 @@ var _ = Describe("Scout Interaction Model", func() {
 
 	Context("Delete", func() {
 		It("Should be able to delete interactions for a specified scout", func() {
-			s := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1", 8080, true, "foo",
-				"idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
-			si := ScoutInteraction{-1, s.Id, 0.2, Path{[2]int{1, 2}, [2]int{5, 6}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, time.Now()}
+			si := ScoutInteraction{-1, s.UUID, 0.2, Path{[2]int{1, 2}, [2]int{5, 6}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, time.Now()}
 			err = si.Insert(db)
 			Ω(err).Should(BeNil())
 
-			si2 := ScoutInteraction{-1, s.Id, 0.2, Path{[2]int{1, 2}, [2]int{5, 6}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, time.Now()}
+			si2 := ScoutInteraction{-1, s.UUID, 0.2, Path{[2]int{1, 2}, [2]int{5, 6}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, time.Now()}
 			err = si2.Insert(db)
 			Ω(err).Should(BeNil())
 
-			err = DeleteScoutInteractions(db, s.Id)
+			err = DeleteScoutInteractions(db, s.UUID)
 			Ω(err).Should(BeNil())
 
 			n, err := NumScoutInteractions(db)
@@ -94,21 +92,20 @@ var _ = Describe("Scout Interaction Model", func() {
 
 	Context("Unprocessed", func() {
 		It("Should be able to get unproccessed interactions", func() {
-			s := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1", 8080, true, "foo",
-				"idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
 			et := time.Now().UTC().Round(15 * time.Minute)
-			si1 := ScoutInteraction{-1, s.Id, 0.2, Path{[2]int{1, 2}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, et}
+			si1 := ScoutInteraction{-1, s.UUID, 0.2, Path{[2]int{1, 2}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, et}
 			err = si1.Insert(db)
 			Ω(err).Should(BeNil())
 
-			si2 := ScoutInteraction{-1, s.Id, 0.3, Path{[2]int{1, 2}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, et}
+			si2 := ScoutInteraction{-1, s.UUID, 0.3, Path{[2]int{1, 2}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, et}
 			err = si2.Insert(db)
 			Ω(err).Should(BeNil())
 
-			si3 := ScoutInteraction{-1, s.Id, 0.4, Path{[2]int{1, 2}}, Path{[2]int{3, 4}}, RealArray{0.1}, true, et}
+			si3 := ScoutInteraction{-1, s.UUID, 0.4, Path{[2]int{1, 2}}, Path{[2]int{3, 4}}, RealArray{0.1}, true, et}
 			err = si3.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -120,13 +117,12 @@ var _ = Describe("Scout Interaction Model", func() {
 
 	Context("MarkProcessed", func() {
 		It("Should be able to mark interactions as processed", func() {
-			s := Scout{-1, "800fd548-2d2b-4185-885d-6323ccbe88a0", "192.168.0.1", 8080, true, "foo",
-				"idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
 			et := time.Now().UTC().Round(15 * time.Minute)
-			si1 := ScoutInteraction{-1, s.Id, 0.2, Path{[2]int{1, 2}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, et}
+			si1 := ScoutInteraction{-1, s.UUID, 0.2, Path{[2]int{1, 2}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, et}
 			err = si1.Insert(db)
 			Ω(err).Should(BeNil())
 

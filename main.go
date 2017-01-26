@@ -78,34 +78,21 @@ func main() {
 	}
 	defer db.Close()
 
-	// Store the old log in the DB.
-	l, err := models.CreateLogFromFile(tmpLog, db, config)
-	if err != nil {
-		log.Fatalf("ERROR: Unable to create log from file - %s", err)
-	}
-	err = l.Insert(db)
-	if err != nil {
-		log.Fatalf("ERROR: Unable to save log to database - %s", err)
-	}
-	err = os.Remove(tmpLog)
-	if err != nil {
-		log.Fatalf("ERROR: Unable to delete temporary log - %s", err)
-	}
-
 	// If no scout exists in the DB, bootstrap it by creating one.
 	c, err := models.NumScouts(db)
 	if err != nil {
 		log.Fatalf("ERROR: Unable to cound scouts in DB - %s", err)
 	}
 	if c == 0 {
-		ns := models.Scout{-1, configuration.NewUUID().String(), "0.0.0.0", 8080, false, "Location " + strconv.FormatInt(c+1, 10), "idle", &models.ScoutSummary{}}
+		ns := models.Scout{"", "0.0.0.0", 8080, false, "Location " + strconv.FormatInt(c+1, 10), "idle", &models.ScoutSummary{}}
 		err = ns.Insert(db)
 		if err != nil {
 			log.Fatalf("ERROR: Unable to add initial scout to DB.")
 		}
 	}
 
-	go processes.HealthHeartbeat(db, config)
+	go processes.SaveLogToDB(tmpLog, db)
+	go processes.HealthHeartbeat(db)
 	go processes.Summarise(db, config)
 
 	// deltaC := make(chan Command)

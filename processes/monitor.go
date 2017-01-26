@@ -150,7 +150,7 @@ func calibrate(db *sql.DB, videoFile string, config configuration.Configuration)
 	C.free(unsafe.Pointer(file))
 
 	// Update the DB with the latest calibration details.
-	s, err := models.GetScoutByUUID(db, config.UUID)
+	s, err := models.GetScoutByUUID(db, models.GetScoutUUID(db))
 	if err != nil {
 		log.Printf("ERROR: Unable to calibrate, can't fetch scout from DB")
 		log.Print(err)

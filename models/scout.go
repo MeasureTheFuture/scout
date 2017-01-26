@@ -25,6 +25,7 @@ import (
 	"github.com/MeasureTheFuture/mothership/configuration"
 	_ "github.com/lib/pq"
 	"io/ioutil"
+	"log"
 )
 
 type ScoutState string
@@ -51,7 +52,6 @@ func (s ScoutState) Value() (driver.Value, error) {
 }
 
 type Scout struct {
-	Id         int64         `json:"id"`
 	UUID       string        `json:"uuid"`
 	IpAddress  string        `json:"ip_address"`
 	Port       int64         `json:"port"`
@@ -61,14 +61,14 @@ type Scout struct {
 	Summary    *ScoutSummary `json:"summary"`
 }
 
-func GetScoutById(db *sql.DB, id int64) (*Scout, error) {
-	const query = `SELECT uuid, ip_address, port, authorised, name, state
-				   FROM scouts WHERE id = $1`
+func GetScoutByUUID(db *sql.DB, uuid string) (*Scout, error) {
+	const query = `SELECT ip_address, port, authorised, name, state
+				   FROM scouts WHERE uuid = $1`
 	var result Scout
-	err := db.QueryRow(query, id).Scan(&result.UUID, &result.IpAddress, &result.Port, &result.Authorised,
+	err := db.QueryRow(query, uuid).Scan(&result.IpAddress, &result.Port, &result.Authorised,
 		&result.Name, &result.State)
-	result.Id = id
-	result.Summary, err = GetScoutSummaryById(db, result.Id)
+	result.UUID = uuid
+	result.Summary, err = GetScoutSummaryByUUID(db, result.UUID)
 	if err != nil {
 		return &result, err
 	}
@@ -76,24 +76,19 @@ func GetScoutById(db *sql.DB, id int64) (*Scout, error) {
 	return &result, err
 }
 
-func GetScoutByUUID(db *sql.DB, uuid string) (*Scout, error) {
-	const query = `SELECT id, ip_address, port, authorised, name, state
-				   FROM scouts WHERE uuid = $1`
-	var result Scout
-	err := db.QueryRow(query, uuid).Scan(&result.Id, &result.IpAddress, &result.Port, &result.Authorised,
-		&result.Name, &result.State)
-
-	result.UUID = uuid
-	result.Summary, err = GetScoutSummaryById(db, result.Id)
+func GetScoutUUID(db *sql.DB) string {
+	const query = `SELECT uuid FROM scouts LIMIT 1`
+	var result string
+	err := db.QueryRow(query).Scan(&result)
 	if err != nil {
-		return &result, err
+		log.Fatalf("Unable get scout UUID: %v", err)
 	}
 
-	return &result, err
+	return result
 }
 
 func GetAllScouts(db *sql.DB) ([]*Scout, error) {
-	const query = `SELECT id, uuid, ip_address, port, authorised, name, state FROM scouts`
+	const query = `SELECT uuid, ip_address, port, authorised, name, state FROM scouts`
 
 	var result []*Scout
 	rows, err := db.Query(query)
@@ -106,11 +101,11 @@ func GetAllScouts(db *sql.DB) ([]*Scout, error) {
 
 	for rows.Next() {
 		var s Scout
-		err = rows.Scan(&s.Id, &s.UUID, &s.IpAddress, &s.Port, &s.Authorised, &s.Name, &s.State)
+		err = rows.Scan(&s.UUID, &s.IpAddress, &s.Port, &s.Authorised, &s.Name, &s.State)
 		if err != nil {
 			return result, err
 		}
-		s.Summary, err = GetScoutSummaryById(db, s.Id)
+		s.Summary, err = GetScoutSummaryByUUID(db, s.UUID)
 		if err != nil {
 			return result, err
 		}
@@ -130,42 +125,42 @@ func NumScouts(db *sql.DB) (int64, error) {
 }
 
 func (s *Scout) ClearCalibrationFrame(db *sql.DB) error {
-	const query = `UPDATE scouts SET calibration_frame = NULL WHERE id = $1`
-	_, err := db.Exec(query, s.Id)
+	const query = `UPDATE scouts SET calibration_frame = NULL WHERE uuid = $1`
+	_, err := db.Exec(query, s.UUID)
 	return err
 }
 
 func (s *Scout) UpdateCalibrationFrame(db *sql.DB, frame []byte) error {
-	const query = `UPDATE scouts SET calibration_frame = $1 WHERE id = $2`
-	_, err := db.Exec(query, frame, s.Id)
+	const query = `UPDATE scouts SET calibration_frame = $1 WHERE uuid = $2`
+	_, err := db.Exec(query, frame, s.UUID)
 	return err
 }
 
 func (s *Scout) GetCalibrationFrame(db *sql.DB) ([]byte, error) {
-	const query = `SELECT calibration_frame FROM scouts WHERE id = $1`
+	const query = `SELECT calibration_frame FROM scouts WHERE uuid = $1`
 	var result []byte
-	err := db.QueryRow(query, s.Id).Scan(&result)
+	err := db.QueryRow(query, s.UUID).Scan(&result)
 
 	return result, err
 }
 
 func (s *Scout) Insert(db *sql.DB) error {
-	const query = `INSERT INTO scouts (uuid, ip_address, port, authorised, name, state)
-				   VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
-	err := db.QueryRow(query, s.UUID, s.IpAddress, s.Port, s.Authorised, s.Name, s.State).Scan(&s.Id)
+	const query = `INSERT INTO scouts (ip_address, port, authorised, name, state)
+				   VALUES ($1, $2, $3, $4, $5) RETURNING uuid`
+	err := db.QueryRow(query, s.IpAddress, s.Port, s.Authorised, s.Name, s.State).Scan(&s.UUID)
 	if err != nil {
 		return err
 	}
 
 	// Create matching empty summary.
-	s.Summary = &ScoutSummary{s.Id, 0, Buckets{}, IntBuckets{}}
+	s.Summary = &ScoutSummary{s.UUID, 0, Buckets{}, IntBuckets{}}
 	return s.Summary.Insert(db)
 }
 
 func (s *Scout) Update(db *sql.DB) error {
-	const query = `UPDATE scouts SET uuid = $1, ip_address = $2, port = $3, authorised = $4, name = $5,
-				   state = $6 WHERE id = $7`
-	_, err := db.Exec(query, s.UUID, s.IpAddress, s.Port, s.Authorised, s.Name, s.State, s.Id)
+	const query = `UPDATE scouts SET ip_address = $1, port = $2, authorised = $3, name = $4,
+				   state = $5 WHERE uuid = $6`
+	_, err := db.Exec(query, s.IpAddress, s.Port, s.Authorised, s.Name, s.State, s.UUID)
 	return err
 }
 
@@ -187,14 +182,14 @@ func ScoutsAsJSON(db *sql.DB) ([]string, error) {
 
 	for rows.Next() {
 		var s Scout
-		err = rows.Scan(&s.Id, &s.UUID, &s.IpAddress, &s.Authorised, &image, &s.Name, &s.State, &s.Port)
+		err = rows.Scan(&s.UUID, &s.IpAddress, &s.Authorised, &image, &s.Name, &s.State, &s.Port)
 		if err != nil {
 			return files, err
 		}
 
 		// Write image.
 		if len(image) > 0 {
-			imgF := configuration.GetDataDir() + "/scout" + fmt.Sprintf("%d", s.Id) + ".jpg"
+			imgF := configuration.GetDataDir() + "/scout" + fmt.Sprintf("%d", s.UUID) + ".jpg"
 			err = ioutil.WriteFile(imgF, image, 0644)
 			if err != nil {
 				return files, err

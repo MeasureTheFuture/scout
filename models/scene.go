@@ -61,11 +61,11 @@ func (s *Scene) buildDistanceMap(detected []Waypoint) map[int][]int {
 }
 
 // addInteraction
-func (s *Scene) addInteraction(detected []Waypoint, config configuration.Configuration) {
+func (s *Scene) addInteraction(detected []Waypoint, db *sql.DB, config configuration.Configuration) {
 	if len(s.Interactions) == 0 {
 		// Empty scene: just add a new interaction for each new waypoint.
 		for i := 0; i < len(detected); i++ {
-			s.Interactions = append(s.Interactions, NewInteraction(detected[i], s.sId, config))
+			s.Interactions = append(s.Interactions, NewInteraction(detected[i], s.sId, db))
 			s.sId++
 		}
 
@@ -117,7 +117,7 @@ func (s *Scene) addInteraction(detected []Waypoint, config configuration.Configu
 
 				// We haven't resumed an idle interaction, so the detected element must be a new interaction.
 				if !resumed {
-					s.Interactions = append(s.Interactions, NewInteraction(detected[i], s.sId, config))
+					s.Interactions = append(s.Interactions, NewInteraction(detected[i], s.sId, db))
 					s.sId++
 				}
 			}
@@ -149,7 +149,7 @@ func (s *Scene) removeInteraction(detected []Waypoint, config configuration.Conf
 
 func (s *Scene) Update(db *sql.DB, detected []Waypoint, config configuration.Configuration) {
 	if len(detected) >= len(s.Interactions) {
-		s.addInteraction(detected, config)
+		s.addInteraction(detected, db, config)
 	} else {
 		s.removeInteraction(detected, config)
 	}

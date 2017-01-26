@@ -15,7 +15,6 @@
 	"MogDetectShadows":0,
 	"ScoutAddress":":9090",
 	"MothershipAddress":"127.0.0.1:9091",
-	"UUID":"0938c583-4140-458c-b267-a8d816d96f4b",
 	"SimplifyEpsilon":2.0,
 	"MinDuration":0.2,
 	"IdleDuration":0.3,

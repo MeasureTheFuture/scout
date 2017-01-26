@@ -46,7 +46,7 @@ func updateUnprocessed(db *sql.DB) {
 	}
 
 	for _, si := range up {
-		ss, err := models.GetScoutSummaryById(db, si.ScoutId)
+		ss, err := models.GetScoutSummaryByUUID(db, si.ScoutUUID)
 		if err != nil {
 			log.Printf("ERROR: Summarise unable to get scout summary")
 			log.Print(err)

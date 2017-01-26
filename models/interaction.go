@@ -48,13 +48,13 @@ func (i Interaction) Equal(wp []Waypoint) bool {
 	return true
 }
 
-func NewInteraction(w Waypoint, sId int, config configuration.Configuration) Interaction {
+func NewInteraction(w Waypoint, sId int, db *sql.DB) Interaction {
 	start := time.Now().UTC()
 
 	// The start time broadcasted for the interaction is truncated to the nearest 30 minutes.
 	apparentStart := start.Round(15 * time.Minute)
 
-	i := Interaction{config.UUID, "0.1", apparentStart, start, 0.0, []Waypoint{}, sId}
+	i := Interaction{GetScoutUUID(db), "0.1", apparentStart, start, 0.0, []Waypoint{}, sId}
 	i.addWaypoint(w)
 	return i
 }
@@ -109,18 +109,11 @@ func (i *Interaction) simplify(config configuration.Configuration) {
 }
 
 func (i *Interaction) saveToDB(db *sql.DB, config configuration.Configuration) {
-	s, err := GetScoutByUUID(db, config.UUID)
-	if err != nil {
-		log.Printf("ERROR: Unable to start health heartbeat. Scout UUID missing")
-		log.Print(err)
-		return
-	}
-
 	i.simplify(config) // Remove unnecessary segments from the pathway before storing in the DB.
 
 	si := CreateScoutInteraction(i)
-	si.ScoutId = s.Id
-	err = si.Insert(db)
+	si.ScoutUUID = GetScoutUUID(db)
+	err := si.Insert(db)
 	if err != nil {
 		log.Printf("ERROR: Unable to save Interaction to DB.")
 		log.Print(err)

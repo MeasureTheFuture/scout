@@ -119,12 +119,7 @@ func GetScoutFrame(db *sql.DB, c echo.Context) error {
 }
 
 func GetScout(db *sql.DB, c echo.Context) error {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		return err
-	}
-
-	s, err := models.GetScoutById(db, id)
+	s, err := models.GetScoutByUUID(db, c.Param("id"))
 	if err != nil {
 		return err
 	}
@@ -133,11 +128,6 @@ func GetScout(db *sql.DB, c echo.Context) error {
 }
 
 func UpdateScout(db *sql.DB, c echo.Context) error {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		return err
-	}
-
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
@@ -149,7 +139,7 @@ func UpdateScout(db *sql.DB, c echo.Context) error {
 		return err
 	}
 
-	if id != ns.Id {
+	if c.Param("id") != ns.UUID {
 		return errors.New("Mismatched Ids")
 	}
 
@@ -157,22 +147,22 @@ func UpdateScout(db *sql.DB, c echo.Context) error {
 	if !ns.Authorised {
 		ns.State = models.IDLE
 
-		err = models.DeleteScoutHealths(db, ns.Id)
+		err = models.DeleteScoutHealths(db, ns.UUID)
 		if err != nil {
 			return err
 		}
 
-		err = models.DeleteScoutInteractions(db, ns.Id)
+		err = models.DeleteScoutInteractions(db, ns.UUID)
 		if err != nil {
 			return err
 		}
 
-		err = models.DeleteScoutLogs(db, ns.Id)
+		err = models.DeleteScoutLogs(db, ns.UUID)
 		if err != nil {
 			return err
 		}
 
-		ss, err := models.GetScoutSummaryById(db, ns.Id)
+		ss, err := models.GetScoutSummaryByUUID(db, ns.UUID)
 		if err != nil {
 			return err
 		}

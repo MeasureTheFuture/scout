@@ -33,7 +33,7 @@ type Path [][2]int
 
 type ScoutInteraction struct {
 	Id             int64
-	ScoutId        int64
+	ScoutUUID      string
 	Duration       float32
 	Waypoints      Path
 	WaypointWidths Path
@@ -127,7 +127,7 @@ func CreateScoutInteraction(i *Interaction) ScoutInteraction {
 	var result ScoutInteraction
 
 	result.Id = -1
-	result.ScoutId = -1
+	result.ScoutUUID = ""
 	result.Duration = i.Duration
 
 	wpLength := len(i.Path)
@@ -148,12 +148,12 @@ func CreateScoutInteraction(i *Interaction) ScoutInteraction {
 }
 
 func GetScoutInteractionById(db *sql.DB, id int64) (*ScoutInteraction, error) {
-	const query = `SELECT id, scout_id, duration, waypoints, waypoint_widths, waypoint_times,
+	const query = `SELECT id, scout_uuid, duration, waypoints, waypoint_widths, waypoint_times,
 	processed, entered_at FROM scout_interactions WHERE id = $1`
 
 	var result ScoutInteraction
 	var et time.Time
-	err := db.QueryRow(query, id).Scan(&result.Id, &result.ScoutId, &result.Duration,
+	err := db.QueryRow(query, id).Scan(&result.Id, &result.ScoutUUID, &result.Duration,
 		&result.Waypoints, &result.WaypointWidths, &result.WaypointTimes,
 		&result.Processed, &et)
 	result.EnteredAt = et.UTC()
@@ -161,14 +161,14 @@ func GetScoutInteractionById(db *sql.DB, id int64) (*ScoutInteraction, error) {
 	return &result, err
 }
 
-func GetLastScoutInteraction(db *sql.DB, scoutId int64) (*ScoutInteraction, error) {
+func GetLastScoutInteraction(db *sql.DB, scoutUUID string) (*ScoutInteraction, error) {
 	const query = `SELECT id, duration, waypoints, waypoint_widths, waypoint_times, processed, entered_at
-		FROM scout_interactions WHERE scout_id = $1 ORDER BY id DESC LIMIT 1`
+		FROM scout_interactions WHERE scout_uuid = $1 ORDER BY id DESC LIMIT 1`
 
 	var result ScoutInteraction
-	err := db.QueryRow(query, scoutId).Scan(&result.Id, &result.Duration, &result.Waypoints, &result.WaypointWidths,
+	err := db.QueryRow(query, scoutUUID).Scan(&result.Id, &result.Duration, &result.Waypoints, &result.WaypointWidths,
 		&result.WaypointTimes, &result.Processed, &result.EnteredAt)
-	result.ScoutId = scoutId
+	result.ScoutUUID = scoutUUID
 
 	return &result, err
 }
@@ -193,8 +193,8 @@ func GetUnprocessed(db *sql.DB) ([]*ScoutInteraction, error) {
 	for rows.Next() {
 		var si ScoutInteraction
 		var et time.Time
-		err = rows.Scan(&si.Id, &si.ScoutId, &si.Duration, &si.Waypoints, &si.WaypointWidths,
-			&si.WaypointTimes, &si.Processed, &et)
+		err = rows.Scan(&si.Id, &si.Duration, &si.Waypoints, &si.WaypointWidths,
+			&si.WaypointTimes, &si.Processed, &et, &si.ScoutUUID)
 		si.EnteredAt = et.UTC()
 		if err != nil {
 			return result, err
@@ -213,17 +213,17 @@ func NumScoutInteractions(db *sql.DB) (int64, error) {
 	return result, err
 }
 
-func DeleteScoutInteractions(db *sql.DB, scoutId int64) error {
-	const query = `DELETE FROM scout_interactions WHERE scout_id = $1`
-	_, err := db.Exec(query, scoutId)
+func DeleteScoutInteractions(db *sql.DB, scoutUUID string) error {
+	const query = `DELETE FROM scout_interactions WHERE scout_uuid = $1`
+	_, err := db.Exec(query, scoutUUID)
 	return err
 }
 
 func (si *ScoutInteraction) Insert(db *sql.DB) error {
-	const query = `INSERT INTO scout_interactions (scout_id, duration, waypoints,
+	const query = `INSERT INTO scout_interactions (scout_uuid, duration, waypoints,
 		waypoint_widths, waypoint_times, processed, entered_at) VALUES
 		($1, $2, $3, $4, $5, $6, $7) RETURNING id`
-	return db.QueryRow(query, si.ScoutId, si.Duration, si.Waypoints, si.WaypointWidths,
+	return db.QueryRow(query, si.ScoutUUID, si.Duration, si.Waypoints, si.WaypointWidths,
 		si.WaypointTimes, si.Processed, si.EnteredAt).Scan(&si.Id)
 }
 
@@ -242,8 +242,8 @@ func ScoutInteractionsAsJSON(db *sql.DB) (string, error) {
 	var result []ScoutInteraction
 	for rows.Next() {
 		var si ScoutInteraction
-		err = rows.Scan(&si.Id, &si.ScoutId, &si.Duration, &si.Waypoints, &si.WaypointWidths,
-			&si.WaypointTimes, &si.Processed, &si.EnteredAt)
+		err = rows.Scan(&si.Id, &si.Duration, &si.Waypoints, &si.WaypointWidths,
+			&si.WaypointTimes, &si.Processed, &si.EnteredAt, &si.ScoutUUID)
 		if err != nil {
 			return file, err
 		}

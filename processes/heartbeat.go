@@ -19,7 +19,6 @@ package processes
 
 import (
 	"database/sql"
-	"github.com/MeasureTheFuture/scout/configuration"
 	"github.com/MeasureTheFuture/scout/models"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
@@ -29,16 +28,9 @@ import (
 	"time"
 )
 
-func HealthHeartbeat(db *sql.DB, config configuration.Configuration) {
-	s, err := models.GetScoutByUUID(db, config.UUID)
-	if err != nil {
-		log.Printf("ERROR: Unable to start health heartbeat. Scout UUID missing")
-		log.Print(err)
-		return
-	}
-
+func HealthHeartbeat(db *sql.DB) {
 	// Send initial health heartbeat on startup.
-	err = SaveHeartbeat(db, s)
+	err := SaveHeartbeat(db)
 	if err != nil {
 		log.Printf("ERROR: Unable to save health heartbeat. ")
 		log.Print(err)
@@ -50,7 +42,7 @@ func HealthHeartbeat(db *sql.DB, config configuration.Configuration) {
 	for {
 		select {
 		case <-poll:
-			err = SaveHeartbeat(db, s)
+			err = SaveHeartbeat(db)
 			if err != nil {
 				log.Printf("ERROR: Unable to save health heartbeat. ")
 				log.Print(err)
@@ -60,9 +52,9 @@ func HealthHeartbeat(db *sql.DB, config configuration.Configuration) {
 	}
 }
 
-func SaveHeartbeat(db *sql.DB, s *models.Scout) error {
+func SaveHeartbeat(db *sql.DB) error {
 	t, u := getMemoryUsage()
-	sh := models.ScoutHealth{s.Id, getCPULoad(), u, t, getStorageUsage(), time.Now().UTC()}
+	sh := models.ScoutHealth{models.GetScoutUUID(db), getCPULoad(), u, t, getStorageUsage(), time.Now().UTC()}
 
 	return sh.Insert(db)
 }

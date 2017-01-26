@@ -25,7 +25,7 @@ import (
 )
 
 type ScoutHealth struct {
-	ScoutId     int64
+	ScoutUUID   string
 	CPU         float32
 	Memory      float32
 	TotalMemory float32
@@ -33,30 +33,30 @@ type ScoutHealth struct {
 	CreatedAt   time.Time
 }
 
-func GetScoutHealthById(db *sql.DB, scoutId int64, time time.Time) (*ScoutHealth, error) {
-	const query = `SELECT cpu, memory, total_memory, storage FROM scout_healths WHERE scout_id = $1 AND created_at = $2`
+func GetScoutHealthByUUID(db *sql.DB, scoutUUID string, time time.Time) (*ScoutHealth, error) {
+	const query = `SELECT cpu, memory, total_memory, storage FROM scout_healths WHERE scout_uuid = $1 AND created_at = $2`
 
 	var result ScoutHealth
-	err := db.QueryRow(query, scoutId, time).Scan(&result.CPU, &result.Memory, &result.TotalMemory, &result.Storage)
-	result.ScoutId = scoutId
+	err := db.QueryRow(query, scoutUUID, time).Scan(&result.CPU, &result.Memory, &result.TotalMemory, &result.Storage)
+	result.ScoutUUID = scoutUUID
 	result.CreatedAt = time
 
 	return &result, err
 }
 
-func GetLastScoutHealth(db *sql.DB, scoutId int64) (*ScoutHealth, error) {
-	const query = `SELECT cpu, memory, total_memory, storage, created_at FROM scout_healths WHERE scout_id = $1 ORDER BY created_at DESC LIMIT 1`
+func GetLastScoutHealth(db *sql.DB, scoutUUID string) (*ScoutHealth, error) {
+	const query = `SELECT cpu, memory, total_memory, storage, created_at FROM scout_healths WHERE scout_uuid = $1 ORDER BY created_at DESC LIMIT 1`
 
 	var result ScoutHealth
-	err := db.QueryRow(query, scoutId).Scan(&result.CPU, &result.Memory, &result.TotalMemory, &result.Storage, &result.CreatedAt)
-	result.ScoutId = scoutId
+	err := db.QueryRow(query, scoutUUID).Scan(&result.CPU, &result.Memory, &result.TotalMemory, &result.Storage, &result.CreatedAt)
+	result.ScoutUUID = scoutUUID
 
 	return &result, err
 }
 
-func DeleteScoutHealths(db *sql.DB, scoutId int64) error {
-	const query = `DELETE FROM scout_healths WHERE scout_id = $1`
-	_, err := db.Exec(query, scoutId)
+func DeleteScoutHealths(db *sql.DB, scoutUUID string) error {
+	const query = `DELETE FROM scout_healths WHERE scout_uuid = $1`
+	_, err := db.Exec(query, scoutUUID)
 	return err
 }
 
@@ -69,9 +69,9 @@ func NumScoutHealths(db *sql.DB) (int64, error) {
 }
 
 func (s *ScoutHealth) Insert(db *sql.DB) error {
-	const query = `INSERT INTO scout_healths (scout_id, cpu, memory, total_memory, storage,
+	const query = `INSERT INTO scout_healths (scout_uuid, cpu, memory, total_memory, storage,
 		created_at) VALUES ($1, $2, $3, $4, $5, $6)`
-	_, err := db.Exec(query, s.ScoutId, s.CPU, s.Memory, s.TotalMemory, s.Storage, s.CreatedAt)
+	_, err := db.Exec(query, s.ScoutUUID, s.CPU, s.Memory, s.TotalMemory, s.Storage, s.CreatedAt)
 	return err
 }
 
@@ -89,7 +89,7 @@ func ScoutHealthsAsJSON(db *sql.DB) (string, error) {
 	var result []ScoutHealth
 	for rows.Next() {
 		var sh ScoutHealth
-		err = rows.Scan(&sh.ScoutId, &sh.CPU, &sh.Memory, &sh.TotalMemory, &sh.Storage, &sh.CreatedAt)
+		err = rows.Scan(&sh.ScoutUUID, &sh.CPU, &sh.Memory, &sh.TotalMemory, &sh.Storage, &sh.CreatedAt)
 		if err != nil {
 			return file, err
 		}

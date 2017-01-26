@@ -31,7 +31,7 @@ type Buckets [configuration.HBuckets][configuration.WBuckets]float32
 type IntBuckets [configuration.HBuckets][configuration.WBuckets]int
 
 type ScoutSummary struct {
-	ScoutId          int64
+	ScoutUUID        string
 	VisitorCount     int64
 	VisitTimeBuckets Buckets
 	VisitorBuckets   IntBuckets
@@ -137,12 +137,12 @@ func (b *Buckets) Scan(value interface{}) error {
 	return nil
 }
 
-func GetScoutSummaryById(db *sql.DB, scoutId int64) (*ScoutSummary, error) {
-	const query = `SELECT visitor_count, visit_time_buckets, visitor_buckets FROM scout_summaries WHERE scout_id = $1`
+func GetScoutSummaryByUUID(db *sql.DB, scoutUUID string) (*ScoutSummary, error) {
+	const query = `SELECT visitor_count, visit_time_buckets, visitor_buckets FROM scout_summaries WHERE scout_uuid = $1`
 
 	var result ScoutSummary
-	err := db.QueryRow(query, scoutId).Scan(&result.VisitorCount, &result.VisitTimeBuckets, &result.VisitorBuckets)
-	result.ScoutId = scoutId
+	err := db.QueryRow(query, scoutUUID).Scan(&result.VisitorCount, &result.VisitTimeBuckets, &result.VisitorBuckets)
+	result.ScoutUUID = scoutUUID
 
 	return &result, err
 }
@@ -156,15 +156,15 @@ func (si *ScoutSummary) Clear(db *sql.DB) error {
 }
 
 func (si *ScoutSummary) Insert(db *sql.DB) error {
-	const query = `INSERT INTO scout_summaries (scout_id, visitor_count, visit_time_buckets, visitor_buckets) VALUES ($1, $2, $3, $4)`
-	_, err := db.Exec(query, si.ScoutId, si.VisitorCount, si.VisitTimeBuckets, si.VisitorBuckets)
+	const query = `INSERT INTO scout_summaries (scout_uuid, visitor_count, visit_time_buckets, visitor_buckets) VALUES ($1, $2, $3, $4)`
+	_, err := db.Exec(query, si.ScoutUUID, si.VisitorCount, si.VisitTimeBuckets, si.VisitorBuckets)
 
 	return err
 }
 
 func (si *ScoutSummary) Update(db *sql.DB) error {
-	const query = `UPDATE scout_summaries SET visitor_count = $1, visit_time_buckets = $2, visitor_buckets = $3 WHERE scout_id = $4`
-	_, err := db.Exec(query, si.VisitorCount, si.VisitTimeBuckets, si.VisitorBuckets, si.ScoutId)
+	const query = `UPDATE scout_summaries SET visitor_count = $1, visit_time_buckets = $2, visitor_buckets = $3 WHERE scout_uuid = $4`
+	_, err := db.Exec(query, si.VisitorCount, si.VisitTimeBuckets, si.VisitorBuckets, si.ScoutUUID)
 
 	return err
 }
@@ -184,7 +184,7 @@ func ScoutSummariesAsJSON(db *sql.DB) (string, error) {
 	var result []ScoutSummary
 	for rows.Next() {
 		var ss ScoutSummary
-		err = rows.Scan(&ss.ScoutId, &ss.VisitorCount, &ss.VisitTimeBuckets, &ss.VisitorBuckets)
+		err = rows.Scan(&ss.ScoutUUID, &ss.VisitorCount, &ss.VisitTimeBuckets, &ss.VisitorBuckets)
 		if err != nil {
 			return file, err
 		}

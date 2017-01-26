@@ -19,50 +19,33 @@ package models
 
 import (
 	"database/sql"
-	"github.com/MeasureTheFuture/scout/configuration"
 	_ "github.com/lib/pq"
-	"io/ioutil"
 	"time"
 )
 
 type ScoutLog struct {
-	ScoutId   int64
+	ScoutUUID string
 	Log       []byte
 	CreatedAt time.Time
 }
 
-func CreateLogFromFile(tmpLog string, db *sql.DB, config configuration.Configuration) (*ScoutLog, error) {
-	s, err := GetScoutByUUID(db, config.UUID)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := ioutil.ReadFile(tmpLog)
-	if err != nil {
-		return nil, err
-	}
-
-	sl := ScoutLog{s.Id, b, time.Now().UTC()}
-	return &sl, nil
-}
-
-func GetScoutLogById(db *sql.DB, scoutId int64, time time.Time) (*ScoutLog, error) {
-	const query = `SELECT log FROM scout_logs WHERE scout_id = $1 AND created_at = $2`
+func GetScoutLogByUUID(db *sql.DB, scoutUUID string, time time.Time) (*ScoutLog, error) {
+	const query = `SELECT log FROM scout_logs WHERE scout_uuid = $1 AND created_at = $2`
 
 	var result ScoutLog
-	err := db.QueryRow(query, scoutId, time).Scan(&result.Log)
-	result.ScoutId = scoutId
+	err := db.QueryRow(query, scoutUUID, time).Scan(&result.Log)
+	result.ScoutUUID = scoutUUID
 	result.CreatedAt = time
 
 	return &result, err
 }
 
-func GetLastScoutLog(db *sql.DB, scoutId int64) (*ScoutLog, error) {
-	const query = `SELECT log, created_at FROM scout_logs WHERE scout_id = $1 ORDER by created_at DESC LIMIT 1`
+func GetLastScoutLog(db *sql.DB, scoutUUID string) (*ScoutLog, error) {
+	const query = `SELECT log, created_at FROM scout_logs WHERE scout_uuid = $1 ORDER by created_at DESC LIMIT 1`
 
 	var result ScoutLog
-	err := db.QueryRow(query, scoutId).Scan(&result.Log, &result.CreatedAt)
-	result.ScoutId = scoutId
+	err := db.QueryRow(query, scoutUUID).Scan(&result.Log, &result.CreatedAt)
+	result.ScoutUUID = scoutUUID
 
 	return &result, err
 }
@@ -75,16 +58,16 @@ func NumScoutLogs(db *sql.DB) (int64, error) {
 	return result, err
 }
 
-func DeleteScoutLogs(db *sql.DB, scoutId int64) error {
-	const query = `DELETE FROM scout_logs WHERE scout_id = $1`
-	_, err := db.Exec(query, scoutId)
+func DeleteScoutLogs(db *sql.DB, scoutUUID string) error {
+	const query = `DELETE FROM scout_logs WHERE scout_uuid = $1`
+	_, err := db.Exec(query, scoutUUID)
 
 	return err
 }
 
 func (s *ScoutLog) Insert(db *sql.DB) error {
-	const query = `INSERT INTO scout_logs (scout_id, log, created_at) VALUES ($1, $2, $3)`
-	_, err := db.Exec(query, s.ScoutId, s.Log, s.CreatedAt)
+	const query = `INSERT INTO scout_logs (scout_uuid, log, created_at) VALUES ($1, $2, $3)`
+	_, err := db.Exec(query, s.ScoutUUID, s.Log, s.CreatedAt)
 
 	return err
 }
