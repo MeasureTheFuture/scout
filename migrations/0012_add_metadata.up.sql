@@ -1,0 +1,11 @@
+ALTER TABLE scouts ADD COLUMN min_area double precision NOT NULL DEFAULT 2.0;
+ALTER TABLE scouts ADD COLUMN dilation_iterations int NOT NULL DEFAULT 2;
+ALTER TABLE scouts ADD COLUMN foreground_thresh int NOT NULL DEFAULT 2;
+ALTER TABLE scouts ADD COLUMN guassian_smooth int NOT NULL DEFAULT 2;
+ALTER TABLE scouts ADD COLUMN mog_history_length int NOT NULL DEFAULT 2;
+ALTER TABLE scouts ADD COLUMN mog_threshold double precision NOT NULL DEFAULT 2.0;
+ALTER TABLE scouts ADD COLUMN mog_detect_shadows int NOT NULL DEFAULT 0;
+ALTER TABLE scouts ADD COLUMN simplify_epsilon double precision NOT NULL DEFAULT 2.0;
+ALTER TABLE scouts ADD COLUMN min_duration real NOT NULL DEFAULT 0.2;
+ALTER TABLE scouts ADD COLUMN idle_duration real NOT NULL DEFAULT 0.3;
+ALTER TABLE scouts ADD COLUMN resume_sq_distance int NOT NULL DEFAULT 1;

@@ -1,0 +1,11 @@
+ALTER TABLE scouts DROP COLUMN min_area;
+ALTER TABLE scouts DROP COLUMN dilation_iterations;
+ALTER TABLE scouts DROP COLUMN foreground_thresh;
+ALTER TABLE scouts DROP COLUMN guassian_smooth;
+ALTER TABLE scouts DROP COLUMN mog_history_length;
+ALTER TABLE scouts DROP COLUMN mog_threshold;
+ALTER TABLE scouts DROP COLUMN mog_detect_shadows;
+ALTER TABLE scouts DROP COLUMN simplify_epsilon;
+ALTER TABLE scouts DROP COLUMN min_duration;
+ALTER TABLE scouts DROP COLUMN idle_duration;
+ALTER TABLE scouts DROP COLUMN resume_sq_distance;

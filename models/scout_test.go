@@ -68,7 +68,8 @@ var _ = Describe("Scout Model", func() {
 
 	Context("Insert", func() {
 		It("should insert a valid scout into the DB.", func() {
-			s := Scout{"", "192.168.0.1", 8080, true, "foo", "calibrated", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "calibrated", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -78,7 +79,8 @@ var _ = Describe("Scout Model", func() {
 		})
 
 		It("should return an error when an invalid scout is inserted into the DB.", func() {
-			s := Scout{"aa", "192.168.0.1", 8080, true, "foo", "calibratingas", &ScoutSummary{}}
+			s := Scout{"aa", "192.168.0.1", 8080, true, "foo", "calibratingas", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).ShouldNot(BeNil())
 			Ω(s.UUID).Should(Equal("aa"))
@@ -91,11 +93,13 @@ var _ = Describe("Scout Model", func() {
 			Ω(err).Should(BeNil())
 			Ω(len(al)).Should(Equal(0))
 
-			s1 := Scout{"", "192.168.0.1", 8080, true, "foo", "calibrated", &ScoutSummary{}}
+			s1 := Scout{"", "192.168.0.1", 8080, true, "foo", "calibrated", &ScoutSummary{},
+					    2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err = s1.Insert(db)
 			Ω(err).Should(BeNil())
 
-			s2 := Scout{"", "192.168.0.2", 8080, true, "foo", "calibrated", &ScoutSummary{}}
+			s2 := Scout{"", "192.168.0.2", 8080, true, "foo", "calibrated", &ScoutSummary{},
+						2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err = s2.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -108,7 +112,8 @@ var _ = Describe("Scout Model", func() {
 
 	Context("Update", func() {
 		It("should be able to update a scout in the DB", func() {
-			s := Scout{"", "192.168.0.1", 8080, true, "foo", "measuring", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "measuring", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 

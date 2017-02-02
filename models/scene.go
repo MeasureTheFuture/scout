@@ -20,7 +20,6 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/MeasureTheFuture/scout/configuration"
 	"io/ioutil"
 	"math"
 	"time"
@@ -30,11 +29,12 @@ type Scene struct {
 	Interactions     []Interaction // The current interactions occuring within the scene.
 	IdleInteractions []Interaction // The current interactions that are idle (resumable).
 	sId              int
+	dScout   *Scout
 }
 
 // initScene creates an empty scene that can be used for monitoring interactions.
-func InitScene() *Scene {
-	return &Scene{}
+func InitScene(scout *Scout) *Scene {
+	return &Scene{[]Interaction{}, []Interaction{}, 0, scout}
 }
 
 func (s *Scene) buildDistanceMap(detected []Waypoint) map[int][]int {
@@ -61,11 +61,11 @@ func (s *Scene) buildDistanceMap(detected []Waypoint) map[int][]int {
 }
 
 // addInteraction
-func (s *Scene) addInteraction(detected []Waypoint, db *sql.DB, config configuration.Configuration) {
+func (s *Scene) addInteraction(detected []Waypoint) {
 	if len(s.Interactions) == 0 {
 		// Empty scene: just add a new interaction for each new waypoint.
 		for i := 0; i < len(detected); i++ {
-			s.Interactions = append(s.Interactions, NewInteraction(detected[i], s.sId, db))
+			s.Interactions = append(s.Interactions, NewInteraction(detected[i], s.sId, s.dScout))
 			s.sId++
 		}
 
@@ -106,7 +106,7 @@ func (s *Scene) addInteraction(detected []Waypoint, db *sql.DB, config configura
 					wpt := s.IdleInteractions[k].started.Add(time.Duration(wp.T) * time.Second)
 					dt := float32(t.Sub(wpt).Seconds())
 
-					if detected[i].distanceSq(wp) < config.ResumeSqDistance && dt < config.IdleDuration {
+					if detected[i].distanceSq(wp) < s.dScout.ResumeSqDistance && dt < s.dScout.IdleDuration {
 						// Resume idle interaction.
 						s.IdleInteractions[k].addWaypoint(detected[i])
 						s.Interactions = append(s.Interactions, s.IdleInteractions[k])
@@ -117,7 +117,7 @@ func (s *Scene) addInteraction(detected []Waypoint, db *sql.DB, config configura
 
 				// We haven't resumed an idle interaction, so the detected element must be a new interaction.
 				if !resumed {
-					s.Interactions = append(s.Interactions, NewInteraction(detected[i], s.sId, db))
+					s.Interactions = append(s.Interactions, NewInteraction(detected[i], s.sId, s.dScout))
 					s.sId++
 				}
 			}
@@ -125,7 +125,7 @@ func (s *Scene) addInteraction(detected []Waypoint, db *sql.DB, config configura
 	}
 }
 
-func (s *Scene) removeInteraction(detected []Waypoint, config configuration.Configuration) {
+func (s *Scene) removeInteraction(detected []Waypoint) {
 	distances := s.buildDistanceMap(detected)
 	matched := map[int]int{}
 
@@ -147,11 +147,11 @@ func (s *Scene) removeInteraction(detected []Waypoint, config configuration.Conf
 	}
 }
 
-func (s *Scene) Update(db *sql.DB, detected []Waypoint, config configuration.Configuration) {
+func (s *Scene) Update(db *sql.DB, detected []Waypoint) {
 	if len(detected) >= len(s.Interactions) {
-		s.addInteraction(detected, db, config)
+		s.addInteraction(detected)
 	} else {
-		s.removeInteraction(detected, config)
+		s.removeInteraction(detected)
 	}
 
 	// broadcast idle interactions that have expired and are no longer resumable.
@@ -161,11 +161,11 @@ func (s *Scene) Update(db *sql.DB, detected []Waypoint, config configuration.Con
 		wpt := s.IdleInteractions[i].started.Add(time.Duration(wp.T) * time.Second)
 		dt := float32(t.Sub(wpt).Seconds())
 
-		if dt > config.IdleDuration {
+		if dt > s.dScout.IdleDuration {
 			// Only transmit the interaction to the mothership if it is longer than the
 			// specified minimum duration. This is to filter out any detected noise.
-			if s.IdleInteractions[i].Duration > config.MinDuration {
-				s.IdleInteractions[i].saveToDB(db, config)
+			if s.IdleInteractions[i].Duration > s.dScout.MinDuration {
+				s.IdleInteractions[i].saveToDB(db)
 			}
 
 			s.IdleInteractions = append(s.IdleInteractions[:i], s.IdleInteractions[i+1:]...)
@@ -173,14 +173,14 @@ func (s *Scene) Update(db *sql.DB, detected []Waypoint, config configuration.Con
 	}
 }
 
-func (s *Scene) Close(db *sql.DB, config configuration.Configuration) {
+func (s *Scene) Close(db *sql.DB) {
 	// Broadcast all results to the mothership.
 	for _, i := range s.Interactions {
-		i.saveToDB(db, config)
+		i.saveToDB(db)
 	}
 
 	for _, i := range s.IdleInteractions {
-		i.saveToDB(db, config)
+		i.saveToDB(db)
 	}
 }
 

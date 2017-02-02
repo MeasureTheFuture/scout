@@ -5,18 +5,5 @@
 	"DBTestName":"mothership_test",
 	"Address":":80",
 	"StaticAssets":"public",
-	"SummariseInterval":1000,
-	"MinArea":2,
-	"DilationIterations":2,
-	"ForegroundThresh":2,
-	"GaussianSmooth":2,
-	"MogHistoryLength":2,
-	"MogThreshold":2,
-	"MogDetectShadows":0,
-	"ScoutAddress":":9090",
-	"MothershipAddress":"127.0.0.1:9091",
-	"SimplifyEpsilon":2.0,
-	"MinDuration":0.2,
-	"IdleDuration":0.3,
-	"ResumeSqDistance":1
+	"SummariseInterval":1000
 }

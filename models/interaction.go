@@ -18,8 +18,7 @@
 package models
 
 import (
-	"database/sql"
-	"github.com/MeasureTheFuture/scout/configuration"
+ 	"database/sql"
 	"log"
 	"time"
 )
@@ -32,6 +31,7 @@ type Interaction struct {
 	Duration float32    // The total duration of the interaction.
 	Path     []Waypoint // The pathway of the interaction through the scene.
 	SceneID  int
+	dScout *Scout
 }
 
 func (i Interaction) Equal(wp []Waypoint) bool {
@@ -48,13 +48,13 @@ func (i Interaction) Equal(wp []Waypoint) bool {
 	return true
 }
 
-func NewInteraction(w Waypoint, sId int, db *sql.DB) Interaction {
+func NewInteraction(w Waypoint, sId int, s *Scout) Interaction {
 	start := time.Now().UTC()
 
 	// The start time broadcasted for the interaction is truncated to the nearest 30 minutes.
 	apparentStart := start.Round(15 * time.Minute)
 
-	i := Interaction{GetScoutUUID(db), "0.1", apparentStart, start, 0.0, []Waypoint{}, sId}
+	i := Interaction{s.UUID, "0.1", apparentStart, start, 0.0, []Waypoint{}, sId, s}
 	i.addWaypoint(w)
 	return i
 }
@@ -104,15 +104,15 @@ func (i *Interaction) LastWaypoint() Waypoint {
 	return i.Path[len(i.Path)-1]
 }
 
-func (i *Interaction) simplify(config configuration.Configuration) {
-	i.Path = douglasPeucker(i.Path, config.SimplifyEpsilon)
+func (i *Interaction) simplify() {
+	i.Path = douglasPeucker(i.Path, i.dScout.SimplifyEpsilon)
 }
 
-func (i *Interaction) saveToDB(db *sql.DB, config configuration.Configuration) {
-	i.simplify(config) // Remove unnecessary segments from the pathway before storing in the DB.
+func (i *Interaction) saveToDB(db *sql.DB) {
+	i.simplify() // Remove unnecessary segments from the pathway before storing in the DB.
 
 	si := CreateScoutInteraction(i)
-	si.ScoutUUID = GetScoutUUID(db)
+	si.ScoutUUID = i.dScout.UUID
 	err := si.Insert(db)
 	if err != nil {
 		log.Printf("ERROR: Unable to save Interaction to DB.")

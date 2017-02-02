@@ -60,7 +60,7 @@ func main() {
 	log.SetOutput(f)
 	log.Printf("INFO: Starting scout.\n")
 
-	//
+	// Parse the configuration file.
 	config, err := configuration.Parse(configFile)
 	if err != nil {
 		log.Fatalf("ERROR: Can't parse configuration - %s", err)
@@ -78,7 +78,7 @@ func main() {
 	}
 	defer db.Close()
 
-	// If no scout exists in the DB, bootstrap it by creating one.
+	// If no scout exists in the DB, bootstrap the DB by creating one.
 	c, err := models.NumScouts(db)
 	if err != nil {
 		log.Fatalf("ERROR: Unable to cound scouts in DB - %s", err)
@@ -91,6 +91,10 @@ func main() {
 		}
 	}
 
+	// TODO: Fetch a copy of this scout's metadata from the DB.
+
+
+	// Start the background processes.
 	go processes.SaveLogToDB(tmpLog, db)
 	go processes.HealthHeartbeat(db)
 	go processes.Summarise(db, config)
@@ -108,6 +112,7 @@ func main() {
 	// }()
 	// monitor(deltaC, deltaCFG, videoFile, debug, config)
 
+	// Start the user interface.
 	e := echo.New()
 	e.Static("/", config.StaticAssets)
 	e.Static("/css", config.StaticAssets+"/css")

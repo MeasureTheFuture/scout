@@ -59,14 +59,32 @@ type Scout struct {
 	Name       string        `json:"name"`
 	State      ScoutState    `json:"state"`
 	Summary    *ScoutSummary `json:"summary"`
+
+	MinArea float64
+	DilationIterations int
+	ForegroundThresh int
+	GuassianSmooth int
+	MogHistoryLength int
+	MogThreshold float64
+	MogDetectShadows int
+	SimplifyEpsilon float64
+	MinDuration float32
+	IdleDuration float32
+	ResumeSqDistance int
 }
 
 func GetScoutByUUID(db *sql.DB, uuid string) (*Scout, error) {
-	const query = `SELECT ip_address, port, authorised, name, state
+	const query = `SELECT ip_address, port, authorised, name, state, min_area,
+				   dilation_iterations, foreground_thresh, guassian_smooth,
+				   mog_history_length, mog_threshold, mog_detect_shadows,
+				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance
 				   FROM scouts WHERE uuid = $1`
 	var result Scout
 	err := db.QueryRow(query, uuid).Scan(&result.IpAddress, &result.Port, &result.Authorised,
-		&result.Name, &result.State)
+		&result.Name, &result.State, &result.MinArea, &result.DilationIterations,
+		&result.ForegroundThresh, &result.GuassianSmooth, &result.MogHistoryLength,
+		&result.MogThreshold, &result.MogDetectShadows, &result.SimplifyEpsilon,
+		&result.MinDuration, &result.IdleDuration, &result.ResumeSqDistance)
 	result.UUID = uuid
 	result.Summary, err = GetScoutSummaryByUUID(db, result.UUID)
 	if err != nil {
@@ -88,7 +106,10 @@ func GetScoutUUID(db *sql.DB) string {
 }
 
 func GetAllScouts(db *sql.DB) ([]*Scout, error) {
-	const query = `SELECT uuid, ip_address, port, authorised, name, state FROM scouts`
+	const query = `SELECT uuid, ip_address, port, authorised, name, state, min_area,
+				   dilation_iterations, foreground_thresh, guassian_smooth,
+				   mog_history_length, mog_threshold, mog_detect_shadows,
+				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance FROM scouts`
 
 	var result []*Scout
 	rows, err := db.Query(query)
@@ -101,7 +122,11 @@ func GetAllScouts(db *sql.DB) ([]*Scout, error) {
 
 	for rows.Next() {
 		var s Scout
-		err = rows.Scan(&s.UUID, &s.IpAddress, &s.Port, &s.Authorised, &s.Name, &s.State)
+		err = rows.Scan(&s.UUID, &s.IpAddress, &s.Port, &s.Authorised, &s.Name, &s.State,
+			&s.MinArea, &s.DilationIterations, &s.ForegroundThresh,
+			&s.GuassianSmooth, &s.MogHistoryLength, &s.MogThreshold,
+			&s.MogDetectShadows, &s.SimplifyEpsilon, &s.MinDuration,
+			&s.IdleDuration, &s.ResumeSqDistance)
 		if err != nil {
 			return result, err
 		}
@@ -145,9 +170,16 @@ func (s *Scout) GetCalibrationFrame(db *sql.DB) ([]byte, error) {
 }
 
 func (s *Scout) Insert(db *sql.DB) error {
-	const query = `INSERT INTO scouts (ip_address, port, authorised, name, state)
-				   VALUES ($1, $2, $3, $4, $5) RETURNING uuid`
-	err := db.QueryRow(query, s.IpAddress, s.Port, s.Authorised, s.Name, s.State).Scan(&s.UUID)
+	const query = `INSERT INTO scouts (ip_address, port, authorised, name, state, min_area,
+				   dilation_iterations, foreground_thresh, guassian_smooth,
+				   mog_history_length, mog_threshold, mog_detect_shadows,
+				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance)
+				   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING uuid`
+	err := db.QueryRow(query, s.IpAddress, s.Port, s.Authorised, s.Name, s.State,
+		s.MinArea, s.DilationIterations, s.ForegroundThresh,
+		s.GuassianSmooth, s.MogHistoryLength, s.MogThreshold,
+		s.MogDetectShadows, s.SimplifyEpsilon, s.MinDuration,
+		s.IdleDuration, s.ResumeSqDistance).Scan(&s.UUID)
 	if err != nil {
 		return err
 	}
@@ -159,8 +191,15 @@ func (s *Scout) Insert(db *sql.DB) error {
 
 func (s *Scout) Update(db *sql.DB) error {
 	const query = `UPDATE scouts SET ip_address = $1, port = $2, authorised = $3, name = $4,
-				   state = $5 WHERE uuid = $6`
-	_, err := db.Exec(query, s.IpAddress, s.Port, s.Authorised, s.Name, s.State, s.UUID)
+				   state = $5, min_area = $6, dilation_iterations = $7,
+				   foreground_thresh = $8, guassian_smooth = $9, mog_history_length = $10,
+				   mog_threshold = $11, mog_detect_shadows = $12, simplify_epsilon = $13,
+				   min_duration = $14, idle_duration = $15, resume_sq_distance = $16 WHERE uuid = $17`
+	_, err := db.Exec(query, s.IpAddress, s.Port, s.Authorised, s.Name, s.State,
+		s.MinArea, s.DilationIterations, s.ForegroundThresh,
+		s.GuassianSmooth, s.MogHistoryLength, s.MogThreshold,
+		s.MogDetectShadows, s.SimplifyEpsilon, s.MinDuration,
+		s.IdleDuration, s.ResumeSqDistance, s.UUID)
 	return err
 }
 
@@ -182,7 +221,10 @@ func ScoutsAsJSON(db *sql.DB) ([]string, error) {
 
 	for rows.Next() {
 		var s Scout
-		err = rows.Scan(&s.UUID, &s.IpAddress, &s.Authorised, &image, &s.Name, &s.State, &s.Port)
+		err = rows.Scan(&s.UUID, &s.IpAddress, &s.Authorised, &image, &s.Name, &s.State, &s.Port,
+			&s.MinArea, &s.DilationIterations, &s.ForegroundThresh, &s.GuassianSmooth,
+			&s.MogHistoryLength, &s.MogThreshold, &s.MogDetectShadows, &s.SimplifyEpsilon,
+			&s.MinDuration, &s.IdleDuration, &s.ResumeSqDistance)
 		if err != nil {
 			return files, err
 		}

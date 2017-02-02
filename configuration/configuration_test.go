@@ -44,28 +44,12 @@ var _ = Describe("Configuration", func() {
 			Ω(c.DBTestName).Should(Equal("mothership_test"))
 			Ω(c.Address).Should(Equal(":80"))
 			Ω(c.StaticAssets).Should(Equal("public"))
-
-			Ω(c.MinArea).Should(Equal(2.0))
-			Ω(c.DilationIterations).Should(Equal(2))
-			Ω(c.ForegroundThresh).Should(Equal(2))
-			Ω(c.GaussianSmooth).Should(Equal(2))
-			Ω(c.MogHistoryLength).Should(Equal(2))
-			Ω(c.MogThreshold).Should(Equal(2.0))
-			Ω(c.MogDetectShadows).Should(Equal(0))
-
-			Ω(c.ScoutAddress).Should(Equal(":9090"))
-			Ω(c.MothershipAddress).Should(Equal("127.0.0.1:9091"))
-			Ω(c.SimplifyEpsilon).Should(Equal(2.0))
-			Ω(c.MinDuration).Should(Equal(float32(0.2)))
-			Ω(c.IdleDuration).Should(Equal(float32(0.3)))
-			Ω(c.ResumeSqDistance).Should(Equal(1))
 		})
 	})
 
 	Context("Saving", func() {
 		It("should be able to save a config file", func() {
-			c := Configuration{"mtf", "", "mothership", "mothership_test", ":80", "public", 1000,
-				2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091", 2.0, 0.2, 0.3, 1}
+			c := Configuration{"mtf", "", "mothership", "mothership_test", ":80", "public", 1000}
 			SaveAsJSON(c, "../testdata/foo.json")
 
 			a, err := Parse("../scout.json_example")

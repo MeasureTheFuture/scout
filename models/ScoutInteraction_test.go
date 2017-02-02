@@ -18,7 +18,6 @@
 package models
 
 import (
-	"github.com/MeasureTheFuture/scout/configuration"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"testing"
@@ -38,7 +37,11 @@ var _ = Describe("Scout Interaction Model", func() {
 			t := time.Now().UTC()
 
 			wp := []Waypoint{Waypoint{1, 2, 3, 4, 0.1}}
-			i := Interaction{"abc", "0.1", t, t, 0.1, wp, 1}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+			err := s.Insert(db)
+			Ω(err).Should(BeNil())
+			i := Interaction{"abc", "0.1", t, t, 0.1, wp, 1, &s}
 
 			si := CreateScoutInteraction(&i)
 			Ω(si.ScoutUUID).Should(Equal(""))
@@ -52,7 +55,8 @@ var _ = Describe("Scout Interaction Model", func() {
 
 	Context("Insert", func() {
 		It("Should be able to insert a scout interaction", func() {
-			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -69,7 +73,8 @@ var _ = Describe("Scout Interaction Model", func() {
 
 	Context("Delete", func() {
 		It("Should be able to delete interactions for a specified scout", func() {
-			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -92,7 +97,8 @@ var _ = Describe("Scout Interaction Model", func() {
 
 	Context("Unprocessed", func() {
 		It("Should be able to get unproccessed interactions", func() {
-			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -117,7 +123,8 @@ var _ = Describe("Scout Interaction Model", func() {
 
 	Context("MarkProcessed", func() {
 		It("Should be able to mark interactions as processed", func() {
-			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -138,8 +145,12 @@ var _ = Describe("Scout Interaction Model", func() {
 
 	Context("Init scene", func() {
 		It("should be able to init an empty scene", func() {
-			s := InitScene()
-			Ω(*s).Should(Equal(Scene{}))
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+			err := s.Insert(db)
+			Ω(err).Should(BeNil())
+			si := InitScene(&s)
+			Ω(*si).Should(Equal(Scene{[]Interaction{}, []Interaction{}, 0, &s}))
 		})
 	})
 
@@ -193,16 +204,17 @@ var _ = Describe("Scout Interaction Model", func() {
 	})
 
 	Context("NewInteraction", func() {
-		c := configuration.Configuration{"mtf", "", "mothership", "mothership_test", ":80", "public", 1000,
-			2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091",
-			"0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.01, 0.3, 1}
-
 		It("should create a new interaction", func() {
 			a := Waypoint{0, 0, 0, 0, 0.0}
 			tr := time.Now().UTC().Round(15 * time.Minute)
 
-			i := NewInteraction(a, 0, c)
-			Ω(i.UUID).Should(Equal(c.UUID))
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+			err := s.Insert(db)
+			Ω(err).Should(BeNil())
+
+			i := NewInteraction(a, 0, &s)
+			Ω(i.UUID).Should(Equal(s.UUID))
 			Ω(i.Version).Should(Equal("0.1"))
 			Ω(i.Entered).Should(Equal(tr))
 			Ω(i.Duration).Should(BeNumerically("~", float32(0.0), 0.007))
@@ -213,7 +225,12 @@ var _ = Describe("Scout Interaction Model", func() {
 			a := Waypoint{0, 0, 0, 0, 0.0}
 			b := Waypoint{1, 1, 1, 1, 0.005}
 
-			i := NewInteraction(a, 0, c)
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+			err := s.Insert(db)
+			Ω(err).Should(BeNil())
+
+			i := NewInteraction(a, 0, &s)
 			time.Sleep(50 * time.Millisecond)
 			i.addWaypoint(b)
 			Ω(i.Duration).Should(BeNumerically("~", float32(0.05), 0.007))
@@ -228,74 +245,76 @@ var _ = Describe("Scout Interaction Model", func() {
 		wpB := Waypoint{50, 50, 20, 20, 0.0}
 		wpBA := Waypoint{55, 53, 20, 20, 0.0}
 		wpC := Waypoint{150, 150, 20, 20, 0.0}
-		c := configuration.Configuration{"mtf", "", "mothership", "mothership_test", ":80", "public", 1000,
-			2.0, 2, 2, 2, 2, 2.0, 0, ":9090", "127.0.0.1:9091",
-			"0938c583-4140-458c-b267-a8d816d96f4b", 2.0, 0.01, 0.3, 1}
+
+		s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
+			   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+		err := s.Insert(db)
+		Ω(err).Should(BeNil())
 
 		It("should be able to add an interaction to an empty scene", func() {
-			s := InitScene()
-			s.addInteraction([]Waypoint{wpA}, c)
+			si := InitScene(&s)
+			si.addInteraction([]Waypoint{wpA})
 
-			Ω(len(s.Interactions)).Should(Equal(1))
-			Ω(s.Interactions[0].Equal([]Waypoint{wpA})).Should(BeTrue())
+			Ω(len(si.Interactions)).Should(Equal(1))
+			Ω(si.Interactions[0].Equal([]Waypoint{wpA})).Should(BeTrue())
 		})
 
 		It("should be able to add multiple interactions to an empty scene,", func() {
-			s := InitScene()
-			s.addInteraction([]Waypoint{wpA, wpB}, c)
+			si := InitScene(&s)
+			si.addInteraction([]Waypoint{wpA, wpB})
 
-			Ω(len(s.Interactions)).Should(Equal(2))
-			Ω(s.Interactions[0].Equal([]Waypoint{wpA})).Should(BeTrue())
-			Ω(s.Interactions[1].Equal([]Waypoint{wpB})).Should(BeTrue())
+			Ω(len(si.Interactions)).Should(Equal(2))
+			Ω(si.Interactions[0].Equal([]Waypoint{wpA})).Should(BeTrue())
+			Ω(si.Interactions[1].Equal([]Waypoint{wpB})).Should(BeTrue())
 		})
 
 		It("should list the interaction start time truncated to 30 mins", func() {
-			s := InitScene()
-			s.addInteraction([]Waypoint{wpA}, c)
+			si := InitScene(&s)
+			si.addInteraction([]Waypoint{wpA})
 
-			Ω(s.Interactions[0].Entered).Should(Equal(time.Now().UTC().Round(15 * time.Minute)))
+			Ω(si.Interactions[0].Entered).Should(Equal(time.Now().UTC().Round(15 * time.Minute)))
 		})
 
 		It("should be able to add an interaction to a scene with stuff already going on", func() {
-			s := InitScene()
-			s.addInteraction([]Waypoint{wpA}, c)
+			si := InitScene(&s)
+			si.addInteraction([]Waypoint{wpA})
 
 			time.Sleep(100 * time.Millisecond)
-			s.addInteraction([]Waypoint{wpAA, wpB}, c)
+			si.addInteraction([]Waypoint{wpAA, wpB})
 
-			Ω(len(s.Interactions)).Should(Equal(2))
-			Ω(s.Interactions[0].Equal([]Waypoint{wpA, wpAAT})).Should(BeTrue())
-			Ω(s.Interactions[1].Equal([]Waypoint{wpB})).Should(BeTrue())
+			Ω(len(si.Interactions)).Should(Equal(2))
+			Ω(si.Interactions[0].Equal([]Waypoint{wpA, wpAAT})).Should(BeTrue())
+			Ω(si.Interactions[1].Equal([]Waypoint{wpB})).Should(BeTrue())
 		})
 
 		It("should be able to add multiple interactions to a scene with stuff already going on", func() {
-			s := InitScene()
-			s.addInteraction([]Waypoint{wpA}, c)
-			s.addInteraction([]Waypoint{wpAA, wpB}, c)
-			s.addInteraction([]Waypoint{wpAA, wpBA, wpC}, c)
+			si := InitScene(&s)
+			si.addInteraction([]Waypoint{wpA})
+			si.addInteraction([]Waypoint{wpAA, wpB})
+			si.addInteraction([]Waypoint{wpAA, wpBA, wpC})
 
-			Ω(len(s.Interactions)).Should(Equal(3))
-			Ω(s.Interactions[0].Equal([]Waypoint{wpA, wpAA, wpAA})).Should(BeTrue())
-			Ω(s.Interactions[1].Equal([]Waypoint{wpB, wpBA})).Should(BeTrue())
-			Ω(s.Interactions[2].Equal([]Waypoint{wpC})).Should(BeTrue())
+			Ω(len(si.Interactions)).Should(Equal(3))
+			Ω(si.Interactions[0].Equal([]Waypoint{wpA, wpAA, wpAA})).Should(BeTrue())
+			Ω(si.Interactions[1].Equal([]Waypoint{wpB, wpBA})).Should(BeTrue())
+			Ω(si.Interactions[2].Equal([]Waypoint{wpC})).Should(BeTrue())
 		})
 
 		It("should be able to remove interactions when a person leaves the scene", func() {
-			s := InitScene()
-			s.addInteraction([]Waypoint{wpA, wpB}, c)
-			s.removeInteraction([]Waypoint{wpAA}, c)
+			si := InitScene(&s)
+			si.addInteraction([]Waypoint{wpA, wpB})
+			si.removeInteraction([]Waypoint{wpAA})
 
-			Ω(len(s.Interactions)).Should(Equal(1))
-			Ω(s.Interactions[0].Equal([]Waypoint{wpA, wpAA})).Should(BeTrue())
+			Ω(len(si.Interactions)).Should(Equal(1))
+			Ω(si.Interactions[0].Equal([]Waypoint{wpA, wpAA})).Should(BeTrue())
 		})
 
 		It("should be able to remove multiple interactions when more than one person leaves the scene", func() {
-			s := InitScene()
-			s.addInteraction([]Waypoint{wpA, wpB, wpC}, c)
-			s.removeInteraction([]Waypoint{wpBA}, c)
+			si := InitScene(&s)
+			si.addInteraction([]Waypoint{wpA, wpB, wpC})
+			si.removeInteraction([]Waypoint{wpBA})
 
-			Ω(len(s.Interactions)).Should(Equal(1))
-			Ω(s.Interactions[0].Equal([]Waypoint{wpB, wpBA})).Should(BeTrue())
+			Ω(len(si.Interactions)).Should(Equal(1))
+			Ω(si.Interactions[0].Equal([]Waypoint{wpB, wpBA})).Should(BeTrue())
 		})
 	})
 })

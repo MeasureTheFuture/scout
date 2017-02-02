@@ -74,7 +74,8 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 func monitor(db *sql.DB, deltaC chan models.Command, deltaCFG chan configuration.Configuration,
 	videoFile string, debug bool, config configuration.Configuration) {
 
-	runtime.LockOSThread() // All OpenCV operations must run on the OS thread to access the webcam.
+	// All OpenCV operations must run on the OS thread to access the webcam.
+	runtime.LockOSThread()
 
 	for {
 		c := <-deltaC

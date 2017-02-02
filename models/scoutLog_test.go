@@ -35,7 +35,8 @@ var _ = Describe("Scout Health Model", func() {
 
 	Context("Insert", func() {
 		It("should insert a valid scout_log into the DB.", func() {
-			s := Scout{"", "192.168.0.1", 8080, true, "foo", "calibrated", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "calibrated", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -59,7 +60,8 @@ var _ = Describe("Scout Health Model", func() {
 
 	Context("Delete", func() {
 		It("should be able to delete logs for a specified scout", func() {
-			s := Scout{"", "192.168.0.1", 8080, true, "foo", "calibrated", &ScoutSummary{}}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "calibrated", &ScoutSummary{},
+					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
