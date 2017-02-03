@@ -34,7 +34,7 @@ var _ = Describe("Scout Summary Model", func() {
 	Context("Insert", func() {
 		It("Scout insert should create matching scout summary", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -45,7 +45,7 @@ var _ = Describe("Scout Summary Model", func() {
 
 		It("Should be able to update existing scout summary.", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -66,7 +66,7 @@ var _ = Describe("Scout Summary Model", func() {
 	Context("Clear", func() {
 		It("Should be able to clear an existing scout summary", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-					   2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 

@@ -18,7 +18,7 @@
 package models
 
 import (
- 	"database/sql"
+	"database/sql"
 	"log"
 	"time"
 )
@@ -31,7 +31,7 @@ type Interaction struct {
 	Duration float32    // The total duration of the interaction.
 	Path     []Waypoint // The pathway of the interaction through the scene.
 	SceneID  int
-	dScout *Scout
+	dScout   *Scout
 }
 
 func (i Interaction) Equal(wp []Waypoint) bool {

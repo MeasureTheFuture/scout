@@ -35,7 +35,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/MeasureTheFuture/scout/configuration"
 	"github.com/MeasureTheFuture/scout/models"
 	"io/ioutil"
 	"log"
@@ -71,8 +70,7 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 	}
 }
 
-func monitor(db *sql.DB, deltaC chan models.Command, deltaCFG chan configuration.Configuration,
-	videoFile string, debug bool, config configuration.Configuration) {
+func monitor(db *sql.DB, deltaC chan models.Command, videoFile string, debug bool) {
 
 	// All OpenCV operations must run on the OS thread to access the webcam.
 	runtime.LockOSThread()
@@ -80,16 +78,10 @@ func monitor(db *sql.DB, deltaC chan models.Command, deltaCFG chan configuration
 	for {
 		c := <-deltaC
 
-		// See if the configuration has been changed by calibration
-		select {
-		case config = <-deltaCFG:
-		default:
-		}
-
 		switch {
 		case c == models.CALIBRATE:
 			log.Printf("INFO: Calibrating scout.")
-			calibrate(db, videoFile, config)
+			calibrate(db, videoFile)
 
 		case c == models.START_MEASURE:
 			log.Printf("INFO: Starting measure")
@@ -102,7 +94,7 @@ func monitor(db *sql.DB, deltaC chan models.Command, deltaCFG chan configuration
 				log.Print(err)
 			}
 
-			measure(db, deltaC, videoFile, debug, config)
+			measure(db, deltaC, videoFile, debug)
 
 		case c == models.STOP_MEASURE:
 			log.Printf("INFO: Stopping measure")
@@ -119,7 +111,7 @@ func monitor(db *sql.DB, deltaC chan models.Command, deltaCFG chan configuration
 	runtime.UnlockOSThread()
 }
 
-func calibrate(db *sql.DB, videoFile string, config configuration.Configuration) {
+func calibrate(db *sql.DB, videoFile string) {
 	// It takes a little while for the white balance to stabalise on the logitech.
 	// So grab a frame, wait to stabalise for white balance to stabalise, then grab again
 	// for and save as the calibration frame.
@@ -175,7 +167,9 @@ func calibrate(db *sql.DB, videoFile string, config configuration.Configuration)
 	}
 }
 
-func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug bool, config configuration.Configuration) {
+func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug bool) {
+	s := models.GetScout(db)
+
 	camera, err := getVideoSource(videoFile)
 	if err != nil {
 		// No valid video source. Abort measuring.
@@ -195,7 +189,7 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 		return
 	}()
 
-	scene := models.InitScene()
+	scene := models.InitScene(s)
 
 	// Build the calibration frame from disk.
 	var calibrationFrame *C.IplImage
@@ -217,7 +211,7 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 	defer C.cvReleaseImage(&mask)
 
 	// Push the initial calibration frame into the MOG2 image subtractor.
-	C.initMOG2(C.int(config.MogHistoryLength), C.double(config.MogThreshold), C.int(config.MogDetectShadows))
+	C.initMOG2(C.int(s.MogHistoryLength), C.double(s.MogThreshold), C.int(s.MogDetectShadows))
 	C.applyMOG2(unsafe.Pointer(calibrationFrame), unsafe.Pointer(mask))
 
 	// Current frame counter.
@@ -244,9 +238,9 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 		C.applyMOG2(unsafe.Pointer(nextFrame), unsafe.Pointer(mask))
 
 		// Filter the foreground mask to clean up any noise or holes (morphological-closing).
-		C.cvSmooth(unsafe.Pointer(mask), unsafe.Pointer(mask), C.CV_GAUSSIAN, C.int(config.GaussianSmooth), 0, 0.0, 0.0)
-		C.cvThreshold(unsafe.Pointer(mask), unsafe.Pointer(mask), C.double(config.ForegroundThresh), 255, 0)
-		C.cvDilate(unsafe.Pointer(mask), unsafe.Pointer(mask), nil, C.int(config.DilationIterations))
+		C.cvSmooth(unsafe.Pointer(mask), unsafe.Pointer(mask), C.CV_GAUSSIAN, C.int(s.GaussianSmooth), 0, 0.0, 0.0)
+		C.cvThreshold(unsafe.Pointer(mask), unsafe.Pointer(mask), C.double(s.ForegroundThresh), 255, 0)
+		C.cvDilate(unsafe.Pointer(mask), unsafe.Pointer(mask), nil, C.int(s.DilationIterations))
 
 		// Detect contours in filtered foreground mask
 		storage := C.cvCreateMemStorage(0)
@@ -262,7 +256,7 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 			area := float64(C.cvContourArea(unsafe.Pointer(contours), C.cvSlice(0, 0x3fffffff), 0))
 
 			// Only track large objects.
-			if area > config.MinArea {
+			if area > s.MinArea {
 				boundingBox := C.cvBoundingRect(unsafe.Pointer(contours), 0)
 				w := int(boundingBox.width / 2)
 				h := int(boundingBox.height / 2)
@@ -285,7 +279,7 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 			contours = contours.h_next
 		}
 
-		scene.Update(db, detectedObjects, config)
+		scene.Update(db, detectedObjects)
 		C.cvClearMemStorage(storage)
 		C.cvReleaseMemStorage(&storage)
 
@@ -329,5 +323,5 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 	}
 
 	log.Printf("INFO: Finished measure")
-	scene.Close(db, config)
+	scene.Close(db)
 }

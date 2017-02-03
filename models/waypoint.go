@@ -31,11 +31,11 @@ type Waypoint struct {
 
 // distanceSq calculates the distance squared between this and the
 // supplied waypoint.
-func (a Waypoint) distanceSq(b Waypoint) int {
+func (a Waypoint) distanceSq(b Waypoint) int64 {
 	dx := a.XPixels - b.XPixels
 	dy := a.YPixels - b.YPixels
 
-	return (dx * dx) + (dy * dy)
+	return int64((dx * dx) + (dy * dy))
 }
 
 // perpendicularDistance calulates the distance from a point (x) to a line

@@ -84,7 +84,8 @@ func main() {
 		log.Fatalf("ERROR: Unable to cound scouts in DB - %s", err)
 	}
 	if c == 0 {
-		ns := models.Scout{"", "0.0.0.0", 8080, false, "Location " + strconv.FormatInt(c+1, 10), "idle", &models.ScoutSummary{}}
+		ns := models.Scout{"", "0.0.0.0", 8080, false, "Location " + strconv.FormatInt(c+1, 10), "idle", &models.ScoutSummary{},
+			2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 		err = ns.Insert(db)
 		if err != nil {
 			log.Fatalf("ERROR: Unable to add initial scout to DB.")
@@ -92,7 +93,6 @@ func main() {
 	}
 
 	// TODO: Fetch a copy of this scout's metadata from the DB.
-
 
 	// Start the background processes.
 	go processes.SaveLogToDB(tmpLog, db)

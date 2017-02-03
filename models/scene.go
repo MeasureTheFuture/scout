@@ -29,7 +29,7 @@ type Scene struct {
 	Interactions     []Interaction // The current interactions occuring within the scene.
 	IdleInteractions []Interaction // The current interactions that are idle (resumable).
 	sId              int
-	dScout   *Scout
+	dScout           *Scout
 }
 
 // initScene creates an empty scene that can be used for monitoring interactions.
@@ -43,7 +43,7 @@ func (s *Scene) buildDistanceMap(detected []Waypoint) map[int][]int {
 	// For each of the detected waypoints, work out the
 	// closest interaction in the scene.
 	for i := 0; i < len(detected); i++ {
-		dist := math.MaxInt32
+		dist := int64(math.MaxInt64)
 		closestInteraction := -1
 
 		for j := 0; j < len(s.Interactions); j++ {
@@ -54,7 +54,7 @@ func (s *Scene) buildDistanceMap(detected []Waypoint) map[int][]int {
 			}
 		}
 
-		distances[i] = []int{dist, closestInteraction}
+		distances[i] = []int{int(dist), closestInteraction}
 	}
 
 	return distances

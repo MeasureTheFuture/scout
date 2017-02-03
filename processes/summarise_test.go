@@ -19,8 +19,8 @@ package processes
 
 import (
 	"database/sql"
-	"github.com/MeasureTheFuture/mothership/configuration"
-	"github.com/MeasureTheFuture/mothership/models"
+	"github.com/MeasureTheFuture/scout/configuration"
+	"github.com/MeasureTheFuture/scout/models"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"os"
@@ -68,42 +68,44 @@ var _ = Describe("Summarise Process", func() {
 
 	Context("updateUnprocessed", func() {
 		It("should ignore proccessed interactions", func() {
-			s := models.Scout{-1, "59ef7180-f6b2-4129-99bf-970eb4312b4b",
-				"192.168.0.1", 8080, true, "foo", "calibrating", &models.ScoutSummary{}}
+			s := models.Scout{"59ef7180-f6b2-4129-99bf-970eb4312b4b", "192.168.0.1", 8080,
+				true, "foo", "calibrating", &models.ScoutSummary{},
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
 			et := time.Now().UTC().Round(15 * time.Minute)
-			si := models.ScoutInteraction{-1, s.Id, 0.2, models.Path{[2]int{1, 2}},
+			si := models.ScoutInteraction{-1, s.UUID, 0.2, models.Path{[2]int{1, 2}},
 				models.Path{[2]int{3, 4}}, models.RealArray{0.1}, true, et}
 			err = si.Insert(db)
 			Ω(err).Should(BeNil())
 
 			updateUnprocessed(db)
-			ss, err := models.GetScoutSummaryById(db, s.Id)
+			ss, err := models.GetScoutSummaryByUUID(db, s.UUID)
 			Ω(err).Should(BeNil())
 			Ω(ss.VisitorCount).Should(Equal(int64(0)))
 		})
 
 		It("should increment the visitor count", func() {
-			s := models.Scout{-1, "59ef7180-f6b2-4129-99bf-970eb4312b4b",
-				"192.168.0.1", 8080, true, "foo", "calibrating", &models.ScoutSummary{}}
+			s := models.Scout{"59ef7180-f6b2-4129-99bf-970eb4312b4b", "192.168.0.1", 8080,
+				true, "foo", "calibrating", &models.ScoutSummary{},
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
 			et := time.Now().UTC().Round(15 * time.Minute)
-			si := &models.ScoutInteraction{-1, s.Id, 0.2, models.Path{[2]int{1, 2}},
+			si := &models.ScoutInteraction{-1, s.UUID, 0.2, models.Path{[2]int{1, 2}},
 				models.Path{[2]int{3, 4}}, models.RealArray{0.1}, false, et}
 			err = si.Insert(db)
 			Ω(err).Should(BeNil())
 
-			si2 := &models.ScoutInteraction{-1, s.Id, 0.2, models.Path{[2]int{1, 2}},
+			si2 := &models.ScoutInteraction{-1, s.UUID, 0.2, models.Path{[2]int{1, 2}},
 				models.Path{[2]int{3, 4}}, models.RealArray{0.1}, false, et}
 			err = si2.Insert(db)
 			Ω(err).Should(BeNil())
 
 			updateUnprocessed(db)
-			ss, err := models.GetScoutSummaryById(db, s.Id)
+			ss, err := models.GetScoutSummaryByUUID(db, s.UUID)
 			Ω(err).Should(BeNil())
 			Ω(ss.VisitorCount).Should(Equal(int64(2)))
 
@@ -131,20 +133,21 @@ var _ = Describe("Summarise Process", func() {
 	Context("updateTimeBuckets", func() {
 		PIt("it should update the travel times for the buckets in a scout summary", func() {
 			ss := &models.ScoutSummary{}
-			s := models.Scout{-1, "59ef7180-f6b2-4129-99bf-970eb4312b4b",
-				"192.168.0.1", 8080, true, "foo", "calibrating", ss}
+			s := models.Scout{"59ef7180-f6b2-4129-99bf-970eb4312b4b", "192.168.0.1", 8080,
+				true, "foo", "calibrating", ss,
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
 			et := time.Now().UTC().Round(15 * time.Minute)
-			si := &models.ScoutInteraction{-1, s.Id, 0.2, models.Path{[2]int{1, 2}},
+			si := &models.ScoutInteraction{-1, s.UUID, 0.2, models.Path{[2]int{1, 2}},
 				models.Path{[2]int{0, 0}, [2]int{0, 25}}, models.RealArray{0.0, 1.0}, false, et}
 			err = si.Insert(db)
 			Ω(err).Should(BeNil())
 
 			updateTimeBuckets(db, ss, si)
 
-			ssA, err := models.GetScoutSummaryById(db, s.Id)
+			ssA, err := models.GetScoutSummaryByUUID(db, s.UUID)
 			Ω(err).Should(BeNil())
 			Ω(ssA.VisitorCount).Should(Equal(int64(1)))
 

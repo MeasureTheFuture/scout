@@ -60,17 +60,17 @@ type Scout struct {
 	State      ScoutState    `json:"state"`
 	Summary    *ScoutSummary `json:"summary"`
 
-	MinArea float64
-	DilationIterations int
-	ForegroundThresh int
-	GuassianSmooth int
-	MogHistoryLength int
-	MogThreshold float64
-	MogDetectShadows int
-	SimplifyEpsilon float64
-	MinDuration float32
-	IdleDuration float32
-	ResumeSqDistance int
+	MinArea            float64
+	DilationIterations int64
+	ForegroundThresh   int64
+	GaussianSmooth     int64
+	MogHistoryLength   int64
+	MogThreshold       float64
+	MogDetectShadows   int64
+	SimplifyEpsilon    float64
+	MinDuration        float32
+	IdleDuration       float32
+	ResumeSqDistance   int64
 }
 
 func GetScoutByUUID(db *sql.DB, uuid string) (*Scout, error) {
@@ -82,7 +82,7 @@ func GetScoutByUUID(db *sql.DB, uuid string) (*Scout, error) {
 	var result Scout
 	err := db.QueryRow(query, uuid).Scan(&result.IpAddress, &result.Port, &result.Authorised,
 		&result.Name, &result.State, &result.MinArea, &result.DilationIterations,
-		&result.ForegroundThresh, &result.GuassianSmooth, &result.MogHistoryLength,
+		&result.ForegroundThresh, &result.GaussianSmooth, &result.MogHistoryLength,
 		&result.MogThreshold, &result.MogDetectShadows, &result.SimplifyEpsilon,
 		&result.MinDuration, &result.IdleDuration, &result.ResumeSqDistance)
 	result.UUID = uuid
@@ -92,6 +92,17 @@ func GetScoutByUUID(db *sql.DB, uuid string) (*Scout, error) {
 	}
 
 	return &result, err
+}
+
+func GetScout(db *sql.DB) *Scout {
+	const query = `SELECT uuid FROM scouts LIMIT 1`
+	var result Scout
+	err := db.QueryRow(query).Scan(&result)
+	if err != nil {
+		log.Fatalf("Unable to get scout %v", err)
+	}
+
+	return &result
 }
 
 func GetScoutUUID(db *sql.DB) string {
@@ -124,7 +135,7 @@ func GetAllScouts(db *sql.DB) ([]*Scout, error) {
 		var s Scout
 		err = rows.Scan(&s.UUID, &s.IpAddress, &s.Port, &s.Authorised, &s.Name, &s.State,
 			&s.MinArea, &s.DilationIterations, &s.ForegroundThresh,
-			&s.GuassianSmooth, &s.MogHistoryLength, &s.MogThreshold,
+			&s.GaussianSmooth, &s.MogHistoryLength, &s.MogThreshold,
 			&s.MogDetectShadows, &s.SimplifyEpsilon, &s.MinDuration,
 			&s.IdleDuration, &s.ResumeSqDistance)
 		if err != nil {
@@ -174,10 +185,10 @@ func (s *Scout) Insert(db *sql.DB) error {
 				   dilation_iterations, foreground_thresh, guassian_smooth,
 				   mog_history_length, mog_threshold, mog_detect_shadows,
 				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance)
-				   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING uuid`
+				   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING uuid`
 	err := db.QueryRow(query, s.IpAddress, s.Port, s.Authorised, s.Name, s.State,
 		s.MinArea, s.DilationIterations, s.ForegroundThresh,
-		s.GuassianSmooth, s.MogHistoryLength, s.MogThreshold,
+		s.GaussianSmooth, s.MogHistoryLength, s.MogThreshold,
 		s.MogDetectShadows, s.SimplifyEpsilon, s.MinDuration,
 		s.IdleDuration, s.ResumeSqDistance).Scan(&s.UUID)
 	if err != nil {
@@ -197,7 +208,7 @@ func (s *Scout) Update(db *sql.DB) error {
 				   min_duration = $14, idle_duration = $15, resume_sq_distance = $16 WHERE uuid = $17`
 	_, err := db.Exec(query, s.IpAddress, s.Port, s.Authorised, s.Name, s.State,
 		s.MinArea, s.DilationIterations, s.ForegroundThresh,
-		s.GuassianSmooth, s.MogHistoryLength, s.MogThreshold,
+		s.GaussianSmooth, s.MogHistoryLength, s.MogThreshold,
 		s.MogDetectShadows, s.SimplifyEpsilon, s.MinDuration,
 		s.IdleDuration, s.ResumeSqDistance, s.UUID)
 	return err
@@ -222,7 +233,7 @@ func ScoutsAsJSON(db *sql.DB) ([]string, error) {
 	for rows.Next() {
 		var s Scout
 		err = rows.Scan(&s.UUID, &s.IpAddress, &s.Authorised, &image, &s.Name, &s.State, &s.Port,
-			&s.MinArea, &s.DilationIterations, &s.ForegroundThresh, &s.GuassianSmooth,
+			&s.MinArea, &s.DilationIterations, &s.ForegroundThresh, &s.GaussianSmooth,
 			&s.MogHistoryLength, &s.MogThreshold, &s.MogDetectShadows, &s.SimplifyEpsilon,
 			&s.MinDuration, &s.IdleDuration, &s.ResumeSqDistance)
 		if err != nil {
