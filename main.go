@@ -31,8 +31,6 @@ import (
 	"strconv"
 )
 
-var mainfunc = make(chan func())
-
 func main() {
 	var configFile string
 	var videoFile string
@@ -92,25 +90,20 @@ func main() {
 		}
 	}
 
-	// TODO: Fetch a copy of this scout's metadata from the DB.
-
 	// Start the background processes.
 	go processes.SaveLogToDB(tmpLog, db)
 	go processes.HealthHeartbeat(db)
 	go processes.Summarise(db, config)
 
-	// deltaC := make(chan Command)
-	// deltaCFG := make(chan Configuration, 1)
-
-	// go controller(deltaC, deltaCFG, configFile, config)
+	deltaC := make(chan models.Command)
 	// Test to see if the scout is still in measurement mode on boot and resume if necessary.
-	// go func() {
-	// 	if _, err := os.Stat(".mtf-measure"); err == nil {
-	// 		log.Printf("INFO: Resuming.")
-	// 		deltaC <- START_MEASURE
-	// 	}
-	// }()
-	// monitor(deltaC, deltaCFG, videoFile, debug, config)
+	go func() {
+		if _, err := os.Stat(".mtf-measure"); err == nil {
+			log.Printf("INFO: Resuming.")
+			deltaC <- models.START_MEASURE
+		}
+	}()
+	go processes.Monitor(db, deltaC, videoFile, debug)
 
 	// Start the user interface.
 	e := echo.New()
@@ -124,16 +117,16 @@ func main() {
 		return controllers.GetScouts(db, c)
 	})
 
-	e.GET("/scouts/:id/frame.jpg", func(c echo.Context) error {
+	e.GET("/scouts/:uuid/frame.jpg", func(c echo.Context) error {
 		return controllers.GetScoutFrame(db, c)
 	})
 
-	e.GET("/scouts/:id", func(c echo.Context) error {
+	e.GET("/scouts/:uuid", func(c echo.Context) error {
 		return controllers.GetScout(db, c)
 	})
 
-	e.PUT("/scouts/:id", func(c echo.Context) error {
-		return controllers.UpdateScout(db, c)
+	e.PUT("/scouts/:uuid", func(c echo.Context) error {
+		return controllers.UpdateScout(db, c, deltaC)
 	})
 
 	e.GET("/download.zip", func(c echo.Context) error {

@@ -172,7 +172,8 @@ var _ = Describe("Scout controller", func() {
 			c.SetParamNames("id")
 			c.SetParamValues(s.UUID)
 
-			err = UpdateScout(db, c)
+			deltaC := make(chan models.Command)
+			err = UpdateScout(db, c, deltaC)
 			Ω(err).Should(BeNil())
 			Ω(rec.Code).Should(Equal(200))
 

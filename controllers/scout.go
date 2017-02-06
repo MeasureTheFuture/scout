@@ -22,15 +22,15 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"errors"
+	//"errors"
 	"github.com/MeasureTheFuture/scout/models"
 	"github.com/labstack/echo"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path"
-	"strconv"
 )
 
 func DownloadData(db *sql.DB, c echo.Context) error {
@@ -119,7 +119,7 @@ func GetScoutFrame(db *sql.DB, c echo.Context) error {
 }
 
 func GetScout(db *sql.DB, c echo.Context) error {
-	s, err := models.GetScoutByUUID(db, c.Param("id"))
+	s, err := models.GetScoutByUUID(db, c.Param("uuid"))
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func GetScout(db *sql.DB, c echo.Context) error {
 	return c.JSON(http.StatusOK, s)
 }
 
-func UpdateScout(db *sql.DB, c echo.Context) error {
+func UpdateScout(db *sql.DB, c echo.Context, deltaC chan models.Command) error {
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
@@ -137,10 +137,6 @@ func UpdateScout(db *sql.DB, c echo.Context) error {
 	err = json.Unmarshal(body, &ns)
 	if err != nil {
 		return err
-	}
-
-	if c.Param("id") != ns.UUID {
-		return errors.New("Mismatched Ids")
 	}
 
 	// If the scout is de-authorised/deactivated - clear it all out.
@@ -177,8 +173,7 @@ func UpdateScout(db *sql.DB, c echo.Context) error {
 			return err
 		}
 
-		// Tell the scout to stop!
-		go http.Get("http://" + ns.IpAddress + ":" + strconv.Itoa(int(ns.Port)) + "/measure/stop")
+		deltaC <- models.STOP_MEASURE
 	}
 
 	err = ns.Update(db)
@@ -187,10 +182,11 @@ func UpdateScout(db *sql.DB, c echo.Context) error {
 	}
 
 	if ns.State == models.CALIBRATING {
-		go http.Get("http://" + ns.IpAddress + ":" + strconv.Itoa(int(ns.Port)) + "/calibrate")
+		log.Printf("calibrating")
+		deltaC <- models.CALIBRATE
 
 	} else if ns.State == models.MEASURING {
-		go http.Get("http://" + ns.IpAddress + ":" + strconv.Itoa(int(ns.Port)) + "/measure/start")
+		deltaC <- models.START_MEASURE
 
 	}
 

@@ -95,9 +95,17 @@ func GetScoutByUUID(db *sql.DB, uuid string) (*Scout, error) {
 }
 
 func GetScout(db *sql.DB) *Scout {
-	const query = `SELECT uuid FROM scouts LIMIT 1`
+	const query = `SELECT uuid, ip_address, port, authorised, name, state, min_area,
+				   dilation_iterations, foreground_thresh, guassian_smooth,
+				   mog_history_length, mog_threshold, mog_detect_shadows,
+				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance
+				   FROM scouts LIMIT 1`
 	var result Scout
-	err := db.QueryRow(query).Scan(&result)
+	err := db.QueryRow(query).Scan(&result.UUID, &result.IpAddress, &result.Port, &result.Authorised,
+		&result.Name, &result.State, &result.MinArea, &result.DilationIterations,
+		&result.ForegroundThresh, &result.GaussianSmooth, &result.MogHistoryLength,
+		&result.MogThreshold, &result.MogDetectShadows, &result.SimplifyEpsilon,
+		&result.MinDuration, &result.IdleDuration, &result.ResumeSqDistance)
 	if err != nil {
 		log.Fatalf("Unable to get scout %v", err)
 	}

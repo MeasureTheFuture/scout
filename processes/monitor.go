@@ -25,6 +25,8 @@ package processes
 #cgo linux LDFLAGS: -L/usr/local/lib -L/usr/lib
 #cgo darwin LDFLAGS: -lstdc++ -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lopencv_core -lopencv_features2d -lopencv_video -lCVBindings -lopencv_core
 #cgo linux LDFLAGS: -lm -lstdc++ -lz -ldl -lpthread -lv4l1 -lv4l2 -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lCVBindings -lopencv_video -lopencv_core
+#include "opencv2/videoio/videoio_c.h"
+#include "opencv2/imgcodecs/imgcodecs_c.h"
 #include "cv.h"
 #include "highgui.h"
 #include "CVBindings.h"
@@ -46,7 +48,9 @@ import (
 )
 
 func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
+	log.Printf("getting video source %v", videoFile)
 	if videoFile != "" {
+		log.Printf("INFO: Getting video file.")
 		file := C.CString(videoFile)
 		camera = C.cvCaptureFromFile(file)
 		C.free(unsafe.Pointer(file))
@@ -56,6 +60,7 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 
 		return camera, nil
 	} else {
+		log.Printf("INFO: Opening webcam.")
 		camera = C.cvCreateCameraCapture(0)
 		if camera == nil {
 			return camera, errors.New("Unable to open webcam. Shutting down scout.")
@@ -70,7 +75,7 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 	}
 }
 
-func monitor(db *sql.DB, deltaC chan models.Command, videoFile string, debug bool) {
+func Monitor(db *sql.DB, deltaC chan models.Command, videoFile string, debug bool) {
 
 	// All OpenCV operations must run on the OS thread to access the webcam.
 	runtime.LockOSThread()
@@ -211,7 +216,7 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 	defer C.cvReleaseImage(&mask)
 
 	// Push the initial calibration frame into the MOG2 image subtractor.
-	C.initMOG2(C.int(s.MogHistoryLength), C.double(s.MogThreshold), C.int(s.MogDetectShadows))
+	C.initMOG2(C.int(s.MogHistoryLength), 30.0, 0)
 	C.applyMOG2(unsafe.Pointer(calibrationFrame), unsafe.Pointer(mask))
 
 	// Current frame counter.
@@ -237,9 +242,17 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 		nextFrame := C.cvRetrieveFrame(camera, 0)
 		C.applyMOG2(unsafe.Pointer(nextFrame), unsafe.Pointer(mask))
 
+		file := C.CString("f" + fmt.Sprintf("%03d", frame) + "-mog.png")
+		C.cvSaveImage(file, unsafe.Pointer(mask), nil)
+		C.free(unsafe.Pointer(file))
+
 		// Filter the foreground mask to clean up any noise or holes (morphological-closing).
-		C.cvSmooth(unsafe.Pointer(mask), unsafe.Pointer(mask), C.CV_GAUSSIAN, C.int(s.GaussianSmooth), 0, 0.0, 0.0)
-		C.cvThreshold(unsafe.Pointer(mask), unsafe.Pointer(mask), C.double(s.ForegroundThresh), 255, 0)
+		C.cvSmooth(unsafe.Pointer(mask), unsafe.Pointer(mask), C.CV_GAUSSIAN, 3, 0, 0.0, 5.8)
+		C.cvThreshold(unsafe.Pointer(mask), unsafe.Pointer(mask), 178, 255, 0)
+		file = C.CString("f" + fmt.Sprintf("%03d", frame) + "-smoothed.png")
+		C.cvSaveImage(file, unsafe.Pointer(mask), nil)
+		C.free(unsafe.Pointer(file))
+
 		C.cvDilate(unsafe.Pointer(mask), unsafe.Pointer(mask), nil, C.int(s.DilationIterations))
 
 		// Detect contours in filtered foreground mask
@@ -256,7 +269,7 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 			area := float64(C.cvContourArea(unsafe.Pointer(contours), C.cvSlice(0, 0x3fffffff), 0))
 
 			// Only track large objects.
-			if area > s.MinArea {
+			if area > 3000 {
 				boundingBox := C.cvBoundingRect(unsafe.Pointer(contours), 0)
 				w := int(boundingBox.width / 2)
 				h := int(boundingBox.height / 2)
