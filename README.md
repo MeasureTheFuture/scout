@@ -1,22 +1,56 @@
 # Scout
 
-This software powers measure the future 'scouts'. These are web cam based devices that monitor activity in and around various spaces.
+A 'scout' is a webcam based device that can anonymously measure activity in and around physical spaces. You can build one these stand alone devices yourself, or get pre-built devices by joining the [public beta program](http://measurethefuture.net/beta-pricing/).
 
-![alpha](https://img.shields.io/badge/stability-alpha-orange.svg?style=flat "Alpha")&nbsp;
+![beta](https://img.shields.io/badge/stability-beta-yellowgreen.svg?style=flat "Beta")&nbsp;
  ![GPLv3 License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat "GPLv3 License")
 
-## Compilation/Installation (Edison)
+## Raspberry Pi Installation (Raspberry Pi)
 
-Installation instructions for Measure The Future can be found [here](https://github.com/MeasureTheFuture/installer).
+Instructions on installing Measure the Future can be found [here](https://github.com/MeasureTheFuture/installer).
 
 ## Compilation/Installation (OSX)
 
-1. [Download & Install Go 1.6](https://golang.org/dl/)
-2. Install OpenCV-3.1 via [Brew](http://brew.sh/):
+1. [Download & Install Go 1.7](https://golang.org/dl/)
+2. Install OpenCV-3.2 via [Brew](http://brew.sh/):
 ```
-	$ brew install opencv3
+	$ brew install opencv3 --with-contrib --with-ffpmeg --with-tbb
 ```
-3. Create Project structure, build CV Bindings. Download and build the scout:
+3. [Download and Install PostgreSQL](http://postgresapp.com/)
+4. Create SSL keys for PostgreSQL
+```
+	$ cd ~/Library/Application\ Support/Postgres/var-9.4/
+	$ openssl req -new -text -out server.req
+	$ openssl rsa -in privkey.pem -out server.key
+	$ rm privkey.pem
+	$ openssl req -x509 -in server.req -text -key server.key -out server.crt
+	$ chmod og-rwx server.key
+
+```
+5. Enable SSL by editing the postgres config, uncommenting the line #sss = on (Remove the #)
+```
+	$ vim postgresql.conf
+```
+6. Restart Postgres.app
+7. Create Databases
+```
+	$ psql
+		postgres=# create database mothership;
+		postgres=# create database mothership_test;
+		postgres=# create user mothership_user with password 'password';
+		postgres=# ALTER ROLE mothership_user SET client_encoding TO 'utf8';
+		postgres=# ALTER ROLE mothership_user SET default_transaction_isolation TO 'read committed';
+		postgres=# ALTER ROLE mothership_user SET timezone TO 'UTC';
+		postgres=# GRANT ALL PRIVILEGES ON DATABASE mothership TO mothership_user;
+		postgres=# GRANT ALL PRIVILEGES ON DATABASE mothershop_test TO mothership_user;
+		postgres=# \q
+```
+8. [Download and Install Node v4.4.7](https://nodejs.org/en/)
+9. Update NPM
+```
+	$ sudo npm install npm -g
+```
+10. Create project folder and get source from Github
 ```
 	$ mkdir mtf
 	$ cd mtf
@@ -26,18 +60,41 @@ Installation instructions for Measure The Future can be found [here](https://git
 	$ make
 	$ cp CVBindings.h /usr/local/opt/opencv3/include
 	$ cp libCVBindings.a /usr/local/opt/opencv3/lib
-	$ mkdir scout
-	$ cd scout
+	$ cd ..
 	$ export GOPATH=`pwd`
+	$ go get github.com/MeasureTheFuture/scout
 	$ go get github.com/onsi/ginkgo
 	$ go get github.com/onsi/gomega
-	$ go get github.com/shirou/gopsutil
-	$ go get github.com/MeasureTheFuture/scout
+	$ go get -u github.com/mattes/migrate
+```
+11. Build the backend, create config file and migrate databases.
+```
+	$ go build mothership
+	$ cp src/mothership/mothership.json_example mothership.json
+	$ ./bin/migrate -url postgres://localhost:5432/mothership -path ./src/github.com/MeasureTheFuture/scout/migrations up
+	$ ./bin/migrate -url postgres://localhost:5432/mothership_test -path ./src/github.com/MeasureTheFuture/scout/migrations up
+```
+12. In a new terminal, build the frontend.
+```
+	$ cd src/mothership/frontend
+	$ npm install
+	$ npm run build
+```
+
+## Testing
+1. Testing the backend
+```
+	$ go test -p 1 github.com/MeasureTheFuture/mothership/...
+```
+2. Testing the frontend
+```
+	$ cd src/mothership/frontend
+	$ npm run test
 ```
 
 ## Operating Instructions:
 
-The scout is a command line application that broadcasts interaction data to 'mothership' or any other location for agregation/reporting.
+The scout is a stand-alone application with a basic web-based UI for controlling the measurement hardware. (ctrl-c stops the scout)
 
 ```
 	$ ./scout -help
@@ -54,132 +111,14 @@ The scout is a command line application that broadcasts interaction data to 'mot
     	The path to a video file to detect motion from instead of a webcam
 ```
 
-If the configuration doesn't exist at the specified place, the scout will create one for you. The scout will fill it with default values that can be customised.
+## Start measuring the future
 
-### Connecting to a mothership
+Visit localhost:1323 in your browser.
 
-The wifi on the scout needs to be configured to connect to the Access Point running on the mothership:
-
+## Testing for the backend:
 ```
-	$ configure_edison --wifi
+	$ go test -p 1 github.com/MeasureTheFuture/mothership/...
 ```
-The name of the access point will be the same as the device name you configured for the mothership. The password will be the same as the root password you supplied when you ran `configure_edison` on the mothership.
-
-### Subsequent uses
-
-At the moment, the scout software doesn't automatically start on boot. Each time the scout is powered up you need to login and run:
-
-```
-	$ ./scout
-```
-
-
-## API:
-
-* To calibrate the scout (takes a new reference image):
-```
-	GET http://sco.ut.ip/calibrate
-	returns: 200 OK on success.
-
-	Calibrate accepts parameters for tweaking OpenCV settings:
-
-	MinArea            float64 // The minimum area enclosed by a contour to be counted as an interaction.
-	DilationIterations int     // The number of iterations to perform while dilating the foreground mask.
-	ForegroundThresh   int     // A value between 0 and 255 to use when thresholding the foreground mask.
-	GaussianSmooth     int     // The size of the filter to use when gaussian smoothing.
-	MogHistoryLength   int     // The length of history to use for the MOG2 subtractor.
-	MogThreshold       float64 // Threshold to use with the MOG2 subtractor.
-	MogDetectShadows   int     // 1 if you want the MOG2 subtractor to detect shadows, 0 otherwise.
-
-	For example:
-	GET http://sco.ut.ip/calibrate?MinArea=1300&MogDetectShadows=1
-
-	Sets the minimum detectable area of a 'person' to be 1300 pixels and enables shadow detection.
-```
-
-* Once calibrated, the scout will make the following request to the mothership:
-```
-	POST http://moth.er.sh.ip/scout_api/calibrated
-	This is a MIME multipart message with an attached file (file:calibrationFrame.jpg)
-
-	Within the request header is the following key "Mothership-Authorization", it
-	contains the UUID of the scout.
-```
-
-* To start measuring:
-```
-	GET http://sco.ut.ip/measure/start
-	returns: 200 OK on success.
-```
-
-* During the measurement phase, the scout will make the following requests to the mothership:
-```
-	POST http://moth.er.sh.ip/scout_api/interaction
-	This is a MIME multipart message with an attached file (file:interaction.json) containing:
-	{
-		"UUID":"59ef7180-f6b2-4129-99bf-970eb4312b4b",	// Unique identifier of scout.
-		"Version":"0.1",								// Transmission protocol version.
-		"Entered":"2015-03-07T11:00:00Z",				// When interaction began, rounded to nearest half hour.
-		"Duration":2.3,									// The duration in seconds.
-		"Path":[
-			{
-				"XPixels":4,							// x-coordinate of waypoint centroid in pixels.
-				"YPixels":5,							// y-coordinate of waypoint centroid in pixels.
-				"HalfWidthPixels":2,					// Half the width of the waypoint in pixels.
-				"HalfHeightPixels":2,					// Half the height of the waypoint in pixels.
-				"T":0.5									// The number of seconds since the interaction start.
-			}
-		]
-	}
-
-	Within the request header is the following key "Mothership-Authorization", it
-	contains the UUID of the scout.
-```
-
-* To stop measuring:
-```
-	GET http://sco.ut.ip/measure/stop
-	returns: 200 OK on success.
-```
-
-* On startup, the scout will transmit the log file from its previous run to the mothership:
-```
-	POST http://moth.er.sh.ip/scout_api/log
-	This is a MIME multipart message with an attached file (file:scout.log).
-
-	Within the request header is the following key "Mothership-Authorization", it
-	contains the UUID of the scout.
-```
-
-* When the scout is running, it will send periodic health heart beats to the mothership:
-```
-	POST http://moth.er.sh.ip/scout_api/heartbeat
-	This is a MIME multipart message with an attached file (file:heartbeat.json) containing:
-	{
-		"UUID":"59ef7180-f6b2-4129-99bf-970eb4312b4b",	// Unique identifier of scout.
-		"Version":"0.1",								// Transmission protocol version.
-		"Health":{
-			"IpAddress":"10.1.1.1",						// Current IP address of the scout.
-			"CPU":0.4,									// Current CPU load, 0.0 - no load.
-			"Memory":0.1,								// Current Memory usage, 0.0 - not used, 1.0 all used.
-			"TotalMemory":1233312.0,					// Total Memory available in bytes.
-			"Storage":0.1								// Current Storage usage, 0.0 - not used, 1.0 all full.
-		}
-	}
-
-	Within the request header is the following key "Mothership-Authorization", it
-	contains the UUID of the scout.
-```
-
-## TODO:
-
-- [x] Filter out interactions that are 'noise', ones that last less than a second.
-- [x] Build a couple of extra test datasets that are more complicated (multiple people popping in and out of the frame).
-- [ ] Edison testing - Long running tests / memory leaks and other hardware issues.
-- [ ] Integration testing.
-- [ ] Look at using calibration frame to 'refresh' the foreground subtractor.
-- [ ] Calibration frame could also be periodically updated when we have no people detected in the frame (to compenstate for subtle lighting changes).
-
 
 ## License
 
