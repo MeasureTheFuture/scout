@@ -216,7 +216,7 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 	defer C.cvReleaseImage(&mask)
 
 	// Push the initial calibration frame into the MOG2 image subtractor.
-	C.initMOG2(C.int(s.MogHistoryLength), 30.0, 0)
+	C.initMOG2(C.int(s.MogHistoryLength), C.double(s.MogThreshold), C.int(s.MogDetectShadows))
 	C.applyMOG2(unsafe.Pointer(calibrationFrame), unsafe.Pointer(mask))
 
 	// Current frame counter.
@@ -242,17 +242,9 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 		nextFrame := C.cvRetrieveFrame(camera, 0)
 		C.applyMOG2(unsafe.Pointer(nextFrame), unsafe.Pointer(mask))
 
-		file := C.CString("f" + fmt.Sprintf("%03d", frame) + "-mog.png")
-		C.cvSaveImage(file, unsafe.Pointer(mask), nil)
-		C.free(unsafe.Pointer(file))
-
 		// Filter the foreground mask to clean up any noise or holes (morphological-closing).
-		C.cvSmooth(unsafe.Pointer(mask), unsafe.Pointer(mask), C.CV_GAUSSIAN, 3, 0, 0.0, 5.8)
-		C.cvThreshold(unsafe.Pointer(mask), unsafe.Pointer(mask), 178, 255, 0)
-		file = C.CString("f" + fmt.Sprintf("%03d", frame) + "-smoothed.png")
-		C.cvSaveImage(file, unsafe.Pointer(mask), nil)
-		C.free(unsafe.Pointer(file))
-
+		C.cvSmooth(unsafe.Pointer(mask), unsafe.Pointer(mask), C.CV_GAUSSIAN, 3, 0, 0.0, C.double(s.GaussianSmooth))
+		C.cvThreshold(unsafe.Pointer(mask), unsafe.Pointer(mask), C.double(s.ForegroundThresh), 255, 0)
 		C.cvDilate(unsafe.Pointer(mask), unsafe.Pointer(mask), nil, C.int(s.DilationIterations))
 
 		// Detect contours in filtered foreground mask
@@ -269,7 +261,7 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 			area := float64(C.cvContourArea(unsafe.Pointer(contours), C.cvSlice(0, 0x3fffffff), 0))
 
 			// Only track large objects.
-			if area > 3000 {
+			if area > s.MinArea {
 				boundingBox := C.cvBoundingRect(unsafe.Pointer(contours), 0)
 				w := int(boundingBox.width / 2)
 				h := int(boundingBox.height / 2)
@@ -327,7 +319,7 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 				C.free(unsafe.Pointer(txt))
 			}
 
-			file := C.CString("f" + fmt.Sprintf("%03d", frame) + "-detected.png")
+			file := C.CString("f" + fmt.Sprintf("%03d", frame) + "-detected.jpg")
 			C.cvSaveImage(file, unsafe.Pointer(nextFrame), nil)
 			C.free(unsafe.Pointer(file))
 			frame++

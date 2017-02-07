@@ -83,7 +83,7 @@ func main() {
 	}
 	if c == 0 {
 		ns := models.Scout{"", "0.0.0.0", 8080, false, "Location " + strconv.FormatInt(c+1, 10), "idle", &models.ScoutSummary{},
-			2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+			3000.0, 2, 178, 6, 200, 30.0, 0, 2.0, 0.2, 0.3, 1}
 		err = ns.Insert(db)
 		if err != nil {
 			log.Fatalf("ERROR: Unable to add initial scout to DB.")
