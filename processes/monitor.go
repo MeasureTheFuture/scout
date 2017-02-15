@@ -66,9 +66,9 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 			return camera, errors.New("Unable to open webcam. Shutting down scout.")
 		}
 
-		// Make sure the webcam is set to 1080p.
-		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, 1920)
-		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, 1080)
+		// Make sure the webcam is set to 720p.
+		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, 1280)
+		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, 720)
 		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_BUFFERSIZE, 1)
 
 		return camera, nil
