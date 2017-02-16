@@ -18,8 +18,10 @@
 package models
 
 import (
+	"encoding/json"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"io/ioutil"
 	"testing"
 	"time"
 )
@@ -50,6 +52,31 @@ var _ = Describe("Scout Interaction Model", func() {
 			Ω(si.Waypoints).Should(Equal(Path{[2]int{1, 2}}))
 			Ω(si.WaypointWidths).Should(Equal(Path{[2]int{3, 4}}))
 			Ω(si.WaypointTimes).Should(Equal(RealArray{0.1}))
+		})
+	})
+
+	Context("Get", func() {
+		It("should be able to get scout interactions as json", func() {
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+			err := s.Insert(db)
+			Ω(err).Should(BeNil())
+
+			et := time.Now().UTC().Round(15 * time.Minute)
+			si := ScoutInteraction{-1, s.UUID, 0.2, Path{[2]int{1, 2}, [2]int{5, 6}}, Path{[2]int{3, 4}}, RealArray{0.1}, false, et}
+			err = si.Insert(db)
+			Ω(err).Should(BeNil())
+
+			jsonF, err := ScoutInteractionsAsJSON(db)
+			Ω(err).Should(BeNil())
+
+			jsonB, err := ioutil.ReadFile(jsonF)
+			Ω(err).Should(BeNil())
+
+			var result []ScoutInteraction
+			err = json.Unmarshal(jsonB, &result)
+			Ω(err).Should(BeNil())
+			Ω(result).Should(Equal([]ScoutInteraction{si}))
 		})
 	})
 

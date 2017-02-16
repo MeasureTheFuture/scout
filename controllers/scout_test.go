@@ -135,8 +135,8 @@ var _ = Describe("Scout controller", func() {
 			Ω(err).Should(BeNil())
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			c.SetPath("/scouts/:id")
-			c.SetParamNames("id")
+			c.SetPath("/scouts/:uuid")
+			c.SetParamNames("uuid")
 			c.SetParamValues(s.UUID)
 
 			err = GetScout(db, c)
@@ -168,8 +168,8 @@ var _ = Describe("Scout controller", func() {
 
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			c.SetPath("/scouts/:id")
-			c.SetParamNames("id")
+			c.SetPath("/scouts/:uuid")
+			c.SetParamNames("uuid")
 			c.SetParamValues(s.UUID)
 
 			deltaC := make(chan models.Command)

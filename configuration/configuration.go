@@ -41,7 +41,7 @@ func GetDataDir() string {
 		return ""
 	}
 
-	err = os.Mkdir(dir, os.ModeDir)
+	err = os.Mkdir(dir, 0744)
 	if os.IsNotExist(err) {
 		return ""
 	}

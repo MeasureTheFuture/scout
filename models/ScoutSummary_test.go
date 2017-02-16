@@ -18,8 +18,10 @@
 package models
 
 import (
+	"encoding/json"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"io/ioutil"
 	"testing"
 )
 
@@ -60,6 +62,28 @@ var _ = Describe("Scout Summary Model", func() {
 			ss2, err := GetScoutSummaryByUUID(db, s.UUID)
 			Ω(err).Should(BeNil())
 			Ω(ss2).Should(Equal(ss))
+		})
+	})
+
+	Context("Get", func() {
+		It("should be able to get scout healths as json", func() {
+			ss := ScoutSummary{}
+			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ss,
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+			err := s.Insert(db)
+			ss.ScoutUUID = s.UUID
+			Ω(err).Should(BeNil())
+
+			jsonF, err := ScoutSummariesAsJSON(db)
+			Ω(err).Should(BeNil())
+
+			jsonB, err := ioutil.ReadFile(jsonF)
+			Ω(err).Should(BeNil())
+
+			var result []ScoutSummary
+			err = json.Unmarshal(jsonB, &result)
+			Ω(err).Should(BeNil())
+			Ω(result).Should(Equal([]ScoutSummary{ss}))
 		})
 	})
 

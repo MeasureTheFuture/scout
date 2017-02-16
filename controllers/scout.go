@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	//"errors"
 	"github.com/MeasureTheFuture/scout/models"
 	"github.com/labstack/echo"
 	"io"
@@ -38,24 +37,32 @@ func DownloadData(db *sql.DB, c echo.Context) error {
 
 	sh, err := models.ScoutHealthsAsJSON(db)
 	if err != nil {
+		log.Printf("ERROR: Downloading, unable to get scout healths as JSON.")
+		log.Printf("%v", err)
 		return err
 	}
 	files = append(files, sh)
 
 	si, err := models.ScoutInteractionsAsJSON(db)
 	if err != nil {
+		log.Printf("ERROR: Downloading, unable to get scout interactions as JSON.")
+		log.Printf("%v", err)
 		return err
 	}
 	files = append(files, si)
 
 	ss, err := models.ScoutSummariesAsJSON(db)
 	if err != nil {
+		log.Printf("ERROR: Downloading, unable to get scout summaries as JSON.")
+		log.Printf("%v", err)
 		return err
 	}
 	files = append(files, ss)
 
 	sa, err := models.ScoutsAsJSON(db)
 	if err != nil {
+		log.Printf("ERROR: Downloading, unable to get scouts as JSON.")
+		log.Printf("%v", err)
 		return err
 	}
 	files = append(files, sa[:]...)
@@ -66,22 +73,30 @@ func DownloadData(db *sql.DB, c echo.Context) error {
 	for _, file := range files {
 		dst, err := w.Create(path.Base(file))
 		if err != nil {
+			log.Printf("ERROR: Downloading, unable to create file.")
+			log.Printf("%v", err)
 			return err
 		}
 
 		src, err := os.Open(file)
 		if err != nil {
+			log.Printf("ERROR: Downloading, unable to open file.")
+			log.Printf("%v", err)
 			return err
 		}
 
 		_, err = io.Copy(dst, src)
 		if err != nil {
+			log.Printf("ERROR: Downloading, unable to copy file.")
+			log.Printf("%v", err)
 			return err
 		}
 	}
 
 	err = w.Close()
 	if err != nil {
+		log.Printf("ERROR: Downloading, unable to close file.")
+		log.Printf("%v", err)
 		return err
 	}
 
@@ -89,6 +104,8 @@ func DownloadData(db *sql.DB, c echo.Context) error {
 	zipFile := path.Dir(sh) + "/download.zip"
 	err = ioutil.WriteFile(zipFile, buf.Bytes(), 0644)
 	if err != nil {
+		log.Printf("ERROR: Downloading, unable to write file.")
+		log.Printf("%v", err)
 		return err
 	}
 
@@ -182,7 +199,6 @@ func UpdateScout(db *sql.DB, c echo.Context, deltaC chan models.Command) error {
 	}
 
 	if ns.State == models.CALIBRATING {
-		log.Printf("calibrating")
 		deltaC <- models.CALIBRATE
 
 	} else if ns.State == models.MEASURING {

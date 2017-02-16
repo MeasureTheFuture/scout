@@ -250,7 +250,7 @@ func ScoutsAsJSON(db *sql.DB) ([]string, error) {
 
 		// Write image.
 		if len(image) > 0 {
-			imgF := configuration.GetDataDir() + "/scout" + fmt.Sprintf("%d", s.UUID) + ".jpg"
+			imgF := configuration.GetDataDir() + "/scout-" + fmt.Sprintf("%s", s.UUID) + ".jpg"
 			err = ioutil.WriteFile(imgF, image, 0644)
 			if err != nil {
 				return files, err

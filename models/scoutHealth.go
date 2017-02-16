@@ -77,7 +77,7 @@ func (s *ScoutHealth) Insert(db *sql.DB) error {
 
 func ScoutHealthsAsJSON(db *sql.DB) (string, error) {
 	file := configuration.GetDataDir() + "/scout_healths.json"
-	const query = `SELECT * FROM scout_healths`
+	const query = `SELECT scout_uuid, cpu, memory, total_memory, storage, created_at FROM scout_healths`
 	rows, err := db.Query(query)
 	if err == sql.ErrNoRows {
 		return file, nil
@@ -97,5 +97,6 @@ func ScoutHealthsAsJSON(db *sql.DB) (string, error) {
 		result = append(result, sh)
 	}
 
-	return file, configuration.SaveAsJSON(result, file)
+	err = configuration.SaveAsJSON(result, file)
+	return file, err
 }

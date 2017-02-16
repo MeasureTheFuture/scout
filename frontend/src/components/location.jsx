@@ -170,8 +170,8 @@ var Heatmap = React.createClass({
     var url = 'scouts/'+ActiveLocation(store).id+'/frame.jpg?d=' + new Date().getTime();
     var buckets = ActiveLocation(store).summary.VisitTimeBuckets;
     var vBuckets = ActiveLocation(store).summary.VisitorBuckets;
-    var w = 1920;
-    var h = 1080;
+    var w = 1280;
+    var h = 720;
     var iBuckets = buckets.length;
     var jBuckets = buckets[0].length;
     var bucketW = w/iBuckets;

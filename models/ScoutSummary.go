@@ -172,7 +172,7 @@ func (si *ScoutSummary) Update(db *sql.DB) error {
 func ScoutSummariesAsJSON(db *sql.DB) (string, error) {
 	file := configuration.GetDataDir() + "/scout_summaries.json"
 
-	const query = `SELECT * FROM scout_summaries`
+	const query = `SELECT scout_uuid, visitor_count, visit_time_buckets, visitor_buckets FROM scout_summaries`
 	rows, err := db.Query(query)
 	if err == sql.ErrNoRows {
 		return file, nil
