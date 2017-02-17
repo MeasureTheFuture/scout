@@ -19,7 +19,8 @@
 const initialState = {
   locations:[],
   active:0,
-  editLocation:false
+  editLocation:false,
+  editSettings:false
 }
 
 function ActiveLocation(store) {
@@ -39,12 +40,10 @@ function GetLocations(store) {
     }
 }
 
-function UpdateActiveLocation(store, field, value) {
+function SaveActiveLocation(store) {
   var state = store.getState();
 
   var l = Object.assign({}, state.locations[state.active]);
-  Reflect.set(l, field, value);
-  state.locations[state.active] = l;
 
   // Push the active location to the backend.
   var httpreq = new XMLHttpRequest();
@@ -57,6 +56,16 @@ function UpdateActiveLocation(store, field, value) {
   }
 }
 
+function UpdateActiveLocation(store, field, value) {
+  var state = store.getState();
+
+  var l = Object.assign({}, state.locations[state.active]);
+  Reflect.set(l, field, value);
+  state.locations[state.active] = l;
+
+  this.SaveActiveLocation(store);
+}
+
 function Mothership(state, action) {
   if (state === undefined) {
     return initialState;
@@ -67,28 +76,48 @@ function Mothership(state, action) {
       return {
         locations: action.locations,
         active: state.active,
-        editLocation: state.editLocation
+        editLocation: state.editLocation,
+        editSettings: state.editSettings
       }
 
     case 'SET_ACTIVE':
       return {
         locations: state.locations,
         active: Math.min(state.locations.length - 1, Math.max(0, action.active)),
-        editLocation: state.editLocation
+        editLocation: state.editLocation,
+        editSettings: state.editSettings
       }
 
     case 'EDIT_LOCATION':
       return {
         locations: state.locations,
         active: state.active,
-        editLocation: true
+        editLocation: true,
+        editSettings: state.editSettings
       }
 
     case 'SAVE_LOCATION':
       return {
         locations: state.locations,
         active: state.active,
-        editLocation: false
+        editLocation: false,
+        editSettings: state.editSettings
+      }
+
+    case 'EDIT_SETTINGS':
+      return {
+        locations: state.locations,
+        active: state.active,
+        editLocation: state.editLocation,
+        editSettings: true
+      }
+
+    case 'SAVE_SETTINGS':
+      return {
+        locations: state.locations,
+        active: state.active,
+        editLocation: state.editLocation,
+        editSettings: false
       }
 
     default:
@@ -96,4 +125,4 @@ function Mothership(state, action) {
   }
 }
 
-export { Mothership, GetLocations, ActiveLocation, UpdateActiveLocation }
+export { Mothership, GetLocations, ActiveLocation, UpdateActiveLocation, SaveActiveLocation }

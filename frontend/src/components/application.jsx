@@ -20,6 +20,7 @@ import React from 'react';
 import { GetLocations } from '../reducers/index.js'
 import Location from './location.jsx';
 import Introduction from './documentation.jsx';
+import Settings from './settings.jsx';
 
 var NavItem = React.createClass({
   handleClick: function() {
@@ -71,7 +72,10 @@ var Application = React.createClass({
     const { store } = this.context;
 
     var state = store.getState();
-    var mainContent = ((state.locations.length) ? <Location /> : <Introduction />);
+    var mainContent = <Introduction />;
+    if (state.locations.length) {
+      mainContent = ((state.editSettings) ? <Settings /> : <Location />);
+    }
 
     return (
       <div className="pure-g">

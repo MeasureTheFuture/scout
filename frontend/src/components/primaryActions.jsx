@@ -120,6 +120,22 @@ EditAction.contextTypes = {
   store: React.PropTypes.object
 };
 
+var SettingsAction = React.createClass({
+  handleSettings: function() {
+    const { store } = this.context;
+    store.dispatch({ type:'EDIT_SETTINGS' });
+  },
+
+  render: function() {
+    return (
+        <a href="#" onClick={this.handleSettings}>[<i className="fa fa-cog"></i> settings]</a>
+    );
+  }
+});
+SettingsAction.contextTypes = {
+  store: React.PropTypes.object
+};
+
 var PrimaryActions = React.createClass({
   render: function() {
     const { store } = this.context;
@@ -127,9 +143,10 @@ var PrimaryActions = React.createClass({
     var calibrate = ((ActiveLocation(store).authorised && (ActiveLocation(store).state == 'idle' || ActiveLocation(store).state == 'calibrated')) ? <CalibrateAction /> : "");
     var measure = ((ActiveLocation(store).authorised && ActiveLocation(store).state == 'calibrated') ? <MeasureAction /> : "");
     var edit = (store.getState().editLocation ? <SaveAction /> : <EditAction />);
+    var settings = <SettingsAction />;
 
     return (
-      <p className="location-meta">{onOff} {calibrate} {measure} {edit}</p>
+      <p className="location-meta">{onOff} {calibrate} {measure} {edit} {settings}</p>
     );
   }
 });

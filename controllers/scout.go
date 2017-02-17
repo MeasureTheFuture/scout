@@ -147,12 +147,16 @@ func GetScout(db *sql.DB, c echo.Context) error {
 func UpdateScout(db *sql.DB, c echo.Context, deltaC chan models.Command) error {
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
+		log.Printf("ERROR: Unable to read update message")
+		log.Printf("%v", err)
 		return err
 	}
 
 	var ns models.Scout
 	err = json.Unmarshal(body, &ns)
 	if err != nil {
+		log.Printf("ERROR: Unable to unmarshal JSON.")
+		log.Printf("%v", err)
 		return err
 	}
 
@@ -195,6 +199,8 @@ func UpdateScout(db *sql.DB, c echo.Context, deltaC chan models.Command) error {
 
 	err = ns.Update(db)
 	if err != nil {
+		log.Printf("ERROR: Unable to update scout")
+		log.Printf("%v", err)
 		return err
 	}
 
