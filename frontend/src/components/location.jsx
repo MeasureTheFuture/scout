@@ -194,7 +194,7 @@ var Heatmap = React.createClass({
 
     var scale = [];
     for (var i = 0; i < iBuckets; i++) {
-      scale.push(<rect key={'s'+(i*iBuckets)} x={i*bucketW} y='1080' width={bucketW} height='30' style={{fill:this.generateFill((i*bucketW)/w)}} />);
+      scale.push(<rect key={'s'+(i*iBuckets)} x={i*bucketW} y={h} width={bucketW} height='30' style={{fill:this.generateFill((i*bucketW)/w)}} />);
     }
 
     return (
