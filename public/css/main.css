@@ -54,6 +54,10 @@ img {
     list-style: none;
 }
 
+.pure-form-message {
+    margin-bottom:2em;
+}
+
 .navItem {
     margin-top:1em;
 

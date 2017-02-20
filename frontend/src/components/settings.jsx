@@ -55,37 +55,41 @@ var Settings = React.createClass({
   	const { store } = this.context;
 
     return (
-    	<div>
-    	<h3>SETTINGS</h3>
-        <form className="pure-form pure-form-aligned">
-    	<fieldset>
-        <div className="pure-control-group">
-            <label htmlFor="MinArea">Minimum Area</label>
-            <input id="MinArea" type="text" placeholder={ActiveLocation(store).MinArea}></input>
-            <span className="pure-form-message-inline">The minimum area (in pixels) of a detected object before it gets counted as a person.</span>
+      <form className="pure-form pure-form-stacked">
+      <fieldset>
+      <div className="pure-g">
+        <div className="pure-u-5-5"><h3>SETTINGS</h3></div>
+      </div>
+        <div class="pure-control-group">
+          <label htmlFor="MinArea">Minimum Area: &nbsp;</label>
+          <input id="MinArea" type="text" placeholder={ActiveLocation(store).MinArea}></input>
+          <span className="pure-form-message">The minimum area (in pixels) of a detected object before it gets counted as a person.</span>
         </div>
-        <div className="pure-control-group">
-            <label htmlFor="MinDuration">Minimum Duration</label>
-            <input id="MinDuration" type="text" placeholder={ActiveLocation(store).MinDuration}></input>
-            <span className="pure-form-message-inline">The minimum time (in seconds) a detected object must be tracked before it gets counted as a person.</span>
+
+        <div class="pure-control-group">
+          <label htmlFor="MinDuration">Minimum Duration: &nbsp;</label>
+          <input id="MinDuration" type="text" placeholder={ActiveLocation(store).MinDuration}></input>
+          <span className="pure-form-message">The minimum time (in seconds) a detected object must be tracked before it gets counted as a person.</span>
         </div>
-        <div className="pure-control-group">
-            <label htmlFor="IdleDuration">Idle Duration</label>
-            <input id="IdleDuration" type="text" placeholder={ActiveLocation(store).IdleDuration}></input>
-            <span className="pure-form-message-inline">If an object is briefly occluded, tracking can be resumed. IdleDuration is the maximum time (in seconds) that a detected object can be 'resumed'.</span>
+
+        <div class="pure-control-group">
+          <label htmlFor="IdleDuration">Idle Duration: &nbsp;</label>
+          <input id="IdleDuration" type="text" placeholder={ActiveLocation(store).IdleDuration}></input>
+          <span className="pure-form-message">If an object is briefly occluded, tracking can be resumed. IdleDuration is the maximum time (in seconds) that a detected object can be 'resumed'.</span>
         </div>
-        <div className="pure-control-group">
-            <label htmlFor="MogHistoryLength">History Length</label>
-            <input id="MogHistoryLength" type="text" placeholder={ActiveLocation(store).MogHistoryLength}></input>
-            <span className="pure-form-message-inline">The number of frames to be used when calculating the background frame for the subtraction algorithm.</span>
+
+        <div class="pure-control-group">
+          <label htmlFor="MogHistoryLength">History Length: &nbsp;</label>
+          <input id="MogHistoryLength" type="text" placeholder={ActiveLocation(store).MogHistoryLength}></input>
+          <span className="pure-form-message">The number of frames to be used when calculating the background frame for the subtraction algorithm.</span>
         </div>
-        <div className="pure-controls">
+
+        <div class="pure-controls">
             <a className="pure-button pure-button-primary" href="#" onClick={this.handleSave}>save</a>
             <span className="pure-form-message-inline"><a href="#" onClick={this.handleCancel}>cancel</a></span>
         </div>
-    	</fieldset>
-		</form>
-		</div>
+      </fieldset>
+      </form>
     )
   }
 });
