@@ -90,6 +90,7 @@ CalibrateAction.contextTypes = {
 var SaveAction = React.createClass({
   handleSave: function() {
     const { store } = this.context;
+    console.log(store);
     UpdateActiveLocation(store, "name", document.getElementById('locationInput').value);
     store.dispatch({ type:'SAVE_LOCATION' })
   },
@@ -128,7 +129,7 @@ var SettingsAction = React.createClass({
 
   render: function() {
     return (
-        <a href="#" onClick={this.handleSettings}>[<i className="fa fa-cog"></i> settings]</a>
+        <a id="settings" href="#" onClick={this.handleSettings}>[<i className="fa fa-cog"></i> settings]</a>
     );
   }
 });

@@ -31,6 +31,22 @@ const mockStore = configureStore();
 
 describe('components', () => {
   describe('PrimaryActions', () => {
+  	it('should display a settings button', () => {
+  		var s = {locations:[{id:2, uuid:'800fd548-2d2b-4185-885d-6323ccbe88a0', port:8080, authorised:true, name:'NYPL', state:'idle'}], active:0};
+
+		var c = mount(<Provider store={mockStore(s)}><PrimaryActions /></Provider>);
+		expect(c.find('#settings').length).toEqual(1);
+  	})
+
+  	it('settings button should dispatch an edit settings action on click', () => {
+		var s = {locations:[{id:2, uuid:'800fd548-2d2b-4185-885d-6323ccbe88a0', port:8080, authorised:true, name:'NYPL', state:'idle'}], active:0};
+		var st = mockStore(s);
+		var c = mount(<Provider store={st}><PrimaryActions /></Provider>);
+
+		c.find('#settings').simulate('click');
+		expect(st.getActions()).toEqual([{type:'EDIT_SETTINGS'}])
+  	})
+
 	it('should provide an activate/deactivate button based on authorised state', () => {
 		var s = {locations:[{id:2, uuid:'800fd548-2d2b-4185-885d-6323ccbe88a0', port:8080, authorised:true, name:'NYPL', state:'idle'}], active:0};
 

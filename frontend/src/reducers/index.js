@@ -47,7 +47,7 @@ function SaveActiveLocation(store) {
 
   // Push the active location to the backend.
   var httpreq = new XMLHttpRequest();
-  httpreq.open("PUT", "http://"+window.location.host+"/scouts/"+l.id, true);
+  httpreq.open("PUT", "http://"+window.location.host+"/scouts/"+l.uuid, true);
   httpreq.send(JSON.stringify(l));
   httpreq.onreadystatechange = function() {
     if (httpreq.readyState == 4 && httpreq.status == 200) {
@@ -63,7 +63,7 @@ function UpdateActiveLocation(store, field, value) {
   Reflect.set(l, field, value);
   state.locations[state.active] = l;
 
-  this.SaveActiveLocation(store);
+  SaveActiveLocation(store);
 }
 
 function Mothership(state, action) {
