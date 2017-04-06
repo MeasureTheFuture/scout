@@ -40,7 +40,7 @@ var _ = Describe("Scout Interaction Model", func() {
 
 			wp := []Waypoint{Waypoint{1, 2, 3, 4, 0.1}}
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 			i := Interaction{"abc", "0.1", t, t, 0.1, wp, 1, &s}
@@ -58,7 +58,7 @@ var _ = Describe("Scout Interaction Model", func() {
 	Context("Get", func() {
 		It("should be able to get scout interactions as json", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -83,7 +83,7 @@ var _ = Describe("Scout Interaction Model", func() {
 	Context("Insert", func() {
 		It("Should be able to insert a scout interaction", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -101,7 +101,7 @@ var _ = Describe("Scout Interaction Model", func() {
 	Context("Delete", func() {
 		It("Should be able to delete interactions for a specified scout", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -125,7 +125,7 @@ var _ = Describe("Scout Interaction Model", func() {
 	Context("Unprocessed", func() {
 		It("Should be able to get unproccessed interactions", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -151,7 +151,7 @@ var _ = Describe("Scout Interaction Model", func() {
 	Context("MarkProcessed", func() {
 		It("Should be able to mark interactions as processed", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -173,7 +173,7 @@ var _ = Describe("Scout Interaction Model", func() {
 	Context("Init scene", func() {
 		It("should be able to init an empty scene", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 			si := InitScene(&s)
@@ -236,7 +236,7 @@ var _ = Describe("Scout Interaction Model", func() {
 			tr := time.Now().UTC().Round(15 * time.Minute)
 
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -253,7 +253,7 @@ var _ = Describe("Scout Interaction Model", func() {
 			b := Waypoint{1, 1, 1, 1, 0.005}
 
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -275,7 +275,7 @@ var _ = Describe("Scout Interaction Model", func() {
 
 		It("should be able to add an interaction to an empty scene", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -288,7 +288,7 @@ var _ = Describe("Scout Interaction Model", func() {
 
 		It("should be able to add multiple interactions to an empty scene,", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -302,7 +302,7 @@ var _ = Describe("Scout Interaction Model", func() {
 
 		It("should list the interaction start time truncated to 30 mins", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -314,7 +314,7 @@ var _ = Describe("Scout Interaction Model", func() {
 
 		It("should be able to add an interaction to a scene with stuff already going on", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -331,7 +331,7 @@ var _ = Describe("Scout Interaction Model", func() {
 
 		It("should be able to add multiple interactions to a scene with stuff already going on", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -348,7 +348,7 @@ var _ = Describe("Scout Interaction Model", func() {
 
 		It("should be able to remove interactions when a person leaves the scene", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -362,7 +362,7 @@ var _ = Describe("Scout Interaction Model", func() {
 
 		It("should be able to remove multiple interactions when more than one person leaves the scene", func() {
 			s := Scout{"", "192.168.0.1", 8080, true, "foo", "idle", &ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 

@@ -36,6 +36,7 @@ var Settings = React.createClass({
   	var state = store.getState();
 
   	this.updateField("MinArea");
+    this.updateField("MaxArea");
   	this.updateField("MinDuration");
   	this.updateField("IdleDuration");
   	this.updateField("MogHistoryLength");
@@ -64,6 +65,12 @@ var Settings = React.createClass({
           <label htmlFor="MinArea">Minimum Area: &nbsp;</label>
           <input id="MinArea" type="text" placeholder={ActiveLocation(store).MinArea}></input>
           <span className="pure-form-message">The minimum area (in pixels) of a detected object before it gets counted as a person.</span>
+        </div>
+
+        <div class="pure-control-group">
+          <label htmlFor="MaxArea">Maximum Area: &nbsp;</label>
+          <input id="MaxArea" type="text" placeholder={ActiveLocation(store).MaxArea}></input>
+          <span className="pure-form-message">The maximum area (in pixels) of a detected object before it gets counted as a person.</span>
         </div>
 
         <div class="pure-control-group">

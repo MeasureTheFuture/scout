@@ -70,7 +70,7 @@ var _ = Describe("Summarise Process", func() {
 		It("should ignore proccessed interactions", func() {
 			s := models.Scout{"59ef7180-f6b2-4129-99bf-970eb4312b4b", "192.168.0.1", 8080,
 				true, "foo", "calibrating", &models.ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -89,7 +89,7 @@ var _ = Describe("Summarise Process", func() {
 		It("should increment the visitor count", func() {
 			s := models.Scout{"59ef7180-f6b2-4129-99bf-970eb4312b4b", "192.168.0.1", 8080,
 				true, "foo", "calibrating", &models.ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -135,7 +135,7 @@ var _ = Describe("Summarise Process", func() {
 			ss := &models.ScoutSummary{}
 			s := models.Scout{"59ef7180-f6b2-4129-99bf-970eb4312b4b", "192.168.0.1", 8080,
 				true, "foo", "calibrating", ss,
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 

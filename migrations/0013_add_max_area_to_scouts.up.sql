@@ -1,0 +1,1 @@
+ALTER TABLE scouts ADD COLUMN max_area double precision NOT NULL DEFAULT 2.0;

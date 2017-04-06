@@ -117,7 +117,7 @@ Visit localhost:1323 in your browser.
 
 ## Testing for the backend:
 ```
-	$ go test -p 1 github.com/MeasureTheFuture/mothership/...
+	$ go test -p 1 github.com/MeasureTheFuture/scout/...
 ```
 
 ## License

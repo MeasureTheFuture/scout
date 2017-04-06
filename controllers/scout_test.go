@@ -94,13 +94,13 @@ var _ = Describe("Scout controller", func() {
 		It("should return a list of all the attached scouts", func() {
 			s := models.Scout{"59ef7180-f6b2-4129-99bf-970eb4312b4b", "192.168.0.1",
 				8080, true, "foo", "calibrating", &models.ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
 			s2 := models.Scout{"eeef7180-f6b2-4129-99bf-970eb4312b4b", "192.168.0.2",
 				8080, true, "foop", "calibrating", &models.ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err = s2.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -126,7 +126,7 @@ var _ = Describe("Scout controller", func() {
 		It("should return a single scout", func() {
 			s := models.Scout{"59ef7180-f6b2-4129-99bf-970eb4312b4b", "192.168.0.1",
 				8080, true, "foo", "calibrated", &models.ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 
@@ -152,7 +152,7 @@ var _ = Describe("Scout controller", func() {
 		It("should be able to update a single scout", func() {
 			s := models.Scout{"59ef7180-f6b2-4129-99bf-970eb4312b4b", "192.168.0.1",
 				8080, true, "foo", "calibrated", &models.ScoutSummary{},
-				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1}
+				2.0, 2, 2, 2, 2, 2.0, 0, 2.0, 0.2, 0.3, 1, 4.0}
 			err := s.Insert(db)
 			Ω(err).Should(BeNil())
 

@@ -71,20 +71,21 @@ type Scout struct {
 	MinDuration        float32
 	IdleDuration       float32
 	ResumeSqDistance   int64
+	MaxArea			   float64
 }
 
 func GetScoutByUUID(db *sql.DB, uuid string) (*Scout, error) {
 	const query = `SELECT ip_address, port, authorised, name, state, min_area,
 				   dilation_iterations, foreground_thresh, guassian_smooth,
 				   mog_history_length, mog_threshold, mog_detect_shadows,
-				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance
+				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance, max_area
 				   FROM scouts WHERE uuid = $1`
 	var result Scout
 	err := db.QueryRow(query, uuid).Scan(&result.IpAddress, &result.Port, &result.Authorised,
 		&result.Name, &result.State, &result.MinArea, &result.DilationIterations,
 		&result.ForegroundThresh, &result.GaussianSmooth, &result.MogHistoryLength,
 		&result.MogThreshold, &result.MogDetectShadows, &result.SimplifyEpsilon,
-		&result.MinDuration, &result.IdleDuration, &result.ResumeSqDistance)
+		&result.MinDuration, &result.IdleDuration, &result.ResumeSqDistance, &result.MaxArea)
 	result.UUID = uuid
 	result.Summary, err = GetScoutSummaryByUUID(db, result.UUID)
 	if err != nil {
@@ -98,14 +99,14 @@ func GetScout(db *sql.DB) *Scout {
 	const query = `SELECT uuid, ip_address, port, authorised, name, state, min_area,
 				   dilation_iterations, foreground_thresh, guassian_smooth,
 				   mog_history_length, mog_threshold, mog_detect_shadows,
-				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance
+				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance, max_area
 				   FROM scouts LIMIT 1`
 	var result Scout
 	err := db.QueryRow(query).Scan(&result.UUID, &result.IpAddress, &result.Port, &result.Authorised,
 		&result.Name, &result.State, &result.MinArea, &result.DilationIterations,
 		&result.ForegroundThresh, &result.GaussianSmooth, &result.MogHistoryLength,
 		&result.MogThreshold, &result.MogDetectShadows, &result.SimplifyEpsilon,
-		&result.MinDuration, &result.IdleDuration, &result.ResumeSqDistance)
+		&result.MinDuration, &result.IdleDuration, &result.ResumeSqDistance, &result.MaxArea)
 	if err != nil {
 		log.Fatalf("Unable to get scout %v", err)
 	}
@@ -128,7 +129,8 @@ func GetAllScouts(db *sql.DB) ([]*Scout, error) {
 	const query = `SELECT uuid, ip_address, port, authorised, name, state, min_area,
 				   dilation_iterations, foreground_thresh, guassian_smooth,
 				   mog_history_length, mog_threshold, mog_detect_shadows,
-				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance FROM scouts`
+				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance,
+				   max_area FROM scouts`
 
 	var result []*Scout
 	rows, err := db.Query(query)
@@ -145,7 +147,7 @@ func GetAllScouts(db *sql.DB) ([]*Scout, error) {
 			&s.MinArea, &s.DilationIterations, &s.ForegroundThresh,
 			&s.GaussianSmooth, &s.MogHistoryLength, &s.MogThreshold,
 			&s.MogDetectShadows, &s.SimplifyEpsilon, &s.MinDuration,
-			&s.IdleDuration, &s.ResumeSqDistance)
+			&s.IdleDuration, &s.ResumeSqDistance, &s.MaxArea)
 		if err != nil {
 			return result, err
 		}
@@ -192,13 +194,13 @@ func (s *Scout) Insert(db *sql.DB) error {
 	const query = `INSERT INTO scouts (ip_address, port, authorised, name, state, min_area,
 				   dilation_iterations, foreground_thresh, guassian_smooth,
 				   mog_history_length, mog_threshold, mog_detect_shadows,
-				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance)
-				   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING uuid`
+				   simplify_epsilon, min_duration, idle_duration, resume_sq_distance, max_area)
+				   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING uuid`
 	err := db.QueryRow(query, s.IpAddress, s.Port, s.Authorised, s.Name, s.State,
 		s.MinArea, s.DilationIterations, s.ForegroundThresh,
 		s.GaussianSmooth, s.MogHistoryLength, s.MogThreshold,
 		s.MogDetectShadows, s.SimplifyEpsilon, s.MinDuration,
-		s.IdleDuration, s.ResumeSqDistance).Scan(&s.UUID)
+		s.IdleDuration, s.ResumeSqDistance, s.MaxArea).Scan(&s.UUID)
 	if err != nil {
 		return err
 	}
@@ -213,12 +215,13 @@ func (s *Scout) Update(db *sql.DB) error {
 				   state = $5, min_area = $6, dilation_iterations = $7,
 				   foreground_thresh = $8, guassian_smooth = $9, mog_history_length = $10,
 				   mog_threshold = $11, mog_detect_shadows = $12, simplify_epsilon = $13,
-				   min_duration = $14, idle_duration = $15, resume_sq_distance = $16 WHERE uuid = $17`
+				   min_duration = $14, idle_duration = $15, resume_sq_distance = $16,
+				   max_area = $17 WHERE uuid = $18`
 	_, err := db.Exec(query, s.IpAddress, s.Port, s.Authorised, s.Name, s.State,
 		s.MinArea, s.DilationIterations, s.ForegroundThresh,
 		s.GaussianSmooth, s.MogHistoryLength, s.MogThreshold,
 		s.MogDetectShadows, s.SimplifyEpsilon, s.MinDuration,
-		s.IdleDuration, s.ResumeSqDistance, s.UUID)
+		s.IdleDuration, s.ResumeSqDistance, s.MaxArea, s.UUID)
 	return err
 }
 
@@ -243,7 +246,7 @@ func ScoutsAsJSON(db *sql.DB) ([]string, error) {
 		err = rows.Scan(&s.UUID, &s.IpAddress, &s.Authorised, &image, &s.Name, &s.State, &s.Port,
 			&s.MinArea, &s.DilationIterations, &s.ForegroundThresh, &s.GaussianSmooth,
 			&s.MogHistoryLength, &s.MogThreshold, &s.MogDetectShadows, &s.SimplifyEpsilon,
-			&s.MinDuration, &s.IdleDuration, &s.ResumeSqDistance)
+			&s.MinDuration, &s.IdleDuration, &s.ResumeSqDistance, &s.MaxArea)
 		if err != nil {
 			return files, err
 		}

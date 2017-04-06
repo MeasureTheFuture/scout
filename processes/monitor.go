@@ -260,8 +260,8 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 		for contours != nil {
 			area := float64(C.cvContourArea(unsafe.Pointer(contours), C.cvSlice(0, 0x3fffffff), 0))
 
-			// Only track large objects.
-			if area > s.MinArea {
+			// Only track appropriately sized objects.
+			if area > s.MinArea && area < s.MaxArea {
 				boundingBox := C.cvBoundingRect(unsafe.Pointer(contours), 0)
 				w := int(boundingBox.width / 2)
 				h := int(boundingBox.height / 2)
