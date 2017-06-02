@@ -125,8 +125,8 @@ var _ = Describe("Summarise Process", func() {
 			wpB := models.Waypoint{0, 192, 10, 10, 1.0}
 			wpC := models.Waypoint{0, 25, 10, 10, 1.0}
 
-			Ω(maxTravelTime(wpA, wpB)).Should(Equal(float32(0.5)))
-			Ω(maxTravelTime(wpA, wpC)).Should(Equal(float32(1.0)))
+			Ω(maxTravelTime(wpA, wpB)).Should(BeNumerically("~", float32(0.33), 0.03))
+			Ω(maxTravelTime(wpA, wpC)).Should(BeNumerically("~", float32(1.00), 0.03))
 		})
 	})
 

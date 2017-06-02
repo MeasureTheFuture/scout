@@ -23,6 +23,7 @@ import (
 	"errors"
 	"github.com/MeasureTheFuture/scout/configuration"
 	_ "github.com/lib/pq"
+	"log"
 	"strconv"
 	"strings"
 	"time"

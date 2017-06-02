@@ -112,7 +112,7 @@ func updateTimeBuckets(db *sql.DB, ss *models.ScoutSummary, si *models.ScoutInte
 				// to multiply max time.
 				//
 				// At the moment we allocate mt (the maximum possible travel time)
-				// to the bucket once per interaction. Event if more than one segment
+				// to the bucket once per interaction. Even if more than one segment
 				// intersects this bucket.
 				if s.Intersects(&bucket) {
 					if !intersected[i][j] {

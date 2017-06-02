@@ -71,7 +71,7 @@ type Scout struct {
 	MinDuration        float32
 	IdleDuration       float32
 	ResumeSqDistance   int64
-	MaxArea			   float64
+	MaxArea            float64
 }
 
 func GetScoutByUUID(db *sql.DB, uuid string) (*Scout, error) {

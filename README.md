@@ -69,7 +69,7 @@ Instructions on installing Measure the Future can be found [here](https://github
 ```
 11. Build the backend, create config file and migrate databases.
 ```
-	$ go build mothership
+	$ go build scout
 	$ cp src/mothership/mothership.json_example mothership.json
 	$ ./bin/migrate -url postgres://localhost:5432/mothership -path ./src/github.com/MeasureTheFuture/scout/migrations up
 	$ ./bin/migrate -url postgres://localhost:5432/mothership_test -path ./src/github.com/MeasureTheFuture/scout/migrations up
@@ -84,11 +84,11 @@ Instructions on installing Measure the Future can be found [here](https://github
 ## Testing
 1. Testing the backend
 ```
-	$ go test -p 1 github.com/MeasureTheFuture/mothership/...
+	$ go test -p 1 github.com/MeasureTheFuture/scout/...
 ```
 2. Testing the frontend
 ```
-	$ cd src/mothership/frontend
+	$ cd src/scout/frontend
 	$ npm run test
 ```
 

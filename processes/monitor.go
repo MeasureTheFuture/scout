@@ -23,8 +23,8 @@ package processes
 #cgo CFLAGS: -Wno-error
 #cgo darwin LDFLAGS: -L/usr/local/opt/opencv3/lib
 #cgo linux LDFLAGS: -L/usr/local/lib -L/usr/lib
-#cgo darwin LDFLAGS: -lstdc++ -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lopencv_core -lopencv_features2d -lopencv_video -lCVBindings -lopencv_core
-#cgo linux LDFLAGS: -lm -lstdc++ -lz -ldl -lpthread -lv4l1 -lv4l2 -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lCVBindings -lopencv_video -lopencv_core
+#cgo darwin LDFLAGS: -lstdc++ -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lopencv_core -lopencv_features2d -lopencv_video -lopencv_core -lCVBindings
+#cgo linux LDFLAGS: -lm -lstdc++ -lz -ldl -lpthread -lv4l1 -lv4l2 -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lopencv_video -lopencv_core -lCVBindings
 #include "opencv2/videoio/videoio_c.h"
 #include "opencv2/imgcodecs/imgcodecs_c.h"
 #include "cv.h"
@@ -37,6 +37,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/MeasureTheFuture/scout/configuration"
 	"github.com/MeasureTheFuture/scout/models"
 	"io/ioutil"
 	"log"
@@ -67,8 +68,8 @@ func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
 		}
 
 		// Make sure the webcam is set to 720p.
-		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, 1280)
-		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, 720)
+		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, configuration.FrameW)
+		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, configuration.FrameH)
 		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_BUFFERSIZE, 1)
 
 		return camera, nil
