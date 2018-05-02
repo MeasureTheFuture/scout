@@ -18,25 +18,20 @@
 package processes
 
 /*
-#cgo darwin CFLAGS: -I/usr/local/opt/opencv3/include -I/usr/local/opt/opencv3/include/opencv
+#cgo darwin CFLAGS: -I/usr/local/opt/opencv@3/include -I/usr/local/opt/opencv@3/include/opencv
 #cgo linux CFLAGS: -I/usr/local/include -I/usr/local/include/opencv
 #cgo CFLAGS: -Wno-error
-#cgo darwin LDFLAGS: -L/usr/local/opt/opencv3/lib
+#cgo darwin LDFLAGS: -L/usr/local/opt/opencv@3/
 #cgo linux LDFLAGS: -L/usr/local/lib -L/usr/lib
 #cgo darwin LDFLAGS: -lstdc++ -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lopencv_core -lopencv_features2d -lopencv_video -lopencv_core -lCVBindings
 #cgo linux LDFLAGS: -lm -lstdc++ -lz -ldl -lpthread -lv4l1 -lv4l2 -lopencv_imgcodecs -lopencv_imgproc -lopencv_videoio -lopencv_highgui -lopencv_video -lopencv_core -lCVBindings
-#include "opencv2/videoio/videoio_c.h"
-#include "opencv2/imgcodecs/imgcodecs_c.h"
-#include "cv.h"
-#include "highgui.h"
+#include "stdlib.h"
 #include "CVBindings.h"
 */
 import "C"
 
 import (
 	"database/sql"
-	"errors"
-	"fmt"
 	"github.com/MeasureTheFuture/scout/configuration"
 	"github.com/MeasureTheFuture/scout/models"
 	"io/ioutil"
@@ -44,37 +39,8 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"time"
 	"unsafe"
 )
-
-func getVideoSource(videoFile string) (camera *C.CvCapture, err error) {
-	log.Printf("getting video source %v", videoFile)
-	if videoFile != "" {
-		log.Printf("INFO: Getting video file.")
-		file := C.CString(videoFile)
-		camera = C.cvCaptureFromFile(file)
-		C.free(unsafe.Pointer(file))
-		if camera == nil {
-			return camera, errors.New("Unable to open a video file. Shutting down scout.")
-		}
-
-		return camera, nil
-	} else {
-		log.Printf("INFO: Opening webcam.")
-		camera = C.cvCreateCameraCapture(0)
-		if camera == nil {
-			return camera, errors.New("Unable to open webcam. Shutting down scout.")
-		}
-
-		// Make sure the webcam is set to 720p.
-		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_WIDTH, configuration.FrameW)
-		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_FRAME_HEIGHT, configuration.FrameH)
-		C.cvSetCaptureProperty(camera, C.CV_CAP_PROP_BUFFERSIZE, 1)
-
-		return camera, nil
-	}
-}
 
 func Monitor(db *sql.DB, deltaC chan models.Command, videoFile string, debug bool) {
 
@@ -118,35 +84,18 @@ func Monitor(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 }
 
 func calibrate(db *sql.DB, videoFile string) {
-	// It takes a little while for the white balance to stabalise on the logitech.
-	// So grab a frame, wait to stabalise for white balance to stabalise, then grab again
-	// for and save as the calibration frame.
-	camera, err := getVideoSource(videoFile)
-	if err != nil {
-		// No valid video source, abort.
-		log.Printf("ERROR: Unable to get video source")
-		log.Print(err)
+	srcFile := C.CString(videoFile)
+	dstFile := C.CString("calibrationFrame.jpg")
+
+	success := C.calibrate(srcFile, dstFile, C.int(configuration.FrameW), C.int(configuration.FrameH))
+
+	C.free(unsafe.Pointer(srcFile))
+	C.free(unsafe.Pointer(dstFile))
+
+	if success != true {
+		log.Printf("ERROR: Unable to Calibrate")
 		return
 	}
-	calibrationFrame := C.cvQueryFrame(camera)
-	time.Sleep(1250 * time.Millisecond)
-	C.cvReleaseCapture(&camera)
-
-	camera, err = getVideoSource(videoFile)
-	if err != nil {
-		// No valid video source, abort
-		log.Printf("ERROR: Unable to get video source")
-		log.Print(err)
-		return
-	}
-	defer C.cvReleaseCapture(&camera)
-
-	// Build the calibration image from the first frame that comes off the camera.
-	calibrationFrame = C.cvQueryFrame(camera)
-	fileName := "calibrationFrame.jpg"
-	file := C.CString(fileName)
-	C.cvSaveImage(file, unsafe.Pointer(calibrationFrame), nil)
-	C.free(unsafe.Pointer(file))
 
 	// Update the DB with the latest calibration details.
 	s, err := models.GetScoutByUUID(db, models.GetScoutUUID(db))
@@ -176,14 +125,27 @@ func calibrate(db *sql.DB, videoFile string) {
 func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug bool) {
 	s := models.GetScout(db)
 
-	camera, err := getVideoSource(videoFile)
-	if err != nil {
-		// No valid video source. Abort measuring.
-		log.Printf("ERROR: Unable to get video source")
+	if _, err := os.Stat("calibrationFrame.jpg"); err != nil {
+		log.Printf("ERROR: Unable to measure, missing calibration frame")
 		log.Print(err)
 		return
 	}
-	defer C.cvReleaseCapture(&camera)
+
+	srcFile := C.CString(videoFile)
+	calFile := C.CString("calibrationFrame.jpg")
+
+	success := C.startMeasure(srcFile, calFile,
+							  C.int(configuration.FrameW), C.int(configuration.FrameH),
+							  C.int(s.MogHistoryLength), C.double(s.MogThreshold), C.int(s.MogDetectShadows))
+
+	C.free(unsafe.Pointer(srcFile))
+	C.free(unsafe.Pointer(calFile))
+
+	if success != true {
+		log.Printf("ERROR: Unable to get video source")
+		return
+	}
+	defer C.stopMeasure()
 
 	// Make sure we release the camera when the operating system crushes us.
 	c := make(chan os.Signal, 1)
@@ -191,41 +153,18 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 	go func() {
 		<-c
 		log.Printf("INFO: The OS shut down the scout.")
-		C.cvReleaseCapture(&camera)
+		C.stopMeasure()
 		return
 	}()
 
 	scene := models.InitScene(s)
 
-	// Build the calibration frame from disk.
-	var calibrationFrame *C.IplImage
-	if _, err := os.Stat("calibrationFrame.jpg"); err == nil {
-		file := C.CString("calibrationFrame.jpg")
-
-		calibrationFrame = C.cvLoadImage(file, C.CV_LOAD_IMAGE_COLOR)
-		defer C.cvReleaseImage(&calibrationFrame)
-
-		C.free(unsafe.Pointer(file))
-	} else {
-		log.Printf("ERROR: Unable to measure, missing calibration frame")
-		log.Print(err)
-		return
-	}
-
-	// Create a frame to hold the foreground mask results.
-	mask := C.cvCreateImage(C.cvSize(calibrationFrame.width, calibrationFrame.height), C.IPL_DEPTH_8U, 1)
-	defer C.cvReleaseImage(&mask)
-
-	// Push the initial calibration frame into the MOG2 image subtractor.
-	C.initMOG2(C.int(s.MogHistoryLength), C.double(s.MogThreshold), C.int(s.MogDetectShadows))
-	C.applyMOG2(unsafe.Pointer(calibrationFrame), unsafe.Pointer(mask))
-
 	// Current frame counter.
-	frame := int64(0)
+	//frame := int64(0)
 	measuring := true
 
 	// Start monitoring from the camera.
-	for measuring && C.cvGrabFrame(camera) != 0 {
+	for measuring {
 		// See if there are any new commands on the deltaC channel.
 		select {
 		case c := <-deltaC:
@@ -239,56 +178,31 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 			// Procceed with measuring.
 		}
 
-		// Subtract the calibration frame from the current frame.
-		nextFrame := C.cvRetrieveFrame(camera, 0)
-		C.applyMOG2(unsafe.Pointer(nextFrame), unsafe.Pointer(mask))
-
-		// Filter the foreground mask to clean up any noise or holes (morphological-closing).
-		C.cvSmooth(unsafe.Pointer(mask), unsafe.Pointer(mask), C.CV_GAUSSIAN, 3, 0, 0.0, C.double(s.GaussianSmooth))
-		C.cvThreshold(unsafe.Pointer(mask), unsafe.Pointer(mask), C.double(s.ForegroundThresh), 255, 0)
-		C.cvDilate(unsafe.Pointer(mask), unsafe.Pointer(mask), nil, C.int(s.DilationIterations))
-
-		// Detect contours in filtered foreground mask
-		storage := C.cvCreateMemStorage(0)
-		contours := C.cvCreateSeq(0, C.size_t(unsafe.Sizeof(C.CvSeq{})), C.size_t(unsafe.Sizeof(C.CvPoint{})), storage)
-		offset := C.cvPoint(C.int(0), C.int(0))
-		num := int(C.cvFindContours(unsafe.Pointer(mask), storage, &contours, C.int(unsafe.Sizeof(C.CvContour{})),
-			C.CV_RETR_LIST, C.CV_CHAIN_APPROX_SIMPLE, offset))
+		numObjects := C.int(0)
+		objects := C.grabFrame(&numObjects,
+							   C._Bool(debug),
+					           C.double(s.GaussianSmooth),
+					           C.double(s.ForegroundThresh),
+					           C.int(s.DilationIterations),
+					           C.double(s.MinArea),
+					           C.double(s.MaxArea))
+		o := (*[1<<30]C.int)(unsafe.Pointer(objects))
 
 		var detectedObjects []models.Waypoint
-
-		// Track each of the detected contours.
-		for contours != nil {
-			area := float64(C.cvContourArea(unsafe.Pointer(contours), C.cvSlice(0, 0x3fffffff), 0))
-
-			// Only track appropriately sized objects.
-			if area > s.MinArea && area < s.MaxArea {
-				boundingBox := C.cvBoundingRect(unsafe.Pointer(contours), 0)
-				w := int(boundingBox.width / 2)
-				h := int(boundingBox.height / 2)
-				x := int(boundingBox.x) + w
-				y := int(boundingBox.y) + h
-
-				detectedObjects = append(detectedObjects, models.Waypoint{x, y, w, h, 0.0})
-
-				if debug {
-					// DEBUG -- Render contours and bounding boxes around detected objects.
-					pt1 := C.cvPoint(boundingBox.x, boundingBox.y)
-					pt2 := C.cvPoint(boundingBox.x+boundingBox.width, boundingBox.y+boundingBox.height)
-					C.cvDrawContours(unsafe.Pointer(nextFrame), contours, C.cvScalar(12.0, 212.0, 250.0, 255), C.cvScalar(0, 0, 0, 0), 2, 1, 8, offset)
-					C.cvRectangle(unsafe.Pointer(nextFrame), pt1, pt2, C.cvScalar(16.0, 8.0, 186.0, 255), C.int(5), C.int(8), C.int(0))
-				}
-			} else {
-				num--
-			}
-
-			contours = contours.h_next
+		for i := C.int(0); i < numObjects; i = i + 4 {
+			detectedObjects = append(detectedObjects,
+									 models.Waypoint{int(o[i]),
+									 				 int(o[i + 1]),
+									 				 int(o[i + 2]),
+									 				 int(o[i + 3]), 0.0})
 		}
 
-		scene.Update(db, detectedObjects)
-		C.cvClearMemStorage(storage)
-		C.cvReleaseMemStorage(&storage)
+		C.free(unsafe.Pointer(objects))
 
+		scene.Update(db, detectedObjects)
+
+		/**
+		TODO: Need a new method call for debug printing the interaction path.
 		if debug {
 			var font C.CvFont
 			C.cvInitFont(&font, C.CV_FONT_HERSHEY_SIMPLEX, C.double(0.5), C.double(0.5), C.double(1.0), C.int(2), C.CV_AA)
@@ -326,6 +240,7 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 			frame++
 
 		}
+		**/
 	}
 
 	log.Printf("INFO: Finished measure")

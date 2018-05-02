@@ -209,7 +209,6 @@ func UpdateScout(db *sql.DB, c echo.Context, deltaC chan models.Command) error {
 
 	} else if ns.State == models.MEASURING {
 		deltaC <- models.START_MEASURE
-
 	}
 
 	c.Request()
