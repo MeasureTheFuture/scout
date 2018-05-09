@@ -135,8 +135,8 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 	calFile := C.CString("calibrationFrame.jpg")
 
 	success := C.startMeasure(srcFile, calFile,
-							  C.int(configuration.FrameW), C.int(configuration.FrameH),
-							  C.int(s.MogHistoryLength), C.double(s.MogThreshold), C.int(s.MogDetectShadows))
+		C.int(configuration.FrameW), C.int(configuration.FrameH),
+		C.int(s.MogHistoryLength), C.double(s.MogThreshold), C.int(s.MogDetectShadows))
 
 	C.free(unsafe.Pointer(srcFile))
 	C.free(unsafe.Pointer(calFile))
@@ -145,7 +145,6 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 		log.Printf("ERROR: Unable to get video source")
 		return
 	}
-	defer C.stopMeasure()
 
 	// Make sure we release the camera when the operating system crushes us.
 	c := make(chan os.Signal, 1)
@@ -159,8 +158,6 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 
 	scene := models.InitScene(s)
 
-	// Current frame counter.
-	//frame := int64(0)
 	measuring := true
 
 	// Start monitoring from the camera.
@@ -171,6 +168,13 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 			switch {
 			case c == models.STOP_MEASURE:
 				log.Printf("INFO: Stopping measure")
+
+				// Delete the hidden file to indicate that measuring has stopped across reboots.
+				err := os.Remove(".mtf-measure")
+				if err != nil && os.IsNotExist(err) {
+					log.Printf("ERROR: Unable to remove .mtf-measure file")
+					log.Print(err)
+				}
 				measuring = false
 			}
 
@@ -180,21 +184,21 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 
 		numObjects := C.int(0)
 		objects := C.grabFrame(&numObjects,
-							   C._Bool(debug),
-					           C.double(s.GaussianSmooth),
-					           C.double(s.ForegroundThresh),
-					           C.int(s.DilationIterations),
-					           C.double(s.MinArea),
-					           C.double(s.MaxArea))
-		o := (*[1<<30]C.int)(unsafe.Pointer(objects))
+			C._Bool(debug),
+			C.double(s.GaussianSmooth),
+			C.double(s.ForegroundThresh),
+			C.int(s.DilationIterations),
+			C.double(s.MinArea),
+			C.double(s.MaxArea))
+		o := (*[1 << 30]C.int)(unsafe.Pointer(objects))
 
 		var detectedObjects []models.Waypoint
 		for i := C.int(0); i < numObjects; i = i + 4 {
 			detectedObjects = append(detectedObjects,
-									 models.Waypoint{int(o[i]),
-									 				 int(o[i + 1]),
-									 				 int(o[i + 2]),
-									 				 int(o[i + 3]), 0.0})
+				models.Waypoint{int(o[i]),
+					int(o[i+1]),
+					int(o[i+2]),
+					int(o[i+3]), 0.0})
 		}
 
 		C.free(unsafe.Pointer(objects))
@@ -245,4 +249,5 @@ func measure(db *sql.DB, deltaC chan models.Command, videoFile string, debug boo
 
 	log.Printf("INFO: Finished measure")
 	scene.Close(db)
+	C.stopMeasure()
 }

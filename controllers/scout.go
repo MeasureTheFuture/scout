@@ -144,6 +144,40 @@ func GetScout(db *sql.DB, c echo.Context) error {
 	return c.JSON(http.StatusOK, s)
 }
 
+func ClearMeasurements(db *sql.DB, c echo.Context) error {
+	s, err := models.GetScoutByUUID(db, c.Param("uuid"))
+	if err != nil {
+		return err
+	}
+
+	err = models.DeleteScoutHealths(db, s.UUID)
+	if err != nil {
+		return err
+	}
+
+	err = models.DeleteScoutInteractions(db, s.UUID)
+	if err != nil {
+		return err
+	}
+
+	err = models.DeleteScoutLogs(db, s.UUID)
+	if err != nil {
+		return err
+	}
+
+	ss, err := models.GetScoutSummaryByUUID(db, s.UUID)
+	if err != nil {
+		return err
+	}
+
+	err = ss.Clear(db)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, s)
+}
+
 func UpdateScout(db *sql.DB, c echo.Context, deltaC chan models.Command) error {
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
@@ -164,27 +198,7 @@ func UpdateScout(db *sql.DB, c echo.Context, deltaC chan models.Command) error {
 	if !ns.Authorised {
 		ns.State = models.IDLE
 
-		err = models.DeleteScoutHealths(db, ns.UUID)
-		if err != nil {
-			return err
-		}
-
-		err = models.DeleteScoutInteractions(db, ns.UUID)
-		if err != nil {
-			return err
-		}
-
-		err = models.DeleteScoutLogs(db, ns.UUID)
-		if err != nil {
-			return err
-		}
-
-		ss, err := models.GetScoutSummaryByUUID(db, ns.UUID)
-		if err != nil {
-			return err
-		}
-
-		err = ss.Clear(db)
+		err = ClearMeasurements(db, c)
 		if err != nil {
 			return err
 		}

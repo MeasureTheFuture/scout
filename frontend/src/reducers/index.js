@@ -40,6 +40,21 @@ function GetLocations(store) {
     }
 }
 
+function ClearMeasurements(store) {
+  var state = store.getState();
+  var l = Object.assign({}, state.locations[state.active]);
+
+  var httpreq = new XMLHttpRequest();
+  httpreq.open("GET", "http://"+window.location.host+"/scouts/"+l.uuid+"/clearMeasurements", true);
+  httpreq.send(null);
+  httpreq.onreadystatechange = function() {
+    if (httpreq.readyState == 4 && httpreq.status == 200) {
+      var locations = JSON.parse(httpreq.responseText)
+      store.dispatch({ type:'UPDATE_LOCATIONS', locations:locations})
+    }
+  }
+}
+
 function SaveActiveLocation(store) {
   var state = store.getState();
 
@@ -125,4 +140,4 @@ function Mothership(state, action) {
   }
 }
 
-export { Mothership, GetLocations, ActiveLocation, UpdateActiveLocation, SaveActiveLocation }
+export { Mothership, GetLocations, ActiveLocation, UpdateActiveLocation, ClearMeasurements, SaveActiveLocation }

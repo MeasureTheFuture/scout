@@ -129,6 +129,11 @@ func main() {
 		return controllers.UpdateScout(db, c, deltaC)
 	})
 
+	e.GET("/scouts/:uuid/clearMeasurements", func(c echo.Context) error {
+		log.Printf("clearing meaasurements")
+		return controllers.ClearMeasurements(db, c)
+	})
+
 	e.GET("/download.zip", func(c echo.Context) error {
 		return controllers.DownloadData(db, c)
 	})

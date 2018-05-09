@@ -17,7 +17,7 @@
 "use strict;"
 
 import React from 'react';
-import { UpdateActiveLocation, ActiveLocation } from '../reducers/index.js';
+import { UpdateActiveLocation, ActiveLocation, ClearMeasurements } from '../reducers/index.js';
 
 var DeactivateAction = React.createClass({
   handleDeactivate: function() {
@@ -137,17 +137,37 @@ SettingsAction.contextTypes = {
   store: React.PropTypes.object
 };
 
+var ClearAction = React.createClass({
+  handleClear: function() {
+    const { store } = this.context;
+    ClearMeasurements(store);
+    //store.dispatch({ type:'CLEAR_MEASUREMENTS' });
+  },
+
+  render: function() {
+    return (
+        <a id="settings" href="#" className="warning" onClick={this.handleClear}>[<i className="fa fa-times"></i> clear measurements]</a>
+    );
+  }
+});
+ClearAction.contextTypes = {
+  store: React.PropTypes.object
+};
+
 var PrimaryActions = React.createClass({
   render: function() {
     const { store } = this.context;
+    console.log(ActiveLocation(store).authorised);
+    console.log(ActiveLocation(store).state);
     var onOff = (ActiveLocation(store).authorised ? <DeactivateAction /> : <ActivateAction />);
     var calibrate = ((ActiveLocation(store).authorised && (ActiveLocation(store).state == 'idle' || ActiveLocation(store).state == 'calibrated')) ? <CalibrateAction /> : "");
     var measure = ((ActiveLocation(store).authorised && ActiveLocation(store).state == 'calibrated') ? <MeasureAction /> : "");
     var edit = (store.getState().editLocation ? <SaveAction /> : <EditAction />);
     var settings = <SettingsAction />;
+    var clearMeasurements = ((ActiveLocation(store).authorised && ActiveLocation(store).state == 'measuring') ? <ClearAction /> : "");
 
     return (
-      <p className="location-meta">{onOff} {calibrate} {measure} {edit} {settings}</p>
+      <p className="location-meta">{onOff} {calibrate} {measure} {clearMeasurements} {edit} {settings}</p>
     );
   }
 });
